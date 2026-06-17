@@ -1,12 +1,12 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
+import 'package:vulcan_mobile_playground/core/ble/ble_adv_uuids.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/model/ble_discovered_device_model.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
-
-import '../../../domain/constants/ble_scan_config.dart';
 
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
   FlutterBluePlusDataSource();
@@ -57,7 +57,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
-  Future<void> startScan() async {
+  Future<void> startScan({List<VulcanDeviceType>? filterTypes}) async {
     final adapterState = await FlutterBluePlus.adapterState.first;
     if (_mapAdapterState(adapterState) != BleAdapterStatus.on) {
       throw const BleAdapterException('Bluetooth adapter is not ready');
@@ -67,6 +67,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
     _discoveredDevices.clear();
 
+    final guids = filterTypes == null
+        ? BleAdvUuids.allVulcanScanGuids()
+        : BleAdvUuids.scanGuidsForDeviceTypes(filterTypes);
+
     await FlutterBluePlus.startScan(
       /// Performance tuning
       // timeout: const Duration(seconds: 10),
@@ -74,7 +78,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       continuousUpdates: true, // Update 'lastSeen' & 'rssi'
       continuousDivisor: 20, // 1/10 of advertisements are processed
       /// Optional filters
-      withServices: BleScanConfig.advUUIDsGuid,
+      withServices: guids,
     );
   }
 

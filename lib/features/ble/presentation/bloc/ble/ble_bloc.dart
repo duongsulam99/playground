@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
@@ -14,13 +15,21 @@ import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_
 
 class BleBloc extends Bloc<BleEvent, BleState> {
   BleBloc({
-    required this._watchAdapterStatus,
-    required this._watchScanResults,
-    required this._startScan,
-    required this._stopScan,
-    required this._connectDevice,
-    required this._disconnectDevice,
-  })  : super(const BleState()) {
+    required WatchAdapterStatus watchAdapterStatus,
+    required WatchScanResults watchScanResults,
+    required StartScan startScan,
+    required StopScan stopScan,
+    required ConnectDevice connectDevice,
+    required DisconnectDevice disconnectDevice,
+    List<VulcanDeviceType>? filterTypes,
+  })  : _watchAdapterStatus = watchAdapterStatus,
+        _watchScanResults = watchScanResults,
+        _startScan = startScan,
+        _stopScan = stopScan,
+        _connectDevice = connectDevice,
+        _disconnectDevice = disconnectDevice,
+        _filterTypes = filterTypes,
+        super(const BleState()) {
     on<BleAdapterStatusUpdated>(_onAdapterStatusUpdated);
     on<BleScanResultsUpdated>(_onScanResultsUpdated);
     on<BleStreamFailed>(_onStreamFailed);
@@ -37,6 +46,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final StopScan _stopScan;
   final ConnectDevice _connectDevice;
   final DisconnectDevice _disconnectDevice;
+  final List<VulcanDeviceType>? _filterTypes;
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
@@ -140,7 +150,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       ),
     );
 
-    final result = await _startScan(const NoParams());
+    final result = await _startScan(StartScanParams(filterTypes: _filterTypes));
     result.fold(
       (failure) => emit(
         state.copyWith(

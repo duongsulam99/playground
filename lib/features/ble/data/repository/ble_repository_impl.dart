@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
@@ -35,9 +36,9 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> startScan() async {
+  Future<Either<Failure, Unit>> startScan({List<VulcanDeviceType>? filterTypes}) async {
     try {
-      await _remoteDataSource.startScan();
+      await _remoteDataSource.startScan(filterTypes: filterTypes);
       return const Right(unit);
     } catch (error) {
       return Left(_mapException(error));

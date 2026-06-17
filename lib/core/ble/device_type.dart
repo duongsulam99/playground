@@ -6,7 +6,7 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.da
 ///
 /// `services` and `characteristics` are optional because not every product line
 /// shares the same BLE profile.
-enum DeviceType {
+enum VulcanDeviceType {
   hand(
     name: 'Vulcan Hand',
     hardwareId: 'H09 99',
@@ -134,7 +134,7 @@ enum DeviceType {
     isHasBle: false,
   );
 
-  const DeviceType({
+  const VulcanDeviceType({
     required this.name,
     required this.hardwareId,
     this.hardwareIdOld,
@@ -153,10 +153,10 @@ enum DeviceType {
   final BleServicesProfile? services;
   final BleCharacteristicsProfile? characteristics;
 
-  static DeviceType fromHardwareId(String id) {
-    return DeviceType.values.firstWhere(
+  static VulcanDeviceType fromHardwareId(String id) {
+    return VulcanDeviceType.values.firstWhere(
       (device) => device.hardwareId == id || device.hardwareIdOld == id,
-      orElse: () => DeviceType.none,
+      orElse: () => VulcanDeviceType.none,
     );
   }
 }

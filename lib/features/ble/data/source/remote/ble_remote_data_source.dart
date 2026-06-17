@@ -1,3 +1,4 @@
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/model/ble_discovered_device_model.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
@@ -7,7 +8,7 @@ abstract class BleRemoteDataSource {
 
   Stream<List<BleDiscoveredDeviceModel>> watchScanResults();
 
-  Future<void> startScan();
+  Future<void> startScan({List<VulcanDeviceType>? filterTypes});
 
   Future<void> stopScan();
 

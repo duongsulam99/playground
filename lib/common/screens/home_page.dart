@@ -3,6 +3,8 @@ import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
+import '../../core/ble/device_type.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -11,9 +13,7 @@ class HomePage extends StatelessWidget {
     final localeController = serviceLocator<AbstractLocaleController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n.appTitle),
-      ),
+      appBar: AppBar(title: Text(context.l10n.appTitle)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -33,6 +33,13 @@ class HomePage extends StatelessWidget {
             FilledButton.tonal(
               onPressed: () => Navigator.of(context).pushNamed(BleRoute.path),
               child: const Text('BLE Lab'),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(
+                context,
+              ).pushNamed(BleRoute.path, arguments: [VulcanDeviceType.myoLink]),
+              child: const Text('BLE Lab (Only band, ... devices)'),
             ),
           ],
         ),

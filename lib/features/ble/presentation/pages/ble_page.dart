@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_event.dart';
@@ -9,7 +10,9 @@ import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_d
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_scan_controls.dart';
 
 class BlePage extends StatelessWidget {
-  const BlePage({super.key});
+  const BlePage({super.key, this.filterTypes});
+
+  final List<VulcanDeviceType>? filterTypes;
 
   @override
   Widget build(BuildContext context) {
