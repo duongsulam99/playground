@@ -121,6 +121,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get languageEn;
+
+  /// No description provided for @ble_error_unknow_device.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get ble_error_unknow_device;
 }
 
 class _AppLocalizationsDelegate

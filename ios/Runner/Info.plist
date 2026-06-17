@@ -59,6 +59,16 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- Bluetooth Low Energy (BLE) Configuration -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>App needs Bluetooth to scan and connect to devices</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
+	<!-- Bluetooth Low Energy (BLE) Configuration -->
+
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

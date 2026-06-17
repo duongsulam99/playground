@@ -1,4 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 
 import '../screens/error_page.dart';
 import '../screens/home_page.dart';
@@ -11,6 +12,8 @@ class AppRouter extends SuperAppRoute {
     switch (settings.name) {
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
+      case BleRoute.path:
+        return BleRoute.route();
       default:
         return null;
     }

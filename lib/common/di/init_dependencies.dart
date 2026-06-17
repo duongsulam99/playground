@@ -1,6 +1,7 @@
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:get_it/get_it.dart';
 import 'package:vulcan_mobile_playground/common/local/hive_manager.dart';
+import 'package:vulcan_mobile_playground/features/ble/di/ble_injection.dart';
 import 'package:vulcan_mobile_playground/l10n/locale/locale_controller.dart';
 import 'package:vulcan_mobile_playground/l10n/locale/locale_repository.dart';
 
@@ -15,4 +16,6 @@ Future<void> initDependencies() async {
       repository: serviceLocator<AbstractLocaleRepository>(),
     ),
   );
+
+  initBleInjection(serviceLocator);
 }

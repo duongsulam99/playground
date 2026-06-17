@@ -3,5 +3,6 @@
   "appTitle": "Vulcan Playground",
   "homeWelcome": "Chào mừng đến Vulcan Playground",
   "languageVi": "Tiếng Việt",
-  "languageEn": "Tiếng Anh"
+  "languageEn": "Tiếng Anh",
+  "ble_error_unknow_device": "Thiết bị không xác định"
 }

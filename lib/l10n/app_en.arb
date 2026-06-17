@@ -3,5 +3,6 @@
   "appTitle": "Vulcan Playground",
   "homeWelcome": "Welcome to Vulcan Playground",
   "languageVi": "Vietnamese",
-  "languageEn": "English"
+  "languageEn": "English",
+  "ble_error_unknow_device": "Unknown device"
 }
