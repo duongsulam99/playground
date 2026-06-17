@@ -1,0 +1,21 @@
+name: flutter_supper_app_core
+description: Supper app core package
+publish_to: "none"
+version: 0.0.1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.9.2
+  flutter_secure_storage: ^10.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
