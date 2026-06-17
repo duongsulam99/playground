@@ -12,13 +12,9 @@ import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_scan_
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
 
 void initBleInjection(GetIt sl) {
-  if (sl.isRegistered<BleBloc>()) {
-    return;
-  }
+  if (sl.isRegistered<BleBloc>()) return;
 
-  sl.registerLazySingleton<BleRemoteDataSource>(
-    FlutterBluePlusDataSource.new,
-  );
+  sl.registerLazySingleton<BleRemoteDataSource>(FlutterBluePlusDataSource.new);
 
   sl.registerLazySingleton<BleRepository>(
     () => BleRepositoryImpl(remoteDataSource: sl()),

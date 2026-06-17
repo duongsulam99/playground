@@ -14,71 +14,52 @@ class BlePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BLE Lab'),
-      ),
+      appBar: AppBar(title: const Text('BLE Lab')),
       body: BlocConsumer<BleBloc, BleState>(
         listener: (context, state) {
           if (state.errorMessage != null && state.status == BleStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
         },
         builder: (context, state) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              BleAdapterBanner(adapterStatus: state.adapterStatus),
-              const SizedBox(height: 16),
-              BleScanControls(
-                isScanning: state.isScanning,
-                isEnabled: state.isAdapterReady &&
-                    !state.connectionStatus.isConnected,
-                onToggleScan: () {
-                  context.read<BleBloc>().add(const BleEvent.scanToggled());
-                },
-              ),
-              const SizedBox(height: 16),
-              if (state.status == BleStatus.loading &&
-                  state.connectionStatus == BleConnectionStatus.connecting)
-                const Center(child: CircularProgressIndicator()),
-              if (state.connectionStatus.isConnected) ...[
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.bluetooth_connected),
-                    title: Text(
-                      'Connected: ${state.connectedDeviceId ?? 'Unknown'}',
-                    ),
-                    subtitle: Text(state.connectionStatus.label),
-                    trailing: FilledButton.tonal(
-                      onPressed: () {
-                        context
-                            .read<BleBloc>()
-                            .add(const BleEvent.disconnectRequested());
-                      },
-                      child: const Text('Disconnect'),
-                    ),
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BleAdapterBanner(adapterStatus: state.adapterStatus),
+                  const SizedBox(height: 16),
+                  BleScanControls(
+                    isScanning: state.isScanning,
+                    isEnabled:
+                        state.isAdapterReady &&
+                        !state.connectionStatus.isConnected,
+                    onToggleScan: () {
+                      context.read<BleBloc>().add(const BleEvent.scanToggled());
+                    },
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              Text(
-                'Discovered devices (${state.devices.length})',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  const SizedBox(height: 16),
+                  Text(
+                    'Discovered devices (${state.devices.length})',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  BleDeviceList(
+                    devices: state.devices,
+                    onDeviceSelected: (deviceId) {
+                      context.read<BleBloc>().add(
+                        BleDeviceSelected(deviceId: deviceId),
+                      );
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              BleDeviceList(
-                devices: state.devices,
-                onDeviceSelected: (deviceId) {
-                  context
-                      .read<BleBloc>()
-                      .add(BleEvent.deviceSelected(deviceId: deviceId));
-                },
-              ),
-            ],
+            ),
           );
         },
       ),
