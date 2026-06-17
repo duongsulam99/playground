@@ -1,15 +1,20 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/model/ble_discovered_device_model.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
 
+import '../../../domain/constants/ble_scan_config.dart';
+
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
   FlutterBluePlusDataSource();
 
   BluetoothDevice? _connectedDevice;
   final Map<String, BluetoothDevice> _discoveredDevices = {};
+
+  final _logger = const Logger(className: 'FlutterBluePlusDataSource');
 
   @override
   Stream<BleAdapterStatus> watchAdapterStatus() {
@@ -18,22 +23,37 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Stream<List<BleDiscoveredDeviceModel>> watchScanResults() {
-    return FlutterBluePlus.scanResults.map((results) {
-      for (final result in results) {
-        _discoveredDevices[result.device.remoteId.str] = result.device;
-      }
+    return FlutterBluePlus.scanResults.map(_processScanResults);
+  }
 
-      return results
-          .map(
-            (result) => BleDiscoveredDeviceModel.fromScanResult(
-              id: result.device.remoteId.str,
-              name: result.advertisementData.advName,
-              rssi: result.rssi,
-              isConnectable: result.advertisementData.connectable,
-            ),
-          )
-          .toList();
-    });
+  List<BleDiscoveredDeviceModel> _processScanResults(List<ScanResult> results) {
+    if (results.isEmpty) return const [];
+
+    final devices = <BleDiscoveredDeviceModel>[];
+
+    for (final result in results) {
+      /// Filter out non-connectable devices
+      final ableToConnect = result.advertisementData.connectable;
+      if (!ableToConnect) continue;
+
+      final id = result.device.remoteId.str;
+      _discoveredDevices[id] = result.device;
+
+      _logger.debug(
+        "Advertisement Data: ${result.advertisementData.manufacturerData.toString()}",
+      );
+
+      devices.add(
+        BleDiscoveredDeviceModel.fromScanResult(
+          id: id,
+          name: result.advertisementData.advName,
+          rssi: result.rssi,
+          isConnectable: result.advertisementData.connectable,
+        ),
+      );
+    }
+
+    return devices;
   }
 
   @override
@@ -45,8 +65,16 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
     if (FlutterBluePlus.isScanningNow) return;
 
+    _discoveredDevices.clear();
+
     await FlutterBluePlus.startScan(
-      timeout: const Duration(seconds: 15),
+      /// Performance tuning
+      // timeout: const Duration(seconds: 10),
+      removeIfGone: const Duration(seconds: 2),
+      continuousUpdates: true, // Update 'lastSeen' & 'rssi'
+      continuousDivisor: 20, // 1/10 of advertisements are processed
+      /// Optional filters
+      withServices: BleScanConfig.advUUIDsGuid,
     );
   }
 
