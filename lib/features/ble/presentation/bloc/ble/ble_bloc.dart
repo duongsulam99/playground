@@ -193,6 +193,21 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   ) async {
     final deviceId = event.deviceId;
 
+    if (!state.canConnectDevice(deviceId)) {
+      emit(
+        state.copyWith(
+          activeConnections: _upsertConnection(
+            state.activeConnections,
+            deviceId: deviceId,
+            status: BleConnectionStatus.disconnected,
+            errorMessage: 'Device limit reached (${state.deviceLimit})',
+          ),
+          status: BleStatus.failure,
+        ),
+      );
+      return;
+    }
+
     emit(
       state.copyWith(
         status: BleStatus.loading,

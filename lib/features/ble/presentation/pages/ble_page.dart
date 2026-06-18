@@ -107,6 +107,7 @@ class _BlePageState extends State<BlePage> {
                   BleDeviceList(
                     savedDevices: state.savedDevices,
                     activeConnections: state.activeConnections,
+                    canConnectDevice: state.canConnectDevice,
                     onDeviceSelected: (deviceId) {
                       context.read<BleBloc>().add(
                         BleEvent.connectRequested(deviceId: deviceId),

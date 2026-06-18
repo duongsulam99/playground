@@ -7,6 +7,7 @@ class BleDeviceList extends StatelessWidget {
   const BleDeviceList({
     required this.savedDevices,
     required this.activeConnections,
+    required this.canConnectDevice,
     required this.onDeviceSelected,
     required this.onDeviceDisconnect,
     super.key,
@@ -14,6 +15,7 @@ class BleDeviceList extends StatelessWidget {
 
   final List<BleDiscoveredDevice> savedDevices;
   final List<BleActiveConnection> activeConnections;
+  final bool Function(String deviceId) canConnectDevice;
   final ValueChanged<String> onDeviceSelected;
   final ValueChanged<String> onDeviceDisconnect;
 
@@ -40,6 +42,7 @@ class BleDeviceList extends StatelessWidget {
         final connection = _connectionFor(device.id);
         final connectionStatus =
             connection?.status ?? BleConnectionStatus.disconnected;
+        final canConnect = canConnectDevice(device.id);
 
         return ListTile(
           leading: const Icon(Icons.bluetooth),
@@ -50,8 +53,8 @@ class BleDeviceList extends StatelessWidget {
             '${connection?.hasError == true ? '\nError: ${connection!.errorMessage}' : ''}',
           ),
           isThreeLine: true,
-          trailing: _buildTrailing(device, connectionStatus),
-          onTap: () => _handleTap(device, connectionStatus),
+          trailing: _buildTrailing(device, connectionStatus, canConnect),
+          onTap: () => _handleTap(device, connectionStatus, canConnect),
         );
       },
     );
@@ -67,6 +70,7 @@ class BleDeviceList extends StatelessWidget {
   Widget _buildTrailing(
     BleDiscoveredDevice device,
     BleConnectionStatus connectionStatus,
+    bool canConnect,
   ) {
     if (connectionStatus == BleConnectionStatus.connecting ||
         connectionStatus == BleConnectionStatus.disconnecting) {
@@ -85,7 +89,7 @@ class BleDeviceList extends StatelessWidget {
       );
     }
 
-    if (device.isConnectable) {
+    if (device.isConnectable && canConnect) {
       return const Icon(Icons.link);
     }
 
@@ -95,6 +99,7 @@ class BleDeviceList extends StatelessWidget {
   void _handleTap(
     BleDiscoveredDevice device,
     BleConnectionStatus connectionStatus,
+    bool canConnect,
   ) {
     if (connectionStatus == BleConnectionStatus.connecting ||
         connectionStatus == BleConnectionStatus.disconnecting) {
@@ -106,7 +111,7 @@ class BleDeviceList extends StatelessWidget {
       return;
     }
 
-    if (device.isConnectable) {
+    if (device.isConnectable && canConnect) {
       onDeviceSelected(device.id);
     }
   }

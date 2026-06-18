@@ -45,9 +45,11 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             BlocBuilder<BleBloc, BleState>(
-              buildWhen: (p, c) => p.connectedCount != c.connectedCount,
+              buildWhen: (p, c) => p.activeConnections != c.activeConnections,
               builder: (context, state) {
-                return Text('Connecting: ${state.connectedCount}/2');
+                return Text(
+                  'Connected: ${state.activeDeviceCount}/${state.deviceLimit}',
+                );
               },
             ),
           ],
