@@ -1,10 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
-
-part 'ble_state.freezed.dart';
+part of 'ble_bloc.dart';
 
 enum BleStatus { initial, loading, success, failure }
 

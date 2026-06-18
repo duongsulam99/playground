@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_event.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_state.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_adapter_banner.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_connected_devices_section.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_device_list.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_scan_controls.dart';
+
+import '../bloc/ble/ble_bloc.dart';
 
 class BlePage extends StatefulWidget {
   const BlePage({super.key, this.filterTypes});
@@ -49,17 +48,15 @@ class _BlePageState extends State<BlePage> {
       body: BlocConsumer<BleBloc, BleState>(
         listener: (context, state) {
           if (state.errorMessage != null && state.status == BleStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
 
           for (final entry in state.deviceErrors.entries) {
             if (entry.value.isNotEmpty && state.status == BleStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Device ${entry.key}: ${entry.value}'),
-                ),
+                SnackBar(content: Text('Device ${entry.key}: ${entry.value}')),
               );
             }
           }

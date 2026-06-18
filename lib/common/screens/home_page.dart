@@ -1,5 +1,7 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
@@ -40,6 +42,13 @@ class HomePage extends StatelessWidget {
                 context,
               ).pushNamed(BleRoute.path, arguments: [VulcanDeviceType.myoLink]),
               child: const Text('BLE Lab (Only band, ... devices)'),
+            ),
+            const SizedBox(height: 24),
+            BlocBuilder<BleBloc, BleState>(
+              buildWhen: (prev, curr) => prev.devices != curr.devices,
+              builder: (context, state) {
+                return Text('Connecting: ${state.devices.length}/2');
+              },
             ),
           ],
         ),

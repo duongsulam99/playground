@@ -25,18 +25,16 @@ class BleConnectedDevicesSection extends StatelessWidget {
         )
         .toList();
 
-    if (connectedEntries.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (connectedEntries.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Connected devices (${connectedEntries.length})',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         ListView.separated(
@@ -61,7 +59,8 @@ class BleConnectedDevicesSection extends StatelessWidget {
               title: Text(device?.displayName ?? deviceId),
               subtitle: Text('${status.label}\n$deviceId'),
               isThreeLine: true,
-              trailing: status == BleConnectionStatus.connecting ||
+              trailing:
+                  status == BleConnectionStatus.connecting ||
                       status == BleConnectionStatus.disconnecting
                   ? const SizedBox(
                       width: 24,

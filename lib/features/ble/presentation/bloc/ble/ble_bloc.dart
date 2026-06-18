@@ -1,16 +1,22 @@
 import 'dart:async';
-
 import 'package:bloc/bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/disconnect_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/start_scan.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/stop_scan.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_adapter_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_scan_results.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_event.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_state.dart';
+
+import '../../../domain/entities/ble_discovered_device.dart';
+import '../../../domain/usecase/connect_device.dart';
+import '../../../domain/usecase/disconnect_device.dart';
+import '../../../domain/usecase/start_scan.dart';
+import '../../../domain/usecase/stop_scan.dart';
+import '../../../domain/usecase/watch_adapter_status.dart';
+import '../../../domain/usecase/watch_scan_results.dart';
+
+part 'ble_bloc.freezed.dart';
+part 'ble_event.dart';
+part 'ble_state.dart';
 
 class BleBloc extends Bloc<BleEvent, BleState> {
   BleBloc({
@@ -261,12 +267,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         final errors = Map<String, String>.from(state.deviceErrors)
           ..[deviceId] = failure.message;
 
-        emit(
-          state.copyWith(
-            deviceErrors: errors,
-            status: BleStatus.failure,
-          ),
-        );
+        emit(state.copyWith(deviceErrors: errors, status: BleStatus.failure));
       },
       (_) {
         final connections = Map<String, BleConnectionStatus>.from(
