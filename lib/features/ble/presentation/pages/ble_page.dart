@@ -53,10 +53,14 @@ class _BlePageState extends State<BlePage> {
             ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
 
-          for (final entry in state.deviceErrors.entries) {
-            if (entry.value.isNotEmpty && state.status == BleStatus.failure) {
+          for (final connection in state.activeConnections) {
+            if (connection.hasError && state.status == BleStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Device ${entry.key}: ${entry.value}')),
+                SnackBar(
+                  content: Text(
+                    'Device ${connection.deviceId}: ${connection.errorMessage}',
+                  ),
+                ),
               );
             }
           }
@@ -84,8 +88,8 @@ class _BlePageState extends State<BlePage> {
                   ),
                   const SizedBox(height: 16),
                   BleConnectedDevicesSection(
-                    devices: state.devices,
-                    deviceConnections: state.deviceConnections,
+                    savedDevices: state.savedDevices,
+                    activeConnections: state.activeConnections,
                     onDisconnect: (deviceId) {
                       context.read<BleBloc>().add(
                         BleEvent.disconnectRequested(deviceId: deviceId),
@@ -94,15 +98,15 @@ class _BlePageState extends State<BlePage> {
                   ),
                   if (state.hasConnectedDevices) const SizedBox(height: 16),
                   Text(
-                    'Discovered devices (${state.devices.length})',
+                    'Discovered devices (${state.savedDevices.length})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   BleDeviceList(
-                    devices: state.devices,
-                    deviceConnections: state.deviceConnections,
+                    savedDevices: state.savedDevices,
+                    activeConnections: state.activeConnections,
                     onDeviceSelected: (deviceId) {
                       context.read<BleBloc>().add(
                         BleEvent.connectRequested(deviceId: deviceId),

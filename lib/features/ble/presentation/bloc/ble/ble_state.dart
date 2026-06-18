@@ -7,10 +7,8 @@ abstract class BleState with _$BleState {
   const factory BleState({
     @Default(BleAdapterStatus.unknown) BleAdapterStatus adapterStatus,
     @Default(false) bool isScanning,
-    @Default(<BleDiscoveredDevice>[]) List<BleDiscoveredDevice> devices,
-    @Default(<String, BleConnectionStatus>{})
-    Map<String, BleConnectionStatus> deviceConnections,
-    @Default(<String, String>{}) Map<String, String> deviceErrors,
+    @Default(<BleDiscoveredDevice>[]) List<BleDiscoveredDevice> savedDevices,
+    @Default(<BleActiveConnection>[]) List<BleActiveConnection> activeConnections,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
     List<VulcanDeviceType>? scanFilterTypes,
@@ -21,11 +19,26 @@ extension BleStateX on BleState {
   bool get isAdapterReady => adapterStatus.isReady;
 
   bool get hasConnectedDevices =>
-      deviceConnections.values.any((status) => status.isConnected);
+      activeConnections.any((connection) => connection.status.isConnected);
+
+  int get connectingCount => activeConnections
+      .where((connection) => connection.status == BleConnectionStatus.connecting)
+      .length;
+
+  int get connectedCount => activeConnections
+      .where((connection) => connection.status.isConnected)
+      .length;
+
+  BleActiveConnection? activeConnectionFor(String deviceId) {
+    for (final connection in activeConnections) {
+      if (connection.deviceId == deviceId) return connection;
+    }
+    return null;
+  }
 
   bool isDeviceConnected(String deviceId) =>
-      deviceConnections[deviceId]?.isConnected ?? false;
+      activeConnectionFor(deviceId)?.status.isConnected ?? false;
 
   BleConnectionStatus connectionStatusFor(String deviceId) =>
-      deviceConnections[deviceId] ?? BleConnectionStatus.disconnected;
+      activeConnectionFor(deviceId)?.status ?? BleConnectionStatus.disconnected;
 }

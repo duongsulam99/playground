@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
-import '../../core/ble/enums/device_type.dart';
+import '../../features/ble/presentation/bloc/ble/ble_bloc.dart';
+import '../../features/ble/presentation/routing/ble_route.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -45,9 +45,10 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             BlocBuilder<BleBloc, BleState>(
-              buildWhen: (prev, curr) => prev.devices != curr.devices,
+              buildWhen: (prev, curr) =>
+                  prev.activeConnections != curr.activeConnections,
               builder: (context, state) {
-                return Text('Connecting: ${state.devices.length}/2');
+                return Text('Connecting: ${state.activeConnections.length}/2');
               },
             ),
           ],

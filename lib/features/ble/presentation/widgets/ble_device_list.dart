@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 
 class BleDeviceList extends StatelessWidget {
   const BleDeviceList({
-    required this.devices,
-    required this.deviceConnections,
+    required this.savedDevices,
+    required this.activeConnections,
     required this.onDeviceSelected,
     required this.onDeviceDisconnect,
     super.key,
   });
 
-  final List<BleDiscoveredDevice> devices;
-  final Map<String, BleConnectionStatus> deviceConnections;
+  final List<BleDiscoveredDevice> savedDevices;
+  final List<BleActiveConnection> activeConnections;
   final ValueChanged<String> onDeviceSelected;
   final ValueChanged<String> onDeviceDisconnect;
 
   @override
   Widget build(BuildContext context) {
-    if (devices.isEmpty) {
+    if (savedDevices.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(
@@ -32,19 +33,21 @@ class BleDeviceList extends StatelessWidget {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: devices.length,
+      itemCount: savedDevices.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final device = devices[index];
+        final device = savedDevices[index];
+        final connection = _connectionFor(device.id);
         final connectionStatus =
-            deviceConnections[device.id] ?? BleConnectionStatus.disconnected;
+            connection?.status ?? BleConnectionStatus.disconnected;
 
         return ListTile(
           leading: const Icon(Icons.bluetooth),
           title: Text(device.displayName),
           subtitle: Text(
             '${device.id}\nRSSI: ${device.rssi} dBm\n'
-            'Status: ${connectionStatus.label}',
+            'Status: ${connectionStatus.label}'
+            '${connection?.hasError == true ? '\nError: ${connection!.errorMessage}' : ''}',
           ),
           isThreeLine: true,
           trailing: _buildTrailing(device, connectionStatus),
@@ -52,6 +55,13 @@ class BleDeviceList extends StatelessWidget {
         );
       },
     );
+  }
+
+  BleActiveConnection? _connectionFor(String deviceId) {
+    for (final connection in activeConnections) {
+      if (connection.deviceId == deviceId) return connection;
+    }
+    return null;
   }
 
   Widget _buildTrailing(

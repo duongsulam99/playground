@@ -1,37 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 
 class BleConnectedDevicesSection extends StatelessWidget {
   const BleConnectedDevicesSection({
-    required this.devices,
-    required this.deviceConnections,
+    required this.savedDevices,
+    required this.activeConnections,
     required this.onDisconnect,
     super.key,
   });
 
-  final List<BleDiscoveredDevice> devices;
-  final Map<String, BleConnectionStatus> deviceConnections;
+  final List<BleDiscoveredDevice> savedDevices;
+  final List<BleActiveConnection> activeConnections;
   final ValueChanged<String> onDisconnect;
 
   @override
   Widget build(BuildContext context) {
-    final connectedEntries = deviceConnections.entries
-        .where(
-          (entry) =>
-              entry.value.isConnected ||
-              entry.value == BleConnectionStatus.connecting ||
-              entry.value == BleConnectionStatus.disconnecting,
-        )
-        .toList();
+    final activeEntries =
+        activeConnections.where((connection) => connection.isActive).toList();
 
-    if (connectedEntries.isEmpty) return const SizedBox.shrink();
+    if (activeEntries.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Connected devices (${connectedEntries.length})',
+          'Connected devices (${activeEntries.length})',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -40,28 +35,28 @@ class BleConnectedDevicesSection extends StatelessWidget {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: connectedEntries.length,
+          itemCount: activeEntries.length,
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
-            final entry = connectedEntries[index];
-            final deviceId = entry.key;
-            final status = entry.value;
-            final device = devices.cast<BleDiscoveredDevice?>().firstWhere(
-              (d) => d?.id == deviceId,
+            final connection = activeEntries[index];
+            final device = savedDevices.cast<BleDiscoveredDevice?>().firstWhere(
+              (d) => d?.id == connection.deviceId,
               orElse: () => null,
             );
 
             return ListTile(
               leading: Icon(
                 Icons.bluetooth_connected,
-                color: status.isConnected ? Colors.green : Colors.orange,
+                color: connection.status.isConnected ? Colors.green : Colors.orange,
               ),
-              title: Text(device?.displayName ?? deviceId),
-              subtitle: Text('${status.label}\n$deviceId'),
+              title: Text(device?.displayName ?? connection.deviceId),
+              subtitle: Text(
+                '${connection.status.label}\n${connection.deviceId}',
+              ),
               isThreeLine: true,
               trailing:
-                  status == BleConnectionStatus.connecting ||
-                      status == BleConnectionStatus.disconnecting
+                  connection.status == BleConnectionStatus.connecting ||
+                      connection.status == BleConnectionStatus.disconnecting
                   ? const SizedBox(
                       width: 24,
                       height: 24,
@@ -70,7 +65,7 @@ class BleConnectedDevicesSection extends StatelessWidget {
                   : IconButton(
                       icon: const Icon(Icons.link_off, color: Colors.red),
                       tooltip: 'Disconnect',
-                      onPressed: () => onDisconnect(deviceId),
+                      onPressed: () => onDisconnect(connection.deviceId),
                     ),
             );
           },

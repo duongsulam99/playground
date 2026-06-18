@@ -7,6 +7,7 @@ import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
 import '../../../domain/entities/ble_discovered_device.dart';
+import '../../../domain/entities/ble_active_connection.dart';
 import '../../../domain/usecase/connect_device.dart';
 import '../../../domain/usecase/disconnect_device.dart';
 import '../../../domain/usecase/start_scan.dart';
@@ -75,7 +76,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         if (isClosed) return;
         result.fold(
           (failure) => add(BleEvent.streamFailed(message: failure.message)),
-          (devices) => add(BleEvent.scanResultsUpdated(devices: devices)),
+          (devices) => add(BleEvent.scanResultsUpdated(savedDevices: devices)),
         );
       },
       onError: (Object error) {
@@ -169,7 +170,12 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     BleScanResultsUpdated event,
     Emitter<BleState> emit,
   ) async {
-    emit(state.copyWith(devices: event.devices, status: BleStatus.success));
+    emit(
+      state.copyWith(
+        savedDevices: event.savedDevices,
+        status: BleStatus.success,
+      ),
+    );
   }
 
   Future<void> _onStreamFailed(
@@ -186,15 +192,15 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter<BleState> emit,
   ) async {
     final deviceId = event.deviceId;
-    final updatedConnections = Map<String, BleConnectionStatus>.from(
-      state.deviceConnections,
-    )..[deviceId] = BleConnectionStatus.connecting;
 
     emit(
       state.copyWith(
         status: BleStatus.loading,
-        deviceConnections: updatedConnections,
-        deviceErrors: _clearDeviceError(deviceId),
+        activeConnections: _upsertConnection(
+          state.activeConnections,
+          deviceId: deviceId,
+          status: BleConnectionStatus.connecting,
+        ),
         errorMessage: null,
       ),
     );
@@ -208,37 +214,30 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
 
     connectResult.fold(
-      (failure) {
-        final connections = Map<String, BleConnectionStatus>.from(
-          state.deviceConnections,
-        )..[deviceId] = BleConnectionStatus.disconnected;
-
-        final errors = Map<String, String>.from(state.deviceErrors)
-          ..[deviceId] = failure.message;
-
-        emit(
-          state.copyWith(
-            deviceConnections: connections,
-            deviceErrors: errors,
-            status: BleStatus.failure,
-            isScanning: false,
+      (failure) => emit(
+        state.copyWith(
+          activeConnections: _upsertConnection(
+            state.activeConnections,
+            deviceId: deviceId,
+            status: BleConnectionStatus.disconnected,
+            errorMessage: failure.message,
           ),
-        );
-      },
-      (connectionStatus) {
-        final connections = Map<String, BleConnectionStatus>.from(
-          state.deviceConnections,
-        )..[deviceId] = connectionStatus;
-
-        emit(
-          state.copyWith(
-            deviceConnections: connections,
-            isScanning: false,
-            status: BleStatus.success,
-            errorMessage: null,
+          status: BleStatus.failure,
+          isScanning: false,
+        ),
+      ),
+      (connectionStatus) => emit(
+        state.copyWith(
+          activeConnections: _upsertConnection(
+            state.activeConnections,
+            deviceId: deviceId,
+            status: connectionStatus,
           ),
-        );
-      },
+          isScanning: false,
+          status: BleStatus.success,
+          errorMessage: null,
+        ),
+      ),
     );
   }
 
@@ -247,14 +246,15 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter<BleState> emit,
   ) async {
     final deviceId = event.deviceId;
-    final updatedConnections = Map<String, BleConnectionStatus>.from(
-      state.deviceConnections,
-    )..[deviceId] = BleConnectionStatus.disconnecting;
 
     emit(
       state.copyWith(
         status: BleStatus.loading,
-        deviceConnections: updatedConnections,
+        activeConnections: _upsertConnection(
+          state.activeConnections,
+          deviceId: deviceId,
+          status: BleConnectionStatus.disconnecting,
+        ),
       ),
     );
 
@@ -263,33 +263,57 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
 
     result.fold(
-      (failure) {
-        final errors = Map<String, String>.from(state.deviceErrors)
-          ..[deviceId] = failure.message;
-
-        emit(state.copyWith(deviceErrors: errors, status: BleStatus.failure));
-      },
-      (_) {
-        final connections = Map<String, BleConnectionStatus>.from(
-          state.deviceConnections,
-        )..remove(deviceId);
-
-        emit(
-          state.copyWith(
-            deviceConnections: connections,
-            deviceErrors: _clearDeviceError(deviceId),
-            status: BleStatus.success,
-            errorMessage: null,
+      (failure) => emit(
+        state.copyWith(
+          activeConnections: _upsertConnection(
+            state.activeConnections,
+            deviceId: deviceId,
+            status: BleConnectionStatus.connected,
+            errorMessage: failure.message,
           ),
-        );
-      },
+          status: BleStatus.failure,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          activeConnections: _removeConnection(
+            state.activeConnections,
+            deviceId,
+          ),
+          status: BleStatus.success,
+          errorMessage: null,
+        ),
+      ),
     );
   }
 
-  Map<String, String> _clearDeviceError(String deviceId) {
-    final errors = Map<String, String>.from(state.deviceErrors);
-    errors.remove(deviceId);
-    return errors;
+  List<BleActiveConnection> _upsertConnection(
+    List<BleActiveConnection> current, {
+    required String deviceId,
+    required BleConnectionStatus status,
+    String? errorMessage,
+  }) {
+    final others = current
+        .where((connection) => connection.deviceId != deviceId)
+        .toList();
+
+    return [
+      ...others,
+      BleActiveConnection(
+        deviceId: deviceId,
+        status: status,
+        errorMessage: errorMessage,
+      ),
+    ];
+  }
+
+  List<BleActiveConnection> _removeConnection(
+    List<BleActiveConnection> current,
+    String deviceId,
+  ) {
+    return current
+        .where((connection) => connection.deviceId != deviceId)
+        .toList();
   }
 
   @override
@@ -300,9 +324,9 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       await _stopScan(const NoParams());
     }
 
-    final connectedDeviceIds = state.deviceConnections.entries
-        .where((entry) => entry.value.isConnected)
-        .map((entry) => entry.key)
+    final connectedDeviceIds = state.activeConnections
+        .where((connection) => connection.status.isConnected)
+        .map((connection) => connection.deviceId)
         .toList();
 
     for (final deviceId in connectedDeviceIds) {
