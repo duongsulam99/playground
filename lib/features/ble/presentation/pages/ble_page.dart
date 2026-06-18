@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_event.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_state.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_adapter_banner.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_connected_devices_section.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_device_list.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_scan_controls.dart';
 
@@ -34,10 +34,7 @@ class _BlePageState extends State<BlePage> {
   }
 
   void _bootstrapBlePage() {
-    /// Get the BleBloc from the context
     _bleBloc ??= context.read<BleBloc>();
-
-    /// Add the scan filter event to the BleBloc
     _bleBloc?.add(BleEvent.scanFilterUpdated(filterTypes: widget.filterTypes));
   }
 
@@ -52,9 +49,19 @@ class _BlePageState extends State<BlePage> {
       body: BlocConsumer<BleBloc, BleState>(
         listener: (context, state) {
           if (state.errorMessage != null && state.status == BleStatus.failure) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage!)),
+            );
+          }
+
+          for (final entry in state.deviceErrors.entries) {
+            if (entry.value.isNotEmpty && state.status == BleStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Device ${entry.key}: ${entry.value}'),
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -68,9 +75,7 @@ class _BlePageState extends State<BlePage> {
                   const SizedBox(height: 16),
                   BleScanControls(
                     isScanning: state.isScanning,
-                    isEnabled:
-                        state.isAdapterReady &&
-                        !state.connectionStatus.isConnected,
+                    isEnabled: state.isAdapterReady,
                     onToggleScan: () {
                       final bloc = context.read<BleBloc>();
                       if (state.isScanning) {
@@ -81,6 +86,16 @@ class _BlePageState extends State<BlePage> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  BleConnectedDevicesSection(
+                    devices: state.devices,
+                    deviceConnections: state.deviceConnections,
+                    onDisconnect: (deviceId) {
+                      context.read<BleBloc>().add(
+                        BleEvent.disconnectRequested(deviceId: deviceId),
+                      );
+                    },
+                  ),
+                  if (state.hasConnectedDevices) const SizedBox(height: 16),
                   Text(
                     'Discovered devices (${state.devices.length})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -90,9 +105,15 @@ class _BlePageState extends State<BlePage> {
                   const SizedBox(height: 8),
                   BleDeviceList(
                     devices: state.devices,
+                    deviceConnections: state.deviceConnections,
                     onDeviceSelected: (deviceId) {
                       context.read<BleBloc>().add(
                         BleEvent.connectRequested(deviceId: deviceId),
+                      );
+                    },
+                    onDeviceDisconnect: (deviceId) {
+                      context.read<BleBloc>().add(
+                        BleEvent.disconnectRequested(deviceId: deviceId),
                       );
                     },
                   ),

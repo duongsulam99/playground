@@ -127,12 +127,7 @@ enum VulcanDeviceType {
     genName: null,
     isHasBle: false,
   ),
-  none(
-    name: 'None',
-    hardwareId: 'NONE',
-    genName: null,
-    isHasBle: false,
-  );
+  none(name: 'None', hardwareId: 'NONE', genName: null, isHasBle: false);
 
   const VulcanDeviceType({
     required this.name,

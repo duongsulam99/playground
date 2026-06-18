@@ -3,7 +3,7 @@ import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
-import '../../core/ble/device_type.dart';
+import '../../core/ble/enums/device_type.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/disconnect_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/start_scan.dart';
@@ -179,10 +179,16 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     BleConnectRequested event,
     Emitter<BleState> emit,
   ) async {
+    final deviceId = event.deviceId;
+    final updatedConnections = Map<String, BleConnectionStatus>.from(
+      state.deviceConnections,
+    )..[deviceId] = BleConnectionStatus.connecting;
+
     emit(
       state.copyWith(
         status: BleStatus.loading,
-        connectionStatus: BleConnectionStatus.connecting,
+        deviceConnections: updatedConnections,
+        deviceErrors: _clearDeviceError(deviceId),
         errorMessage: null,
       ),
     );
@@ -192,27 +198,41 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     }
 
     final connectResult = await _connectDevice(
-      ConnectDeviceParams(deviceId: event.deviceId),
+      ConnectDeviceParams(deviceId: deviceId),
     );
 
     connectResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          connectionStatus: BleConnectionStatus.disconnected,
-          errorMessage: failure.message,
-          status: BleStatus.failure,
-          isScanning: false,
-        ),
-      ),
-      (connectionStatus) => emit(
-        state.copyWith(
-          connectionStatus: connectionStatus,
-          connectedDeviceId: event.deviceId,
-          isScanning: false,
-          status: BleStatus.success,
-          errorMessage: null,
-        ),
-      ),
+      (failure) {
+        final connections = Map<String, BleConnectionStatus>.from(
+          state.deviceConnections,
+        )..[deviceId] = BleConnectionStatus.disconnected;
+
+        final errors = Map<String, String>.from(state.deviceErrors)
+          ..[deviceId] = failure.message;
+
+        emit(
+          state.copyWith(
+            deviceConnections: connections,
+            deviceErrors: errors,
+            status: BleStatus.failure,
+            isScanning: false,
+          ),
+        );
+      },
+      (connectionStatus) {
+        final connections = Map<String, BleConnectionStatus>.from(
+          state.deviceConnections,
+        )..[deviceId] = connectionStatus;
+
+        emit(
+          state.copyWith(
+            deviceConnections: connections,
+            isScanning: false,
+            status: BleStatus.success,
+            errorMessage: null,
+          ),
+        );
+      },
     );
   }
 
@@ -220,30 +240,55 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     BleDisconnectRequested event,
     Emitter<BleState> emit,
   ) async {
+    final deviceId = event.deviceId;
+    final updatedConnections = Map<String, BleConnectionStatus>.from(
+      state.deviceConnections,
+    )..[deviceId] = BleConnectionStatus.disconnecting;
+
     emit(
       state.copyWith(
         status: BleStatus.loading,
-        connectionStatus: BleConnectionStatus.disconnecting,
+        deviceConnections: updatedConnections,
       ),
     );
 
-    final result = await _disconnectDevice(const NoParams());
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          errorMessage: failure.message,
-          status: BleStatus.failure,
-        ),
-      ),
-      (_) => emit(
-        state.copyWith(
-          connectionStatus: BleConnectionStatus.disconnected,
-          status: BleStatus.success,
-          connectedDeviceId: null,
-          errorMessage: null,
-        ),
-      ),
+    final result = await _disconnectDevice(
+      DisconnectDeviceParams(deviceId: deviceId),
     );
+
+    result.fold(
+      (failure) {
+        final errors = Map<String, String>.from(state.deviceErrors)
+          ..[deviceId] = failure.message;
+
+        emit(
+          state.copyWith(
+            deviceErrors: errors,
+            status: BleStatus.failure,
+          ),
+        );
+      },
+      (_) {
+        final connections = Map<String, BleConnectionStatus>.from(
+          state.deviceConnections,
+        )..remove(deviceId);
+
+        emit(
+          state.copyWith(
+            deviceConnections: connections,
+            deviceErrors: _clearDeviceError(deviceId),
+            status: BleStatus.success,
+            errorMessage: null,
+          ),
+        );
+      },
+    );
+  }
+
+  Map<String, String> _clearDeviceError(String deviceId) {
+    final errors = Map<String, String>.from(state.deviceErrors);
+    errors.remove(deviceId);
+    return errors;
   }
 
   @override
@@ -253,6 +298,16 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     if (state.isScanning) {
       await _stopScan(const NoParams());
     }
+
+    final connectedDeviceIds = state.deviceConnections.entries
+        .where((entry) => entry.value.isConnected)
+        .map((entry) => entry.key)
+        .toList();
+
+    for (final deviceId in connectedDeviceIds) {
+      await _disconnectDevice(DisconnectDeviceParams(deviceId: deviceId));
+    }
+
     return super.close();
   }
 }

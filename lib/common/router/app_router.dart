@@ -1,5 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 
 import '../screens/error_page.dart';

@@ -1,7 +1,8 @@
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/model/ble_discovered_device_model.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+
+import '../../model/ble_discovered_device_model.dart';
 
 abstract class BleRemoteDataSource {
   Stream<BleAdapterStatus> watchAdapterStatus();
@@ -14,5 +15,5 @@ abstract class BleRemoteDataSource {
 
   Future<BleConnectionStatus> connect(String deviceId);
 
-  Future<void> disconnect();
+  Future<void> disconnect(String deviceId);
 }

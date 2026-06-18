@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
 
 part 'ble_event.freezed.dart';
@@ -19,7 +19,9 @@ sealed class BleEvent with _$BleEvent {
     required String deviceId,
   }) = BleConnectRequested;
 
-  const factory BleEvent.disconnectRequested() = BleDisconnectRequested;
+  const factory BleEvent.disconnectRequested({
+    required String deviceId,
+  }) = BleDisconnectRequested;
 
   const factory BleEvent.adapterStatusUpdated({
     required BleAdapterStatus status,

@@ -1,5 +1,5 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 /// Advertisement service UUIDs used for BLE scan filtering (Vulcan devices).
 class BleAdvUuids {

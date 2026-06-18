@@ -1,21 +1,26 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/ble_adv_uuids.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/model/ble_discovered_device_model.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+
+import '../../model/ble_discovered_device_model.dart';
+import 'ble_device_data_source_factory.dart';
+import 'ble_device_remote_data_source.dart';
+import 'ble_remote_data_source.dart';
 
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
-  FlutterBluePlusDataSource();
+  FlutterBluePlusDataSource({required this._deviceFactory});
 
-  BluetoothDevice? _connectedDevice;
+  final BleDeviceDataSourceFactory _deviceFactory;
+  final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
   final Map<String, BluetoothDevice> _discoveredDevices = {};
 
   final _logger = const Logger(className: 'FlutterBluePlusDataSource');
 
+  // STREAMS
   @override
   Stream<BleAdapterStatus> watchAdapterStatus() {
     return FlutterBluePlus.adapterState.map(_mapAdapterState);
@@ -26,6 +31,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     return FlutterBluePlus.scanResults.map(_processScanResults);
   }
 
+  // ACTIONS
   List<BleDiscoveredDeviceModel> _processScanResults(List<ScanResult> results) {
     if (results.isEmpty) return const [];
 
@@ -40,6 +46,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       _discoveredDevices[id] = result.device;
 
       _logger.debug(
+        "Scan Result",
         "Advertisement Data: ${result.advertisementData.manufacturerData.toString()}",
       );
 
@@ -81,51 +88,61 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<BleConnectionStatus> connect(String deviceId) async {
-    final device = _resolveDevice(deviceId);
+    final existing = _connectedDevices[deviceId];
+    if (existing != null) return BleConnectionStatus.connected;
+
+    final bluetoothDevice = _resolveBluetoothDevice(deviceId);
 
     if (FlutterBluePlus.isScanningNow) {
       await FlutterBluePlus.stopScan();
     }
 
+    final deviceSource = _deviceFactory.create(bluetoothDevice);
+
     try {
-      await device.connect(
-        license: License.nonprofit,
-        timeout: const Duration(seconds: 20),
+      final status = await deviceSource.connect();
+      _connectedDevices[deviceId] = deviceSource;
+      _logger.debug(
+        "connect",
+        "'Device $deviceId added to connected devices map'",
       );
-
-      _connectedDevice = device;
-
-      _logger.debug('Connected to ${_connectedDevice?.remoteId.str}');
-      return BleConnectionStatus.connected;
+      return status;
     } catch (e) {
-      throw BleException('Failed to connect: $e');
+      if (e is BleException) rethrow;
+      throw BleException('Failed to connect: $e', deviceId: deviceId);
     }
   }
 
   @override
-  Future<void> disconnect() async {
-    final device = _connectedDevice;
-    if (device == null) {
-      throw const BleNotConnectedException();
+  Future<void> disconnect(String deviceId) async {
+    final deviceSource = _connectedDevices.remove(deviceId);
+    if (deviceSource == null) {
+      throw BleNotConnectedException(
+        'Device $deviceId is not connected',
+        deviceId: deviceId,
+      );
     }
 
     try {
-      await device.disconnect();
-    } finally {
-      _connectedDevice = null;
+      await deviceSource.disconnect();
+    } catch (e) {
+      if (e is BleException) rethrow;
+      throw BleException('Failed to disconnect: $e', deviceId: deviceId);
     }
   }
 
-  BluetoothDevice _resolveDevice(String deviceId) {
+  BluetoothDevice _resolveBluetoothDevice(String deviceId) {
     final cached = _discoveredDevices[deviceId];
     if (cached != null) return cached;
 
-    if (_connectedDevice?.remoteId.str == deviceId) {
-      return _connectedDevice!;
+    final connected = _connectedDevices[deviceId];
+    if (connected != null) {
+      return BluetoothDevice.fromId(deviceId);
     }
 
     throw BleDeviceNotFoundException(
       'Device $deviceId not found in scan cache',
+      deviceId: deviceId,
     );
   }
 

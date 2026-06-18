@@ -1,12 +1,13 @@
 import 'package:dartz/dartz.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
+
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import '../../domain/entities/ble_discovered_device.dart';
+import '../../domain/repository/ble_repository.dart';
+import '../source/remote/ble_remote_data_source.dart';
 
 class BleRepositoryImpl implements BleRepository {
   BleRepositoryImpl({required this._remoteDataSource});
@@ -66,9 +67,9 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> disconnect() async {
+  Future<Either<Failure, Unit>> disconnect(String deviceId) async {
     try {
-      await _remoteDataSource.disconnect();
+      await _remoteDataSource.disconnect(deviceId);
       return const Right(unit);
     } catch (error) {
       return Left(_mapException(error));
@@ -77,7 +78,7 @@ class BleRepositoryImpl implements BleRepository {
 
   Failure _mapException(Object error) {
     if (error is BleException) {
-      return BleFailure(error.message);
+      return BleFailure(error.message, deviceId: error.deviceId);
     }
     return UnknownFailure(error.toString());
   }
