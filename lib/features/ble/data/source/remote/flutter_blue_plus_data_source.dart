@@ -48,7 +48,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
           id: id,
           name: result.advertisementData.advName,
           rssi: result.rssi,
-          isConnectable: result.advertisementData.connectable,
+          isConnectable: ableToConnect,
         ),
       );
     }
@@ -90,9 +90,12 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     try {
       await device.connect(
         license: License.nonprofit,
-        timeout: const Duration(seconds: 15),
+        timeout: const Duration(seconds: 20),
       );
+
       _connectedDevice = device;
+
+      _logger.debug('Connected to ${_connectedDevice?.remoteId.str}');
       return BleConnectionStatus.connected;
     } catch (e) {
       throw BleException('Failed to connect: $e');
@@ -115,9 +118,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   BluetoothDevice _resolveDevice(String deviceId) {
     final cached = _discoveredDevices[deviceId];
-    if (cached != null) {
-      return cached;
-    }
+    if (cached != null) return cached;
 
     if (_connectedDevice?.remoteId.str == deviceId) {
       return _connectedDevice!;
@@ -171,8 +172,6 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   BleAdapterStatus _mapAdapterState(BluetoothAdapterState state) {
     switch (state) {
-      case BluetoothAdapterState.unknown:
-        return BleAdapterStatus.unknown;
       case BluetoothAdapterState.unavailable:
         return BleAdapterStatus.unavailable;
       case BluetoothAdapterState.unauthorized:
@@ -185,6 +184,8 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
         return BleAdapterStatus.turningOff;
       case BluetoothAdapterState.off:
         return BleAdapterStatus.off;
+      default:
+        return BleAdapterStatus.unknown;
     }
   }
 }

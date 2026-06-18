@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/repository/ble_repository_impl.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/source/remote/flutter_blue_plus_data_source.dart';
@@ -28,9 +27,8 @@ void initBleInjection(GetIt sl) {
   sl.registerFactory(() => ConnectDevice(repository: sl()));
   sl.registerFactory(() => DisconnectDevice(repository: sl()));
 
-  sl.registerFactoryParam<BleBloc, List<VulcanDeviceType>?, void>(
-    (filterTypes, _) => BleBloc(
-      filterTypes: filterTypes,
+  sl.registerLazySingleton<BleBloc>(
+    () => BleBloc(
       watchAdapterStatus: sl(),
       watchScanResults: sl(),
       startScan: sl(),
@@ -39,4 +37,6 @@ void initBleInjection(GetIt sl) {
       disconnectDevice: sl(),
     ),
   );
+
+  sl<BleBloc>();
 }

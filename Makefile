@@ -23,3 +23,24 @@ get:
 
 clean:
 	@$(FLUTTER) clean
+
+repair:
+	@$(FLUTTER) pub cache repair
+
+# ============================================================
+# Build the app (with code generation)
+# ============================================================
+
+build:
+	@echo "Building..."
+	@$(FLUTTER) pub run build_runner build --delete-conflicting-outputs
+	@echo "Build completed."
+
+# ============================================================
+# Fix warnings automatically
+# ============================================================
+
+fix:
+	@echo "🔧 Fixing warnings..."
+	@bash scripts/fix_warnings.sh
+	@echo "✅ Warnings fixed"

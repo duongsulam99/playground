@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
@@ -21,16 +20,17 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required this._stopScan,
     required this._connectDevice,
     required this._disconnectDevice,
-    this._filterTypes,
   }) : super(const BleState()) {
+    on<BleScanFilterUpdated>(_onScanFilterUpdated);
+    on<BleStartScan>(_onStartScan);
+    on<BleStopScan>(_onStopScan);
     on<BleAdapterStatusUpdated>(_onAdapterStatusUpdated);
     on<BleScanResultsUpdated>(_onScanResultsUpdated);
     on<BleStreamFailed>(_onStreamFailed);
-    on<BleScanToggled>(_onScanToggled);
-    on<BleDeviceSelected>(_onDeviceSelected);
+    on<BleConnectRequested>(_onConnectRequested);
     on<BleDisconnectRequested>(_onDisconnectRequested);
 
-    _subscribeToStreams();
+    _subscribeAdapterStream();
   }
 
   final WatchAdapterStatus _watchAdapterStatus;
@@ -39,12 +39,13 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final StopScan _stopScan;
   final ConnectDevice _connectDevice;
   final DisconnectDevice _disconnectDevice;
-  final List<VulcanDeviceType>? _filterTypes;
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
 
-  void _subscribeToStreams() {
+  void _subscribeAdapterStream() {
+    if (_adapterSubscription != null) return;
+
     _adapterSubscription = _watchAdapterStatus(const NoParams()).listen(
       (result) {
         if (isClosed) return;
@@ -58,6 +59,10 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         add(BleEvent.streamFailed(message: error.toString()));
       },
     );
+  }
+
+  void _subscribeScanResultsStream() {
+    if (_scanResultsSubscription != null) return;
 
     _scanResultsSubscription = _watchScanResults(const NoParams()).listen(
       (result) {
@@ -72,6 +77,73 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         add(BleEvent.streamFailed(message: error.toString()));
       },
     );
+  }
+
+  Future<void> _unsubscribeScanResultsStream() async {
+    await _scanResultsSubscription?.cancel();
+    _scanResultsSubscription = null;
+  }
+
+  Future<void> _stopScanning(Emitter<BleState> emit) async {
+    if (!state.isScanning) {
+      await _unsubscribeScanResultsStream();
+      return;
+    }
+
+    final result = await _stopScan(const NoParams());
+    await _unsubscribeScanResultsStream();
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          isScanning: false,
+          errorMessage: failure.message,
+          status: BleStatus.failure,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          isScanning: false,
+          status: BleStatus.success,
+          errorMessage: null,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onScanFilterUpdated(
+    BleScanFilterUpdated event,
+    Emitter<BleState> emit,
+  ) async {
+    emit(state.copyWith(scanFilterTypes: event.filterTypes));
+  }
+
+  Future<void> _onStartScan(BleStartScan event, Emitter<BleState> emit) async {
+    if (state.isScanning) return;
+
+    emit(state.copyWith(status: BleStatus.loading, errorMessage: null));
+
+    final result = await _startScan(
+      StartScanParams(filterTypes: state.scanFilterTypes),
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          isScanning: false,
+          errorMessage: failure.message,
+          status: BleStatus.failure,
+        ),
+      ),
+      (_) {
+        _subscribeScanResultsStream();
+        emit(state.copyWith(isScanning: true, status: BleStatus.success));
+      },
+    );
+  }
+
+  Future<void> _onStopScan(BleStopScan event, Emitter<BleState> emit) async {
+    await _stopScanning(emit);
   }
 
   Future<void> _onAdapterStatusUpdated(
@@ -103,48 +175,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
   }
 
-  Future<void> _onScanToggled(
-    BleScanToggled event,
-    Emitter<BleState> emit,
-  ) async {
-    if (state.isScanning) {
-      final result = await _stopScan(const NoParams());
-      result.fold(
-        (failure) => emit(
-          state.copyWith(
-            isScanning: false,
-            errorMessage: failure.message,
-            status: BleStatus.failure,
-          ),
-        ),
-        (_) => emit(
-          state.copyWith(
-            isScanning: false,
-            status: BleStatus.success,
-            errorMessage: null,
-          ),
-        ),
-      );
-      return;
-    }
-
-    emit(state.copyWith(status: BleStatus.loading, errorMessage: null));
-
-    final result = await _startScan(StartScanParams(filterTypes: _filterTypes));
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          isScanning: false,
-          errorMessage: failure.message,
-          status: BleStatus.failure,
-        ),
-      ),
-      (_) => emit(state.copyWith(isScanning: true, status: BleStatus.success)),
-    );
-  }
-
-  Future<void> _onDeviceSelected(
-    BleDeviceSelected event,
+  Future<void> _onConnectRequested(
+    BleConnectRequested event,
     Emitter<BleState> emit,
   ) async {
     emit(
@@ -156,7 +188,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
 
     if (state.isScanning) {
-      await _stopScan(const NoParams());
+      await _stopScanning(emit);
     }
 
     final connectResult = await _connectDevice(
@@ -217,7 +249,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   @override
   Future<void> close() async {
     await _adapterSubscription?.cancel();
-    await _scanResultsSubscription?.cancel();
+    await _unsubscribeScanResultsStream();
     if (state.isScanning) {
       await _stopScan(const NoParams());
     }

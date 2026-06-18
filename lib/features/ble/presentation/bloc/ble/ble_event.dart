@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
 
@@ -6,11 +7,17 @@ part 'ble_event.freezed.dart';
 
 @freezed
 sealed class BleEvent with _$BleEvent {
-  const factory BleEvent.scanToggled() = BleScanToggled;
+  const factory BleEvent.scanFilterUpdated({
+    List<VulcanDeviceType>? filterTypes,
+  }) = BleScanFilterUpdated;
 
-  const factory BleEvent.deviceSelected({
+  const factory BleEvent.startScan() = BleStartScan;
+
+  const factory BleEvent.stopScan() = BleStopScan;
+
+  const factory BleEvent.connectRequested({
     required String deviceId,
-  }) = BleDeviceSelected;
+  }) = BleConnectRequested;
 
   const factory BleEvent.disconnectRequested() = BleDisconnectRequested;
 

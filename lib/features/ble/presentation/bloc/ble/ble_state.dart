@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:vulcan_mobile_playground/core/ble/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
@@ -18,6 +19,7 @@ abstract class BleState with _$BleState {
     String? connectedDeviceId,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
+    List<VulcanDeviceType>? scanFilterTypes,
   }) = _BleState;
 }
 

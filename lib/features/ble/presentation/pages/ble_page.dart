@@ -9,10 +9,41 @@ import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_a
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_device_list.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_scan_controls.dart';
 
-class BlePage extends StatelessWidget {
+class BlePage extends StatefulWidget {
   const BlePage({super.key, this.filterTypes});
 
   final List<VulcanDeviceType>? filterTypes;
+
+  @override
+  State<BlePage> createState() => _BlePageState();
+}
+
+class _BlePageState extends State<BlePage> {
+  BleBloc? _bleBloc;
+
+  @override
+  void initState() {
+    _bootstrapBlePage();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _onPageClose();
+    super.dispose();
+  }
+
+  void _bootstrapBlePage() {
+    /// Get the BleBloc from the context
+    _bleBloc ??= context.read<BleBloc>();
+
+    /// Add the scan filter event to the BleBloc
+    _bleBloc?.add(BleEvent.scanFilterUpdated(filterTypes: widget.filterTypes));
+  }
+
+  void _onPageClose() {
+    _bleBloc?.add(const BleEvent.stopScan());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +72,12 @@ class BlePage extends StatelessWidget {
                         state.isAdapterReady &&
                         !state.connectionStatus.isConnected,
                     onToggleScan: () {
-                      context.read<BleBloc>().add(const BleEvent.scanToggled());
+                      final bloc = context.read<BleBloc>();
+                      if (state.isScanning) {
+                        bloc.add(const BleEvent.stopScan());
+                      } else {
+                        bloc.add(const BleEvent.startScan());
+                      }
                     },
                   ),
                   const SizedBox(height: 16),
@@ -56,7 +92,7 @@ class BlePage extends StatelessWidget {
                     devices: state.devices,
                     onDeviceSelected: (deviceId) {
                       context.read<BleBloc>().add(
-                        BleDeviceSelected(deviceId: deviceId),
+                        BleEvent.connectRequested(deviceId: deviceId),
                       );
                     },
                   ),
