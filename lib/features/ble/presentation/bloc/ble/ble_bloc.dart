@@ -15,21 +15,14 @@ import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_
 
 class BleBloc extends Bloc<BleEvent, BleState> {
   BleBloc({
-    required WatchAdapterStatus watchAdapterStatus,
-    required WatchScanResults watchScanResults,
-    required StartScan startScan,
-    required StopScan stopScan,
-    required ConnectDevice connectDevice,
-    required DisconnectDevice disconnectDevice,
-    List<VulcanDeviceType>? filterTypes,
-  })  : _watchAdapterStatus = watchAdapterStatus,
-        _watchScanResults = watchScanResults,
-        _startScan = startScan,
-        _stopScan = stopScan,
-        _connectDevice = connectDevice,
-        _disconnectDevice = disconnectDevice,
-        _filterTypes = filterTypes,
-        super(const BleState()) {
+    required this._watchAdapterStatus,
+    required this._watchScanResults,
+    required this._startScan,
+    required this._stopScan,
+    required this._connectDevice,
+    required this._disconnectDevice,
+    this._filterTypes,
+  }) : super(const BleState()) {
     on<BleAdapterStatusUpdated>(_onAdapterStatusUpdated);
     on<BleScanResultsUpdated>(_onScanResultsUpdated);
     on<BleStreamFailed>(_onStreamFailed);
@@ -98,12 +91,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     BleScanResultsUpdated event,
     Emitter<BleState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        devices: event.devices,
-        status: BleStatus.success,
-      ),
-    );
+    emit(state.copyWith(devices: event.devices, status: BleStatus.success));
   }
 
   Future<void> _onStreamFailed(
@@ -111,10 +99,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter<BleState> emit,
   ) async {
     emit(
-      state.copyWith(
-        errorMessage: event.message,
-        status: BleStatus.failure,
-      ),
+      state.copyWith(errorMessage: event.message, status: BleStatus.failure),
     );
   }
 
@@ -143,12 +128,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        status: BleStatus.loading,
-        errorMessage: null,
-      ),
-    );
+    emit(state.copyWith(status: BleStatus.loading, errorMessage: null));
 
     final result = await _startScan(StartScanParams(filterTypes: _filterTypes));
     result.fold(
@@ -159,12 +139,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           status: BleStatus.failure,
         ),
       ),
-      (_) => emit(
-        state.copyWith(
-          isScanning: true,
-          status: BleStatus.success,
-        ),
-      ),
+      (_) => emit(state.copyWith(isScanning: true, status: BleStatus.success)),
     );
   }
 
@@ -184,8 +159,9 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       await _stopScan(const NoParams());
     }
 
-    final connectResult =
-        await _connectDevice(ConnectDeviceParams(deviceId: event.deviceId));
+    final connectResult = await _connectDevice(
+      ConnectDeviceParams(deviceId: event.deviceId),
+    );
 
     connectResult.fold(
       (failure) => emit(
