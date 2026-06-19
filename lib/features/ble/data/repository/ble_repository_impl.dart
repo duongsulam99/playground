@@ -5,6 +5,7 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
 import '../../domain/entities/ble_discovered_device.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/ble_remote_data_source.dart';
@@ -71,6 +72,18 @@ class BleRepositoryImpl implements BleRepository {
     try {
       await _remoteDataSource.disconnect(deviceId);
       return const Right(unit);
+    } catch (error) {
+      return Left(_mapException(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, MyoBandDeviceInfo>> readMyoBandDeviceInfo(
+    String deviceId,
+  ) async {
+    try {
+      final info = await _remoteDataSource.readMyoBandDeviceInfo(deviceId);
+      return Right(info);
     } catch (error) {
       return Left(_mapException(error));
     }

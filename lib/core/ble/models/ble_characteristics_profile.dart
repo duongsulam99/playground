@@ -1,17 +1,21 @@
+import '../config/adapter/key.dart';
+import '../config/hand/key.dart';
+import '../config/ring/key.dart';
+
 /// Typed BLE GATT characteristic UUID profile.
 /// See: https://www.bluetooth.com/specifications/gatt/characteristics
-///
-///
 sealed class BleCharacteristicsProfile {
   const BleCharacteristicsProfile();
 
   List<String> get uuids;
 
-  bool contains(String uuid) => uuids.contains(uuid);
+  bool contains(String uuid) =>
+      uuids.any((value) => value.toLowerCase() == uuid.toLowerCase());
 
   String? keyFor(String uuid) {
+    final normalizedId = uuid.toLowerCase();
     for (final entry in entries) {
-      if (entry.value == uuid) {
+      if (entry.value.toLowerCase() == normalizedId) {
         return entry.key;
       }
     }
@@ -62,16 +66,16 @@ final class HandBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
-    MapEntry('NAME_CHAR_UUID', nameCharUuid),
-    MapEntry('HARDWARE_CHAR_UUID', hardwareCharUuid),
-    MapEntry('CONNECT_UUID', connectUuid),
-    MapEntry('SETTING_UUID', settingUuid),
-    MapEntry('TECHNICAL_UUID', technicalUuid),
-    MapEntry('ADDR_UUID', addrUuid),
-    MapEntry('ANGLE_UUID', angleUuid),
-    MapEntry('CONTROL_UUID', controlUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(BleHandKey.ota, otaUuid),
+    MapEntry(BleHandKey.nameChar, nameCharUuid),
+    MapEntry(BleHandKey.hardwareChar, hardwareCharUuid),
+    MapEntry(BleHandKey.connect, connectUuid),
+    MapEntry(BleHandKey.setting, settingUuid),
+    MapEntry(BleHandKey.technical, technicalUuid),
+    MapEntry(BleHandKey.addr, addrUuid),
+    MapEntry(BleHandKey.angle, angleUuid),
+    MapEntry(BleHandKey.control, controlUuid),
+    MapEntry(BleHandKey.battery, batteryUuid),
   ];
 }
 
@@ -157,13 +161,13 @@ final class CoaxialBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
-    MapEntry('NAME_CHAR_UUID', nameCharUuid),
-    MapEntry('HARDWARE_CHAR_UUID', hardwareCharUuid),
-    MapEntry('CONNECT_UUID', connectUuid),
-    MapEntry('ADDR_UUID', addrUuid),
-    MapEntry('CONTROL_UUID', controlUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(BleHandKey.ota, otaUuid),
+    MapEntry(BleHandKey.nameChar, nameCharUuid),
+    MapEntry(BleHandKey.hardwareChar, hardwareCharUuid),
+    MapEntry(BleHandKey.connect, connectUuid),
+    MapEntry(BleHandKey.addr, addrUuid),
+    MapEntry(BleHandKey.control, controlUuid),
+    MapEntry(BleHandKey.battery, batteryUuid),
   ];
 }
 
@@ -273,21 +277,21 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
-    MapEntry('NAME_CHAR_UUID', nameCharUuid),
-    MapEntry('HARDWARE_CHAR_UUID', hardwareCharUuid),
-    MapEntry('MODE_CHAR_UUID', modeCharUuid),
-    MapEntry('ACTION_BUTTON_UUID', actionButtonUuid),
-    MapEntry('SIGNAL_UUID', signalUuid),
-    MapEntry('MEDICAL_UUID', medicalUuid),
-    MapEntry('THRESHOLD_UUID', thresholdUuid),
-    MapEntry('LOGIC_UUID', logicUuid),
-    MapEntry('STATE_CONTROL_UUID', stateControlUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
-    MapEntry('COUNT_CONTROL_UUID', countControlUuid),
-    MapEntry('CALIB_HISTORY_UUID', calibHistoryUuid),
-    MapEntry('SMP_CHAR_UUID', smpCharUuid),
-    MapEntry('SETTING_UUID', settingUuid),
+    MapEntry(BleRingKey.ota, otaUuid),
+    MapEntry(BleRingKey.nameChar, nameCharUuid),
+    MapEntry(BleRingKey.hardwareChar, hardwareCharUuid),
+    MapEntry(BleRingKey.modeChar, modeCharUuid),
+    MapEntry(BleRingKey.actionButton, actionButtonUuid),
+    MapEntry(BleRingKey.signal, signalUuid),
+    MapEntry(BleRingKey.medical, medicalUuid),
+    MapEntry(BleRingKey.threshold, thresholdUuid),
+    MapEntry(BleRingKey.logic, logicUuid),
+    MapEntry(BleRingKey.stateControl, stateControlUuid),
+    MapEntry(BleRingKey.battery, batteryUuid),
+    MapEntry(BleRingKey.countControl, countControlUuid),
+    MapEntry(BleRingKey.calibHistory, calibHistoryUuid),
+    MapEntry(BleRingKey.smpChar, smpCharUuid),
+    MapEntry(BleRingKey.setting, settingUuid),
   ];
 }
 
@@ -307,9 +311,9 @@ final class SensorBoxBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('NAME_CHAR_UUID', nameCharUuid),
-    MapEntry('STATE_CONTROL_UUID', stateControlUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(BleAdapterKey.nameChar, nameCharUuid),
+    MapEntry(BleAdapterKey.stateControl, stateControlUuid),
+    MapEntry(BleAdapterKey.battery, batteryUuid),
   ];
 }
 
@@ -345,12 +349,12 @@ final class BleAdapterBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
-    MapEntry('NAME_CHAR_UUID', nameCharUuid),
-    MapEntry('HARDWARE_CHAR_UUID', hardwareCharUuid),
-    MapEntry('SIGNAL_UUID', signalUuid),
-    MapEntry('STATE_CONTROL_UUID', stateControlUuid),
-    MapEntry('LOGIC_UUID', logicUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(BleAdapterKey.ota, otaUuid),
+    MapEntry(BleAdapterKey.nameChar, nameCharUuid),
+    MapEntry(BleAdapterKey.hardwareChar, hardwareCharUuid),
+    MapEntry(BleAdapterKey.signal, signalUuid),
+    MapEntry(BleAdapterKey.stateControl, stateControlUuid),
+    MapEntry(BleAdapterKey.logic, logicUuid),
+    MapEntry(BleAdapterKey.battery, batteryUuid),
   ];
 }

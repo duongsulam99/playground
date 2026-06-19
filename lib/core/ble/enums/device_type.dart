@@ -155,3 +155,18 @@ enum VulcanDeviceType {
     );
   }
 }
+
+extension VulcanDeviceTypeX on VulcanDeviceType {
+  bool get isMyoBandFamily {
+    return switch (this) {
+      VulcanDeviceType.ring ||
+      VulcanDeviceType.ringNrf ||
+      VulcanDeviceType.ringDev3ch ||
+      VulcanDeviceType.ringDev6ch ||
+      VulcanDeviceType.ringWrist ||
+      VulcanDeviceType.ringMedical ||
+      VulcanDeviceType.myoLink => true,
+      _ => false,
+    };
+  }
+}

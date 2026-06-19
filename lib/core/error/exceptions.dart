@@ -19,3 +19,7 @@ class BleNotConnectedException extends BleException {
 class BleAdapterException extends BleException {
   const BleAdapterException(super.message);
 }
+
+class BleCharacteristicNotFoundException extends BleException {
+  const BleCharacteristicNotFoundException(super.message, {super.deviceId});
+}

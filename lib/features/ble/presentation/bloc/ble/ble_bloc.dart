@@ -8,8 +8,10 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 
 import '../../../domain/entities/ble_discovered_device.dart';
 import '../../../domain/entities/ble_active_connection.dart';
+import '../../../domain/entities/myo_band_device_info.dart';
 import '../../../domain/usecase/connect_device.dart';
 import '../../../domain/usecase/disconnect_device.dart';
+import '../../../domain/usecase/read_myo_band_device_info.dart';
 import '../../../domain/usecase/start_scan.dart';
 import '../../../domain/usecase/stop_scan.dart';
 import '../../../domain/usecase/watch_adapter_status.dart';
@@ -27,6 +29,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required this._stopScan,
     required this._connectDevice,
     required this._disconnectDevice,
+    required this._readMyoBandDeviceInfo,
   }) : super(const BleState()) {
     on<BleScanFilterUpdated>(_onScanFilterUpdated);
     on<BleStartScan>(_onStartScan);
@@ -46,6 +49,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final StopScan _stopScan;
   final ConnectDevice _connectDevice;
   final DisconnectDevice _disconnectDevice;
+  final ReadMyoBandDeviceInfo _readMyoBandDeviceInfo;
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
@@ -228,29 +232,85 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       ConnectDeviceParams(deviceId: deviceId),
     );
 
-    connectResult.fold(
-      (failure) => emit(
+    if (connectResult.isLeft()) {
+      final failure = connectResult.fold((left) => left, (_) => throw StateError(''));
+      emit(
         state.copyWith(
           activeConnections: _upsertConnection(
             state.activeConnections,
             deviceId: deviceId,
             status: BleConnectionStatus.disconnected,
             errorMessage: failure.message,
+            clearMyoBandInfo: true,
           ),
           status: BleStatus.failure,
           isScanning: false,
         ),
+      );
+      return;
+    }
+
+    final connectionStatus = connectResult.getOrElse(
+      () => BleConnectionStatus.disconnected,
+    );
+
+    emit(
+      state.copyWith(
+        activeConnections: _upsertConnection(
+          state.activeConnections,
+          deviceId: deviceId,
+          status: connectionStatus,
+          errorMessage: null,
+          clearMyoBandInfo: true,
+        ),
+        isScanning: false,
+        status: BleStatus.success,
       ),
-      (connectionStatus) => emit(
+    );
+
+    if (!_isMyoBandDevice(deviceId)) return;
+
+    emit(
+      state.copyWith(
+        activeConnections: _upsertConnection(
+          state.activeConnections,
+          deviceId: deviceId,
+          status: connectionStatus,
+          isReadingInfo: true,
+          errorMessage: null,
+        ),
+        status: BleStatus.loading,
+      ),
+    );
+
+    final readResult = await _readMyoBandDeviceInfo(
+      ReadMyoBandDeviceInfoParams(deviceId: deviceId),
+    );
+
+    readResult.fold(
+      (failure) => emit(
         state.copyWith(
           activeConnections: _upsertConnection(
             state.activeConnections,
             deviceId: deviceId,
             status: connectionStatus,
+            isReadingInfo: false,
+            errorMessage: failure.message,
           ),
-          isScanning: false,
+          status: BleStatus.failure,
+        ),
+      ),
+      (info) => emit(
+        state.copyWith(
+          activeConnections: _upsertConnection(
+            state.activeConnections,
+            deviceId: deviceId,
+            status: connectionStatus,
+            myoBandInfo: info,
+            isReadingInfo: false,
+            errorMessage: null,
+          ),
           status: BleStatus.success,
-          errorMessage: null,
         ),
       ),
     );
@@ -302,12 +362,28 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
   }
 
+  bool _isMyoBandDevice(String deviceId) {
+    for (final device in state.savedDevices) {
+      if (device.id == deviceId) {
+        return device.deviceType.isMyoBandFamily;
+      }
+    }
+    return false;
+  }
+
   List<BleActiveConnection> _upsertConnection(
     List<BleActiveConnection> current, {
     required String deviceId,
     required BleConnectionStatus status,
     String? errorMessage,
+    MyoBandDeviceInfo? myoBandInfo,
+    bool? isReadingInfo,
+    bool clearMyoBandInfo = false,
   }) {
+    final existing = current
+        .where((connection) => connection.deviceId == deviceId)
+        .firstOrNull;
+
     final others = current
         .where((connection) => connection.deviceId != deviceId)
         .toList();
@@ -318,6 +394,10 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         deviceId: deviceId,
         status: status,
         errorMessage: errorMessage,
+        myoBandInfo: clearMyoBandInfo
+            ? null
+            : (myoBandInfo ?? existing?.myoBandInfo),
+        isReadingInfo: isReadingInfo ?? existing?.isReadingInfo ?? false,
       ),
     ];
   }

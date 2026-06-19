@@ -6,6 +6,7 @@ import 'package:vulcan_mobile_playground/features/ble/data/source/remote/flutter
 import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/disconnect_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/usecase/read_myo_band_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/start_scan.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/stop_scan.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_adapter_status.dart';
@@ -31,6 +32,7 @@ void initBleInjection(GetIt sl) {
   sl.registerFactory(() => StopScan(repository: sl()));
   sl.registerFactory(() => ConnectDevice(repository: sl()));
   sl.registerFactory(() => DisconnectDevice(repository: sl()));
+  sl.registerFactory(() => ReadMyoBandDeviceInfo(repository: sl()));
 
   sl.registerLazySingleton<BleBloc>(
     () => BleBloc(
@@ -40,6 +42,7 @@ void initBleInjection(GetIt sl) {
       stopScan: sl(),
       connectDevice: sl(),
       disconnectDevice: sl(),
+      readMyoBandDeviceInfo: sl(),
     ),
   );
 

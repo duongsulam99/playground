@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
 
 abstract class BleRepository {
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus();
@@ -17,4 +18,8 @@ abstract class BleRepository {
   Future<Either<Failure, BleConnectionStatus>> connect(String deviceId);
 
   Future<Either<Failure, Unit>> disconnect(String deviceId);
+
+  Future<Either<Failure, MyoBandDeviceInfo>> readMyoBandDeviceInfo(
+    String deviceId,
+  );
 }

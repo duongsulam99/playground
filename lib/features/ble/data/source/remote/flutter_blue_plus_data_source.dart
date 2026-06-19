@@ -5,6 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
 
 import '../../model/ble_discovered_device_model.dart';
 import 'ble_device_data_source_factory.dart';
@@ -16,7 +17,8 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   final BleDeviceDataSourceFactory _deviceFactory;
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
-  final Map<String, BluetoothDevice> _discoveredDevices = {};
+  final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
+  final Map<String, BluetoothDevice> _bluetoothDevices = {};
 
   final _logger = const Logger(className: 'FlutterBluePlusDataSource');
 
@@ -37,27 +39,26 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
     final devices = <BleDiscoveredDeviceModel>[];
 
+    /// Process every scan result
     for (final result in results) {
       /// Filter out non-connectable devices
       final ableToConnect = result.advertisementData.connectable;
       if (!ableToConnect) continue;
 
+      /// Extract device info [id]
       final id = result.device.remoteId.str;
-      _discoveredDevices[id] = result.device;
 
-      _logger.debug(
-        "Scan Result",
-        "Advertisement Data: ${result.advertisementData.manufacturerData.toString()}",
-      );
+      /// Convert scan result to BleDiscoveredDeviceModel
+      final model = BleDiscoveredDeviceModel.fromScanResult(result);
 
-      devices.add(
-        BleDiscoveredDeviceModel.fromScanResult(
-          id: id,
-          name: result.advertisementData.advName,
-          rssi: result.rssi,
-          isConnectable: ableToConnect,
-        ),
-      );
+      /// Cache discovered device
+      _discoveredDevices[id] = model;
+
+      /// Cache bluetooth device
+      _bluetoothDevices[id] = result.device;
+
+      /// Add device to list to return
+      devices.add(model);
     }
 
     return devices;
@@ -71,6 +72,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
     /// Clear discovered devices before new scan
     _discoveredDevices.clear();
+    _bluetoothDevices.clear();
 
     /// Get scan GUIDs based on filter types
     final guids = _getScanGuids(filterTypes);
@@ -91,25 +93,55 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     final existing = _connectedDevices[deviceId];
     if (existing != null) return BleConnectionStatus.connected;
 
+    final discovered = _discoveredDevices[deviceId];
     final bluetoothDevice = _resolveBluetoothDevice(deviceId);
+    final deviceType = discovered?.deviceType ?? VulcanDeviceType.none;
+
+    if (deviceType == VulcanDeviceType.none) {
+      throw BleException(
+        'Unknown device type for $deviceId',
+        deviceId: deviceId,
+      );
+    }
 
     if (FlutterBluePlus.isScanningNow) {
       await FlutterBluePlus.stopScan();
     }
 
-    final deviceSource = _deviceFactory.create(bluetoothDevice);
+    final deviceSource = _deviceFactory.create(
+      bluetoothDevice,
+      deviceType: deviceType,
+    );
 
     try {
       final status = await deviceSource.connect();
       _connectedDevices[deviceId] = deviceSource;
       _logger.debug(
-        "connect",
-        "'Device $deviceId added to connected devices map'",
+        'connect',
+        'Device $deviceId added to connected devices map',
       );
       return status;
     } catch (e) {
       if (e is BleException) rethrow;
       throw BleException('Failed to connect: $e', deviceId: deviceId);
+    }
+  }
+
+  @override
+  Future<MyoBandDeviceInfo> readMyoBandDeviceInfo(String deviceId) async {
+    final deviceSource = _connectedDevices[deviceId];
+    if (deviceSource == null) {
+      throw BleNotConnectedException(
+        'Device $deviceId is not connected',
+        deviceId: deviceId,
+      );
+    }
+
+    try {
+      return await deviceSource.readMyoBandDeviceInfo();
+    } catch (e) {
+      if (e is BleException) rethrow;
+      throw BleException('Failed to read MyoBand info: $e', deviceId: deviceId);
     }
   }
 
@@ -132,11 +164,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   BluetoothDevice _resolveBluetoothDevice(String deviceId) {
-    final cached = _discoveredDevices[deviceId];
+    final cached = _bluetoothDevices[deviceId];
     if (cached != null) return cached;
 
-    final connected = _connectedDevices[deviceId];
-    if (connected != null) {
+    if (_connectedDevices.containsKey(deviceId)) {
       return BluetoothDevice.fromId(deviceId);
     }
 
