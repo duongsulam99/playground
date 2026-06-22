@@ -49,6 +49,18 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   Stream<List<int>> watchDeviceData() => _connectionHandler.cleanDataStream;
 
   @override
+  Stream<BleConnectionStatus> watchConnectionStatus() {
+    return _device.connectionState.map(_mapConnectionState);
+  }
+
+  BleConnectionStatus _mapConnectionState(BluetoothConnectionState state) {
+    if (state == BluetoothConnectionState.connected) {
+      return BleConnectionStatus.connected;
+    }
+    return BleConnectionStatus.disconnected;
+  }
+
+  @override
   Future<BleConnectionStatus> connect() async {
     try {
       await _device.connect(

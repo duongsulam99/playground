@@ -11,15 +11,17 @@ abstract class BleRemoteDataSource {
 
   Stream<Map<String, BleDiscoveredDeviceModel>> watchScanResults();
 
-  Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
-
   Future<void> startScan({List<VulcanDeviceType>? filterTypes});
 
   Future<void> stopScan();
 
   Future<BleConnectionStatus> connect(String deviceId);
 
+  Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId);
+
   Future<void> disconnect(String deviceId);
 
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
+
+  Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
 }

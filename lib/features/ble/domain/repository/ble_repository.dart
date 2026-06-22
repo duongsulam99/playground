@@ -17,6 +17,10 @@ abstract class BleRepository {
     String deviceId,
   );
 
+  Stream<Either<Failure, BleConnectionStatus>>? watchConnectionStatus(
+    String deviceId,
+  );
+
   Future<Either<Failure, Unit>> startScan({
     List<VulcanDeviceType>? filterTypes,
   });

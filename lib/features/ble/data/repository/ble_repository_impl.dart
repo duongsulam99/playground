@@ -52,6 +52,20 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
+  Stream<Either<Failure, BleConnectionStatus>>? watchConnectionStatus(
+    String deviceId,
+  ) {
+    final stream = _remoteDataSource.watchConnectionStatus(deviceId);
+    if (stream == null) return null;
+
+    return stream
+        .map((status) => Right<Failure, BleConnectionStatus>(status))
+        .handleError((Object error, StackTrace stackTrace) {
+          throw _mapException(error);
+        });
+  }
+
+  @override
   Future<Either<Failure, Unit>> startScan({
     List<VulcanDeviceType>? filterTypes,
   }) async {

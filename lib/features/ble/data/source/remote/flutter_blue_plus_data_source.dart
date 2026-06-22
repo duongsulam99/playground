@@ -135,6 +135,19 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
+  Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId) {
+    final deviceSource = _connectedDevices[deviceId];
+    if (deviceSource == null) return null;
+
+    return deviceSource.watchConnectionStatus().map((status) {
+      if (status == BleConnectionStatus.disconnected) {
+        _connectedDevices.remove(deviceId);
+      }
+      return status;
+    });
+  }
+
+  @override
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
     final deviceSource = _connectedDevices[deviceId];
     if (deviceSource == null) {

@@ -14,6 +14,8 @@ abstract class BleDeviceRemoteDataSource {
 
   Future<BleDeviceInfoModel> readDeviceInfo();
 
+  Stream<BleConnectionStatus> watchConnectionStatus();
+
   Stream<List<int>>? get notifyDataStream;
 
   Future<void> Function()? get onNotifyStopListening;
