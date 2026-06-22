@@ -1,21 +1,21 @@
 import 'package:equatable/equatable.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
-import 'myo_band_device_info.dart';
+import 'ble_device_info.dart';
 
 class BleActiveConnection extends Equatable {
   const BleActiveConnection({
     required this.deviceId,
     required this.status,
     this.errorMessage,
-    this.myoBandInfo,
+    this.deviceInfo,
     this.isReadingInfo = false,
   });
 
   final String deviceId;
   final BleConnectionStatus status;
   final String? errorMessage;
-  final MyoBandDeviceInfo? myoBandInfo;
+  final BleDeviceInfo? deviceInfo;
   final bool isReadingInfo;
 
   bool get isActive =>
@@ -30,7 +30,7 @@ class BleActiveConnection extends Equatable {
     deviceId,
     status,
     errorMessage,
-    myoBandInfo,
+    deviceInfo,
     isReadingInfo,
   ];
 }

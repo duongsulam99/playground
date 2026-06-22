@@ -1,17 +1,18 @@
 import 'package:get_it/get_it.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/repository/ble_repository_impl.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_device_data_source_factory.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/remote/ble_remote_data_source.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/remote/flutter_blue_plus_data_source.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/connect_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/disconnect_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/read_myo_band_device_info.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/start_scan.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/stop_scan.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_adapter_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/usecase/watch_scan_results.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
+
+import '../data/repository/ble_repository_impl.dart';
+import '../data/source/remote/ble_device_data_source_factory.dart';
+import '../data/source/remote/ble_remote_data_source.dart';
+import '../data/source/remote/flutter_blue_plus_data_source.dart';
+import '../domain/repository/ble_repository.dart';
+import '../domain/usecase/connect_device.dart';
+import '../domain/usecase/disconnect_device.dart';
+import '../domain/usecase/read_device_info.dart';
+import '../domain/usecase/start_scan.dart';
+import '../domain/usecase/stop_scan.dart';
+import '../domain/usecase/watch_adapter_status.dart';
+import '../domain/usecase/watch_scan_results.dart';
+import '../presentation/bloc/ble/ble_bloc.dart';
 
 void initBleInjection(GetIt sl) {
   if (sl.isRegistered<BleBloc>()) return;
@@ -32,7 +33,7 @@ void initBleInjection(GetIt sl) {
   sl.registerFactory(() => StopScan(repository: sl()));
   sl.registerFactory(() => ConnectDevice(repository: sl()));
   sl.registerFactory(() => DisconnectDevice(repository: sl()));
-  sl.registerFactory(() => ReadMyoBandDeviceInfo(repository: sl()));
+  sl.registerFactory(() => ReadDeviceInfo(repository: sl()));
 
   sl.registerLazySingleton<BleBloc>(
     () => BleBloc(
@@ -42,7 +43,7 @@ void initBleInjection(GetIt sl) {
       stopScan: sl(),
       connectDevice: sl(),
       disconnectDevice: sl(),
-      readMyoBandDeviceInfo: sl(),
+      readDeviceInfo: sl(),
     ),
   );
 

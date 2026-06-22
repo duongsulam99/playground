@@ -22,7 +22,7 @@ class HomeMyoBandInfoSection extends StatelessWidget {
       final scannedType = _deviceTypeFor(connection.deviceId);
       if (scannedType?.isMyoBandFamily == true) return true;
 
-      return connection.myoBandInfo?.resolvedType.isMyoBandFamily == true;
+      return connection.deviceInfo?.resolvedType.isMyoBandFamily == true;
     }).toList();
 
     if (myoBandConnections.isEmpty) {
@@ -77,7 +77,7 @@ class _MyoBandInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final info = connection.myoBandInfo;
+    final info = connection.deviceInfo;
 
     if (connection.isReadingInfo) {
       return Card(

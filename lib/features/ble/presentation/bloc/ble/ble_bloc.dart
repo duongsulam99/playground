@@ -8,10 +8,10 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 
 import '../../../domain/entities/ble_discovered_device.dart';
 import '../../../domain/entities/ble_active_connection.dart';
-import '../../../domain/entities/myo_band_device_info.dart';
+import '../../../domain/entities/ble_device_info.dart';
 import '../../../domain/usecase/connect_device.dart';
 import '../../../domain/usecase/disconnect_device.dart';
-import '../../../domain/usecase/read_myo_band_device_info.dart';
+import '../../../domain/usecase/read_device_info.dart';
 import '../../../domain/usecase/start_scan.dart';
 import '../../../domain/usecase/stop_scan.dart';
 import '../../../domain/usecase/watch_adapter_status.dart';
@@ -29,7 +29,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required this._stopScan,
     required this._connectDevice,
     required this._disconnectDevice,
-    required this._readMyoBandDeviceInfo,
+    required this._readDeviceInfo,
   }) : super(const BleState()) {
     on<BleScanFilterUpdated>(_onScanFilterUpdated);
     on<BleStartScan>(_onStartScan);
@@ -49,7 +49,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final StopScan _stopScan;
   final ConnectDevice _connectDevice;
   final DisconnectDevice _disconnectDevice;
-  final ReadMyoBandDeviceInfo _readMyoBandDeviceInfo;
+  final ReadDeviceInfo _readDeviceInfo;
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
@@ -244,7 +244,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
             deviceId: deviceId,
             status: BleConnectionStatus.disconnected,
             errorMessage: failure.message,
-            clearMyoBandInfo: true,
+            clearDeviceInfo: true,
           ),
           status: BleStatus.failure,
           isScanning: false,
@@ -263,7 +263,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           state.activeConnections,
           deviceId: deviceId,
           status: connectionStatus,
-          clearMyoBandInfo: true,
+          clearDeviceInfo: true,
         ),
         isScanning: false,
         status: BleStatus.success,
@@ -284,8 +284,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       ),
     );
 
-    final readResult = await _readMyoBandDeviceInfo(
-      ReadMyoBandDeviceInfoParams(deviceId: deviceId),
+    final readResult = await _readDeviceInfo(
+      ReadDeviceInfoParams(deviceId: deviceId),
     );
 
     readResult.fold(
@@ -295,7 +295,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
             state.activeConnections,
             deviceId: deviceId,
             status: connectionStatus,
-            isReadingInfo: false,
             errorMessage: failure.message,
           ),
           status: BleStatus.failure,
@@ -303,14 +302,13 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       ),
       (info) => emit(
         state.copyWith(
+          status: BleStatus.success,
           activeConnections: _upsertConnection(
             state.activeConnections,
             deviceId: deviceId,
             status: connectionStatus,
-            myoBandInfo: info,
-            isReadingInfo: false,
+            deviceInfo: info,
           ),
-          status: BleStatus.success,
         ),
       ),
     );
@@ -376,9 +374,9 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required String deviceId,
     required BleConnectionStatus status,
     String? errorMessage,
-    MyoBandDeviceInfo? myoBandInfo,
-    bool? isReadingInfo,
-    bool clearMyoBandInfo = false,
+    BleDeviceInfo? deviceInfo,
+    bool isReadingInfo = false,
+    bool clearDeviceInfo = false,
   }) {
     final existing = current
         .where((connection) => connection.deviceId == deviceId)
@@ -394,12 +392,24 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         deviceId: deviceId,
         status: status,
         errorMessage: errorMessage,
-        myoBandInfo: clearMyoBandInfo
-            ? null
-            : (myoBandInfo ?? existing?.myoBandInfo),
-        isReadingInfo: isReadingInfo ?? existing?.isReadingInfo ?? false,
+        isReadingInfo: isReadingInfo,
+        deviceInfo: _getDeviceInfo(
+          clearDeviceInfo,
+          existingInfo: existing?.deviceInfo,
+        ),
       ),
     ];
+  }
+
+  BleDeviceInfo? _getDeviceInfo(
+    bool clearDeviceInfo, {
+    BleDeviceInfo? existingInfo,
+  }) {
+    if (clearDeviceInfo) return null;
+    if (existingInfo == null) return null;
+
+    /// Keep existing info
+    return existingInfo;
   }
 
   List<BleActiveConnection> _removeConnection(

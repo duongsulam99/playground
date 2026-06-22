@@ -3,15 +3,18 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
+
+import '../entities/ble_device_info.dart';
+import '../entities/ble_discovered_device.dart';
 
 abstract class BleRepository {
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus();
 
   Stream<Either<Failure, List<BleDiscoveredDevice>>> watchScanResults();
 
-  Future<Either<Failure, Unit>> startScan({List<VulcanDeviceType>? filterTypes});
+  Future<Either<Failure, Unit>> startScan({
+    List<VulcanDeviceType>? filterTypes,
+  });
 
   Future<Either<Failure, Unit>> stopScan();
 
@@ -19,7 +22,5 @@ abstract class BleRepository {
 
   Future<Either<Failure, Unit>> disconnect(String deviceId);
 
-  Future<Either<Failure, MyoBandDeviceInfo>> readMyoBandDeviceInfo(
-    String deviceId,
-  );
+  Future<Either<Failure, BleDeviceInfo>> readDeviceInfo(String deviceId);
 }
