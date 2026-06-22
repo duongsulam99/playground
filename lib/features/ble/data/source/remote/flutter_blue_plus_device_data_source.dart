@@ -29,6 +29,9 @@ class FlutterBluePlusDeviceDataSource implements BleDeviceRemoteDataSource {
   final VulcanDeviceType _deviceType;
   final DeviceConnectionHandler _connectionHandler;
   final Map<String, BluetoothCharacteristic> _characteristics = {};
+  StreamSubscription<List<int>>? _signalDataSubscription;
+  bool _isStreamingSignal = false;
+
   final _logger = const Logger(className: 'FlutterBluePlusDeviceDataSource');
 
   @override
@@ -65,6 +68,11 @@ class FlutterBluePlusDeviceDataSource implements BleDeviceRemoteDataSource {
         'connect',
         'Connected to $deviceId (MTU: ${_connectionHandler.currentMtu})',
       );
+
+      if (_deviceType.isMyoBandFamily) {
+        await _startMyoBandSignalLogging();
+      }
+
       return BleConnectionStatus.connected;
     } catch (e) {
       _connectionHandler.dispose();
@@ -74,10 +82,21 @@ class FlutterBluePlusDeviceDataSource implements BleDeviceRemoteDataSource {
     }
   }
 
-  Future<void> startListening(String characteristicKey) async {
+  Future<void> startListening(
+    String characteristicKey, {
+    bool reassembleFrames = true,
+  }) async {
+    /// Ensure device is connected
     _ensureConnected();
+
+    /// Ensure characteristic is available
     final characteristic = _requireCharacteristic(characteristicKey);
-    await _connectionHandler.startListeningData(characteristic);
+
+    /// Call Connection Handler To Start Listening
+    await _connectionHandler.startListeningData(
+      characteristic,
+      reassembleFrames: reassembleFrames,
+    );
     _logger.debug(
       'startListening',
       'Listening on $characteristicKey for $deviceId',
@@ -201,9 +220,77 @@ class FlutterBluePlusDeviceDataSource implements BleDeviceRemoteDataSource {
     }
   }
 
+  Future<void> _startMyoBandSignalLogging() async {
+    await _signalDataSubscription?.cancel();
+    _signalDataSubscription = null;
+    _isStreamingSignal = false;
+
+    try {
+      await writeData(defaultNotifyCharacteristicKey, utf8.encode('255'));
+
+      await startListening(
+        defaultNotifyCharacteristicKey,
+        reassembleFrames: false,
+      );
+
+      _signalDataSubscription = watchDeviceData().listen(
+        (frame) {
+          _logger.debug(
+            'myoBandSignal',
+            '${frame.length} bytes: ${_formatBytes(frame)}',
+          );
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          _logger.error('myoBandSignal', 'Stream error: $error');
+        },
+      );
+
+      _isStreamingSignal = true;
+      _logger.debug(
+        'startMyoBandSignalLogging',
+        'Listening and logging MyoBand signal for $deviceId',
+      );
+    } catch (e, st) {
+      await _signalDataSubscription?.cancel();
+      _signalDataSubscription = null;
+      _isStreamingSignal = false;
+      _logger.error(
+        'startMyoBandSignalLogging',
+        'Failed to start MyoBand signal logging: $e\n$st',
+      );
+    }
+  }
+
+  Future<void> _stopMyoBandSignalLogging() async {
+    await _signalDataSubscription?.cancel();
+    _signalDataSubscription = null;
+
+    if (!_isStreamingSignal || _characteristics.isEmpty) return;
+
+    try {
+      await writeData(defaultNotifyCharacteristicKey, utf8.encode('000'));
+    } catch (e) {
+      _logger.warning(
+        'stopMyoBandSignalLogging',
+        'Failed to stop MyoBand signal for $deviceId: $e',
+      );
+    } finally {
+      _isStreamingSignal = false;
+    }
+  }
+
+  String _formatBytes(List<int> bytes) {
+    return bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join(' ');
+  }
+
   @override
   Future<void> disconnect() async {
     try {
+      if (_deviceType.isMyoBandFamily) {
+        await _stopMyoBandSignalLogging();
+      }
       _connectionHandler.dispose();
       _characteristics.clear();
       await _device.disconnect();

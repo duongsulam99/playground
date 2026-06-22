@@ -233,7 +233,10 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
 
     if (connectResult.isLeft()) {
-      final failure = connectResult.fold((left) => left, (_) => throw StateError(''));
+      final failure = connectResult.fold(
+        (left) => left,
+        (_) => throw StateError(''),
+      );
       emit(
         state.copyWith(
           activeConnections: _upsertConnection(
@@ -260,7 +263,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           state.activeConnections,
           deviceId: deviceId,
           status: connectionStatus,
-          errorMessage: null,
           clearMyoBandInfo: true,
         ),
         isScanning: false,
@@ -277,7 +279,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           deviceId: deviceId,
           status: connectionStatus,
           isReadingInfo: true,
-          errorMessage: null,
         ),
         status: BleStatus.loading,
       ),
@@ -308,7 +309,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
             status: connectionStatus,
             myoBandInfo: info,
             isReadingInfo: false,
-            errorMessage: null,
           ),
           status: BleStatus.success,
         ),

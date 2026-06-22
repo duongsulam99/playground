@@ -69,26 +69,55 @@ class DeviceConnectionHandler {
     });
   }
 
+  bool _cleanAndEnsureController(StreamController<List<int>>? controller) {
+    if (controller == null) return false;
+
+    if (controller.isClosed) return false;
+
+    return true;
+  }
+
   Future<void> startListeningData(
-    BluetoothCharacteristic characteristic,
-  ) async {
+    BluetoothCharacteristic characteristic, {
+    bool reassembleFrames = true,
+  }) async {
+    /// Ensure device is connected
     _ensureNotDisposed();
+
+    /// Ensure Stream Controller Is Available & Open
     _ensureStreamController();
 
+    /// Cancel previous subscription
     await _notificationSubscription?.cancel();
     _accumulator.clear();
 
+    /// Send Notify Value Request To Device
     await _enqueueOperation(() => characteristic.setNotifyValue(true));
 
+    /// Listen to value received from characteristic
     _notificationSubscription = characteristic.onValueReceived.listen(
       (rawChunk) {
-        _accumulator.appendChunk(rawChunk, (completeFrame) {
-          final controller = _cleanDataStreamController;
-          if (controller != null && !controller.isClosed) {
-            controller.add(completeFrame);
-          }
+        /// IMPORTANT STEP BEFORE ADDING DATA ( SAFETY GUARD)
+        /// Clean Stream Controller
+        /// and ensure controller is available
+        if (!_cleanAndEnsureController(_cleanDataStreamController)) return;
+
+        /// If reassembleFrames is false
+        /// add the raw chunk to the stream controller directly
+        if (!reassembleFrames) {
+          _cleanDataStreamController!.add(List<int>.from(rawChunk));
+          return;
+        }
+
+        /// If reassembleFrames is true
+        /// append the chunk to the accumulator
+        /// and add the complete frame to the stream controller
+        _accumulator.appendChunk(rawChunk, (List<int> frame) {
+          _cleanDataStreamController!.add(List<int>.from(frame));
         });
       },
+
+      /// Handle Errors When Start Listening
       onError: (Object error, StackTrace stackTrace) {
         _logger.error('startListeningData', 'Notify stream error: $error');
       },
