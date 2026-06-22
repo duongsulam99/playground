@@ -35,7 +35,7 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   VulcanDeviceType get deviceType => _deviceType;
 
   @override
-  Future<void> Function()? get onNotifyListening => null;
+  Stream<List<int>>? get notifyDataStream => null;
 
   @override
   Future<void> Function()? get onNotifyStopListening => null;

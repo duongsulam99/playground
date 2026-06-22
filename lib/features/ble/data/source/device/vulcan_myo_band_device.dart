@@ -1,5 +1,6 @@
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
@@ -16,10 +17,17 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   final _logger = const Logger(className: 'VulcanMyoBandDevice');
 
   @override
-  Future<void> Function()? get onNotifyListening => _startSignalListening;
+  Stream<List<int>>? get notifyDataStream => watchDeviceData();
 
   @override
   Future<void> Function()? get onNotifyStopListening => _stopSignalListening;
+
+  @override
+  Future<BleConnectionStatus> connect() async {
+    final status = await super.connect();
+    await _setupNotifyListening();
+    return status;
+  }
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo() async {
@@ -51,7 +59,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> _startSignalListening() async {
+  Future<void> _setupNotifyListening() async {
     await _signalDataSubscription?.cancel();
     _signalDataSubscription = null;
     _isStreamingSignal = false;
@@ -60,7 +68,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
       await writeData(BleAdapterKey.signal, utf8.encode('255'));
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
 
-      _signalDataSubscription = watchDeviceData().listen(
+      _signalDataSubscription = notifyDataStream?.listen(
         (frame) {
           _logger.debug(
             'myoBandSignal',
@@ -74,16 +82,16 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
 
       _isStreamingSignal = true;
       _logger.debug(
-        'startSignalListening',
-        'Listening and logging MyoBand signal for $deviceId',
+        'setupNotifyListening',
+        'Notify stream ready for $deviceId',
       );
     } catch (e, st) {
       await _signalDataSubscription?.cancel();
       _signalDataSubscription = null;
       _isStreamingSignal = false;
       _logger.error(
-        'startSignalListening',
-        'Failed to start MyoBand signal logging: $e\n$st',
+        'setupNotifyListening',
+        'Failed to setup MyoBand notify stream: $e\n$st',
       );
     }
   }

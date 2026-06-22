@@ -14,7 +14,7 @@ abstract class BleDeviceRemoteDataSource {
 
   Future<BleDeviceInfoModel> readDeviceInfo();
 
-  Future<void> Function()? get onNotifyListening;
+  Stream<List<int>>? get notifyDataStream;
 
   Future<void> Function()? get onNotifyStopListening;
 }
