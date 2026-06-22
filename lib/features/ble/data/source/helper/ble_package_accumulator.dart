@@ -1,11 +1,11 @@
-/// Chịu trách nhiệm tích lũy các chunk byte từ BLE 
+/// Chịu trách nhiệm tích lũy các chunk byte từ BLE
 /// và gộp thành gói tin hoàn chỉnh.
 class BlePacketAccumulator {
   final List<int> _buffer = [];
   int _expectedLength = -1;
 
   /// Nhận các mảng byte thô (Chunks) từ BLE Stream và kiểm tra tính trọn vẹn.
-  void appendChunk(List<int> chunk, Function(List<int>) onFrameComplete) {
+  void appendChunk(List<int> chunk, void Function(List<int>) onFrameComplete) {
     _buffer.addAll(chunk);
 
     // Bước 1: Đọc Header để xác định tổng độ dài Payload (2 byte đầu)
