@@ -21,7 +21,7 @@ sealed class BleEvent with _$BleEvent {
   }) = BleAdapterStatusUpdated;
 
   const factory BleEvent.scanResultsUpdated({
-    required List<BleDiscoveredDevice> savedDevices,
+    required Map<String, BleDiscoveredDevice> savedDevices,
   }) = BleScanResultsUpdated;
 
   const factory BleEvent.streamFailed({required String message}) =

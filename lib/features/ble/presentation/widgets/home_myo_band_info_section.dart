@@ -11,12 +11,12 @@ class HomeMyoBandInfoSection extends StatelessWidget {
     super.key,
   });
 
-  final List<BleDiscoveredDevice> savedDevices;
-  final List<BleActiveConnection> activeConnections;
+  final Map<String, BleDiscoveredDevice> savedDevices;
+  final Map<String, BleActiveConnection> activeConnections;
 
   @override
   Widget build(BuildContext context) {
-    final myoBandConnections = activeConnections.where((connection) {
+    final myoBandConnections = activeConnections.values.where((connection) {
       if (!connection.status.isConnected) return false;
 
       final scannedType = _deviceTypeFor(connection.deviceId);
@@ -50,12 +50,7 @@ class HomeMyoBandInfoSection extends StatelessWidget {
     );
   }
 
-  BleDiscoveredDevice? _deviceFor(String deviceId) {
-    for (final device in savedDevices) {
-      if (device.id == deviceId) return device;
-    }
-    return null;
-  }
+  BleDiscoveredDevice? _deviceFor(String deviceId) => savedDevices[deviceId];
 
   VulcanDeviceType? _deviceTypeFor(String deviceId) {
     return _deviceFor(deviceId)?.deviceType;

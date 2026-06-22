@@ -361,16 +361,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   }
 
   bool _isMyoBandDevice(String deviceId) {
-    for (final device in state.savedDevices) {
-      if (device.id == deviceId) {
-        return device.deviceType.isMyoBandFamily;
-      }
-    }
-    return false;
+    return state.savedDevices[deviceId]?.deviceType.isMyoBandFamily ?? false;
   }
 
-  List<BleActiveConnection> _upsertConnection(
-    List<BleActiveConnection> current, {
+  Map<String, BleActiveConnection> _upsertConnection(
+    Map<String, BleActiveConnection> current, {
     required String deviceId,
     required BleConnectionStatus status,
     String? errorMessage,
@@ -378,17 +373,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     bool isReadingInfo = false,
     bool clearDeviceInfo = false,
   }) {
-    final existing = current
-        .where((connection) => connection.deviceId == deviceId)
-        .firstOrNull;
+    final existing = current[deviceId];
 
-    final others = current
-        .where((connection) => connection.deviceId != deviceId)
-        .toList();
-
-    return [
-      ...others,
-      BleActiveConnection(
+    return {
+      ...current,
+      deviceId: BleActiveConnection(
         deviceId: deviceId,
         status: status,
         errorMessage: errorMessage,
@@ -396,29 +385,30 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         deviceInfo: _getDeviceInfo(
           clearDeviceInfo,
           existingInfo: existing?.deviceInfo,
+          newInfo: deviceInfo,
         ),
       ),
-    ];
+    };
   }
 
   BleDeviceInfo? _getDeviceInfo(
     bool clearDeviceInfo, {
     BleDeviceInfo? existingInfo,
+    BleDeviceInfo? newInfo,
   }) {
     if (clearDeviceInfo) return null;
+    if (newInfo != null) return newInfo;
     if (existingInfo == null) return null;
 
     /// Keep existing info
     return existingInfo;
   }
 
-  List<BleActiveConnection> _removeConnection(
-    List<BleActiveConnection> current,
+  Map<String, BleActiveConnection> _removeConnection(
+    Map<String, BleActiveConnection> current,
     String deviceId,
   ) {
-    return current
-        .where((connection) => connection.deviceId != deviceId)
-        .toList();
+    return Map<String, BleActiveConnection>.from(current)..remove(deviceId);
   }
 
   @override
@@ -429,7 +419,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       await _stopScan(const NoParams());
     }
 
-    final connectedDeviceIds = state.activeConnections
+    final connectedDeviceIds = state.activeConnections.values
         .where((connection) => connection.status.isConnected)
         .map((connection) => connection.deviceId)
         .toList();

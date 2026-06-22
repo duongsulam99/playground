@@ -11,14 +11,15 @@ class BleConnectedDevicesSection extends StatelessWidget {
     super.key,
   });
 
-  final List<BleDiscoveredDevice> savedDevices;
-  final List<BleActiveConnection> activeConnections;
+  final Map<String, BleDiscoveredDevice> savedDevices;
+  final Map<String, BleActiveConnection> activeConnections;
   final ValueChanged<String> onDisconnect;
 
   @override
   Widget build(BuildContext context) {
-    final activeEntries =
-        activeConnections.where((connection) => connection.isActive).toList();
+    final activeEntries = activeConnections.values
+        .where((connection) => connection.isActive)
+        .toList();
 
     if (activeEntries.isEmpty) return const SizedBox.shrink();
 
@@ -39,10 +40,7 @@ class BleConnectedDevicesSection extends StatelessWidget {
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final connection = activeEntries[index];
-            final device = savedDevices.cast<BleDiscoveredDevice?>().firstWhere(
-              (d) => d?.id == connection.deviceId,
-              orElse: () => null,
-            );
+            final device = savedDevices[connection.deviceId];
 
             return ListTile(
               leading: Icon(

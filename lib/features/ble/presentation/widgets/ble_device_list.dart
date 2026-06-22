@@ -13,8 +13,8 @@ class BleDeviceList extends StatelessWidget {
     super.key,
   });
 
-  final List<BleDiscoveredDevice> savedDevices;
-  final List<BleActiveConnection> activeConnections;
+  final Map<String, BleDiscoveredDevice> savedDevices;
+  final Map<String, BleActiveConnection> activeConnections;
   final bool Function(String deviceId) canConnectDevice;
   final ValueChanged<String> onDeviceSelected;
   final ValueChanged<String> onDeviceDisconnect;
@@ -32,14 +32,16 @@ class BleDeviceList extends StatelessWidget {
       );
     }
 
+    final devices = savedDevices.values.toList();
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: savedDevices.length,
+      itemCount: devices.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final device = savedDevices[index];
-        final connection = _connectionFor(device.id);
+        final device = devices[index];
+        final connection = activeConnections[device.id];
         final connectionStatus =
             connection?.status ?? BleConnectionStatus.disconnected;
         final canConnect = canConnectDevice(device.id);
@@ -58,13 +60,6 @@ class BleDeviceList extends StatelessWidget {
         );
       },
     );
-  }
-
-  BleActiveConnection? _connectionFor(String deviceId) {
-    for (final connection in activeConnections) {
-      if (connection.deviceId == deviceId) return connection;
-    }
-    return null;
   }
 
   Widget _buildTrailing(

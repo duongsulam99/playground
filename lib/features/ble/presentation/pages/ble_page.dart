@@ -53,7 +53,7 @@ class _BlePageState extends State<BlePage> {
             ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
 
-          for (final connection in state.activeConnections) {
+          for (final connection in state.activeConnections.values) {
             if (connection.hasError && state.status == BleStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

@@ -7,8 +7,8 @@ abstract class BleState with _$BleState {
   const factory BleState({
     @Default(BleAdapterStatus.unknown) BleAdapterStatus adapterStatus,
     @Default(false) bool isScanning,
-    @Default(<BleDiscoveredDevice>[]) List<BleDiscoveredDevice> savedDevices,
-    @Default(<BleActiveConnection>[]) List<BleActiveConnection> activeConnections,
+    @Default({}) Map<String, BleDiscoveredDevice> savedDevices,
+    @Default({}) Map<String, BleActiveConnection> activeConnections,
     @Default(2) int deviceLimit,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
@@ -19,19 +19,21 @@ abstract class BleState with _$BleState {
 extension BleStateX on BleState {
   bool get isAdapterReady => adapterStatus.isReady;
 
-  bool get hasConnectedDevices =>
-      activeConnections.any((connection) => connection.status.isConnected);
+  bool get hasConnectedDevices => activeConnections.values.any(
+    (connection) => connection.status.isConnected,
+  );
 
-  int get connectingCount => activeConnections
+  int get connectingCount => activeConnections.values
       .where((connection) => connection.status == BleConnectionStatus.connecting)
       .length;
 
-  int get connectedCount => activeConnections
+  int get connectedCount => activeConnections.values
       .where((connection) => connection.status.isConnected)
       .length;
 
-  int get activeDeviceCount =>
-      activeConnections.where((connection) => connection.isActive).length;
+  int get activeDeviceCount => activeConnections.values
+      .where((connection) => connection.isActive)
+      .length;
 
   bool get isAtDeviceLimit => activeDeviceCount >= deviceLimit;
 
@@ -41,12 +43,11 @@ extension BleStateX on BleState {
     return activeDeviceCount < deviceLimit;
   }
 
-  BleActiveConnection? activeConnectionFor(String deviceId) {
-    for (final connection in activeConnections) {
-      if (connection.deviceId == deviceId) return connection;
-    }
-    return null;
-  }
+  BleActiveConnection? activeConnectionFor(String deviceId) =>
+      activeConnections[deviceId];
+
+  BleDiscoveredDevice? savedDeviceFor(String deviceId) =>
+      savedDevices[deviceId];
 
   bool isDeviceConnected(String deviceId) =>
       activeConnectionFor(deviceId)?.status.isConnected ?? false;
