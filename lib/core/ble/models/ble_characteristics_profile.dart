@@ -1,6 +1,6 @@
-import '../config/adapter/key.dart';
-import '../config/hand/key.dart';
-import '../config/ring/key.dart';
+import '../config/keys/adapter/key.dart';
+import '../config/keys/hand/key.dart';
+import '../config/keys/ring/key.dart';
 
 /// Typed BLE GATT characteristic UUID profile.
 /// See: https://www.bluetooth.com/specifications/gatt/characteristics

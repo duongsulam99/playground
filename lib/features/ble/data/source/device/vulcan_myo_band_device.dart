@@ -1,5 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/config/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/config/keys/adapter/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
