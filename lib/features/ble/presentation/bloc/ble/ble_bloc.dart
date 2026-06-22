@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_constant.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
@@ -204,7 +205,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
             state.activeConnections,
             deviceId: deviceId,
             status: BleConnectionStatus.disconnected,
-            errorMessage: 'Device limit reached (${state.deviceLimit})',
+            errorMessage: 'Device limit reached',
           ),
           status: BleStatus.failure,
         ),

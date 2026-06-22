@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
+import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_constant.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
@@ -53,7 +54,7 @@ class HomePage extends StatelessWidget {
                 return Column(
                   children: [
                     Text(
-                      'Connected: ${state.activeDeviceCount}/${state.deviceLimit}',
+                      'Connected: ${state.activeDeviceCount}/${VulcanConstant.deviceLimit}',
                     ),
                     HomeMyoBandInfoSection(
                       savedDevices: state.savedDevices,

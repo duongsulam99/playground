@@ -9,7 +9,6 @@ abstract class BleState with _$BleState {
     @Default(false) bool isScanning,
     @Default({}) Map<String, BleDiscoveredDevice> savedDevices,
     @Default({}) Map<String, BleActiveConnection> activeConnections,
-    @Default(2) int deviceLimit,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
     List<VulcanDeviceType>? scanFilterTypes,
@@ -35,12 +34,12 @@ extension BleStateX on BleState {
       .where((connection) => connection.isActive)
       .length;
 
-  bool get isAtDeviceLimit => activeDeviceCount >= deviceLimit;
+  bool get isAtDeviceLimit => activeDeviceCount >= VulcanConstant.deviceLimit;
 
   bool canConnectDevice(String deviceId) {
     final existing = activeConnectionFor(deviceId);
     if (existing?.isActive == true) return true;
-    return activeDeviceCount < deviceLimit;
+    return activeDeviceCount < VulcanConstant.deviceLimit;
   }
 
   BleActiveConnection? activeConnectionFor(String deviceId) =>
