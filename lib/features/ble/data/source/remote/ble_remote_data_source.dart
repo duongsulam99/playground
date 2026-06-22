@@ -18,5 +18,5 @@ abstract class BleRemoteDataSource {
 
   Future<void> disconnect(String deviceId);
 
-  Future<BleDeviceInfo> readDeviceInfo(String deviceId);
+  Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
 }

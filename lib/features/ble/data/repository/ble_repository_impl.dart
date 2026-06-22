@@ -5,7 +5,8 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
+
+import '../../domain/entities/ble_device_info.dart';
 import '../../domain/entities/ble_discovered_device.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/ble_remote_data_source.dart';
@@ -17,28 +18,28 @@ class BleRepositoryImpl implements BleRepository {
 
   @override
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus() {
-    return _remoteDataSource.watchAdapterStatus().map(
-      (status) => Right<Failure, BleAdapterStatus>(status),
-    ).handleError(
-      (Object error, StackTrace stackTrace) {
-        throw _mapException(error);
-      },
-    );
+    return _remoteDataSource
+        .watchAdapterStatus()
+        .map((status) => Right<Failure, BleAdapterStatus>(status))
+        .handleError((Object error, StackTrace stackTrace) {
+          throw _mapException(error);
+        });
   }
 
   @override
   Stream<Either<Failure, List<BleDiscoveredDevice>>> watchScanResults() {
-    return _remoteDataSource.watchScanResults().map(
-      (devices) => Right<Failure, List<BleDiscoveredDevice>>(devices),
-    ).handleError(
-      (Object error, StackTrace stackTrace) {
-        throw _mapException(error);
-      },
-    );
+    return _remoteDataSource
+        .watchScanResults()
+        .map((devices) => Right<Failure, List<BleDiscoveredDevice>>(devices))
+        .handleError((Object error, StackTrace stackTrace) {
+          throw _mapException(error);
+        });
   }
 
   @override
-  Future<Either<Failure, Unit>> startScan({List<VulcanDeviceType>? filterTypes}) async {
+  Future<Either<Failure, Unit>> startScan({
+    List<VulcanDeviceType>? filterTypes,
+  }) async {
     try {
       await _remoteDataSource.startScan(filterTypes: filterTypes);
       return const Right(unit);
@@ -78,11 +79,9 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Future<Either<Failure, MyoBandDeviceInfo>> readMyoBandDeviceInfo(
-    String deviceId,
-  ) async {
+  Future<Either<Failure, BleDeviceInfo>> readDeviceInfo(String deviceId) async {
     try {
-      final info = await _remoteDataSource.readMyoBandDeviceInfo(deviceId);
+      final info = await _remoteDataSource.readDeviceInfo(deviceId);
       return Right(info);
     } catch (error) {
       return Left(_mapException(error));

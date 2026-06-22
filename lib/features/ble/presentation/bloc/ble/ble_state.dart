@@ -9,7 +9,7 @@ abstract class BleState with _$BleState {
     @Default(false) bool isScanning,
     @Default(<BleDiscoveredDevice>[]) List<BleDiscoveredDevice> savedDevices,
     @Default(<BleActiveConnection>[]) List<BleActiveConnection> activeConnections,
-    @Default(1) int deviceLimit,
+    @Default(2) int deviceLimit,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
     List<VulcanDeviceType>? scanFilterTypes,

@@ -5,8 +5,8 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/myo_band_device_info.dart';
 
+import '../../model/ble_device_info.dart';
 import '../../model/ble_discovered_device_model.dart';
 import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';
@@ -128,7 +128,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
-  Future<MyoBandDeviceInfo> readMyoBandDeviceInfo(String deviceId) async {
+  Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
     final deviceSource = _connectedDevices[deviceId];
     if (deviceSource == null) {
       throw BleNotConnectedException(
@@ -138,10 +138,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     }
 
     try {
-      return await deviceSource.readMyoBandDeviceInfo();
+      return await deviceSource.readDeviceInfo();
     } catch (e) {
       if (e is BleException) rethrow;
-      throw BleException('Failed to read MyoBand info: $e', deviceId: deviceId);
+      throw BleException('Failed to read device info: $e', deviceId: deviceId);
     }
   }
 
