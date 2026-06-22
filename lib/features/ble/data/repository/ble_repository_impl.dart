@@ -12,7 +12,7 @@ import '../../domain/repository/ble_repository.dart';
 import '../source/remote/ble_remote_data_source.dart';
 
 class BleRepositoryImpl implements BleRepository {
-  BleRepositoryImpl({required this._remoteDataSource});
+  const BleRepositoryImpl({required this._remoteDataSource});
 
   final BleRemoteDataSource _remoteDataSource;
 
@@ -27,10 +27,10 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Stream<Either<Failure, List<BleDiscoveredDevice>>> watchScanResults() {
+  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults() {
     return _remoteDataSource
         .watchScanResults()
-        .map((devices) => Right<Failure, List<BleDiscoveredDevice>>(devices))
+        .map((devices) => Right<Failure, Map<String, BleDiscoveredDevice>>(devices))
         .handleError((Object error, StackTrace stackTrace) {
           throw _mapException(error);
         });

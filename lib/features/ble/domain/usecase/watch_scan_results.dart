@@ -5,13 +5,15 @@ import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discov
 import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
 
 class WatchScanResults
-    extends StreamUsecase<List<BleDiscoveredDevice>, NoParams> {
+    extends StreamUsecase<Map<String, BleDiscoveredDevice>, NoParams> {
   WatchScanResults({required this.repository});
 
   final BleRepository repository;
 
   @override
-  Stream<Either<Failure, List<BleDiscoveredDevice>>> call(NoParams params) {
+  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> call(
+    NoParams params,
+  ) {
     return repository.watchScanResults();
   }
 }

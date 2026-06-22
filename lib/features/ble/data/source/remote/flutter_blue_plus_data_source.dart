@@ -29,15 +29,15 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
-  Stream<List<BleDiscoveredDeviceModel>> watchScanResults() {
+  Stream<Map<String, BleDiscoveredDeviceModel>> watchScanResults() {
     return FlutterBluePlus.scanResults.map(_processScanResults);
   }
 
   // ACTIONS
-  List<BleDiscoveredDeviceModel> _processScanResults(List<ScanResult> results) {
-    if (results.isEmpty) return const [];
-
-    final devices = <BleDiscoveredDeviceModel>[];
+  Map<String, BleDiscoveredDeviceModel> _processScanResults(
+    List<ScanResult> results,
+  ) {
+    if (results.isEmpty) return const {};
 
     /// Process every scan result
     for (final result in results) {
@@ -56,12 +56,9 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
       /// Cache bluetooth device
       _bluetoothDevices[id] = result.device;
-
-      /// Add device to list to return
-      devices.add(model);
     }
 
-    return devices;
+    return Map<String, BleDiscoveredDeviceModel>.from(_discoveredDevices);
   }
 
   @override

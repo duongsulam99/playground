@@ -10,7 +10,7 @@ import '../entities/ble_discovered_device.dart';
 abstract class BleRepository {
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus();
 
-  Stream<Either<Failure, List<BleDiscoveredDevice>>> watchScanResults();
+  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults();
 
   Future<Either<Failure, Unit>> startScan({
     List<VulcanDeviceType>? filterTypes,
