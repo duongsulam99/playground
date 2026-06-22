@@ -1,5 +1,6 @@
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_device_info_route.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_route.dart';
 
 import '../screens/error_page.dart';
@@ -16,6 +17,9 @@ class AppRouter extends SuperAppRoute {
       case BleRoute.path:
         final filterTypes = settings.arguments as List<VulcanDeviceType>?;
         return BleRoute.route(filterTypes: filterTypes);
+      case BleDeviceInfoRoute.path:
+        final deviceId = settings.arguments as String;
+        return BleDeviceInfoRoute.route(deviceId: deviceId);
       default:
         return null;
     }

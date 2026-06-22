@@ -54,7 +54,7 @@ class HomePage extends StatelessWidget {
                 return Column(
                   children: [
                     Text(
-                      'Connected: ${state.activeDeviceCount}/${VulcanConstant.deviceLimit}',
+                      'Connected: ${state.connectedCount}/${VulcanConstant.deviceLimit}',
                     ),
                     HomeMyoBandInfoSection(
                       savedDevices: state.savedDevices,

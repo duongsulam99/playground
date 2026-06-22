@@ -3,6 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_device_info_route.dart';
 
 class HomeMyoBandInfoSection extends StatelessWidget {
   const HomeMyoBandInfoSection({
@@ -44,9 +45,17 @@ class HomeMyoBandInfoSection extends StatelessWidget {
           (connection) => _MyoBandInfoCard(
             connection: connection,
             fallbackName: _displayNameFor(connection.deviceId),
+            onTap: () => _openDeviceInfo(context, connection.deviceId),
           ),
         ),
       ],
+    );
+  }
+
+  void _openDeviceInfo(BuildContext context, String deviceId) {
+    Navigator.of(context).pushNamed(
+      BleDeviceInfoRoute.path,
+      arguments: deviceId,
     );
   }
 
@@ -65,10 +74,12 @@ class _MyoBandInfoCard extends StatelessWidget {
   const _MyoBandInfoCard({
     required this.connection,
     required this.fallbackName,
+    required this.onTap,
   });
 
   final BleActiveConnection connection;
   final String fallbackName;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +95,8 @@ class _MyoBandInfoCard extends StatelessWidget {
           ),
           title: Text(fallbackName),
           subtitle: const Text('Reading device info...'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onTap,
         ),
       );
     }
@@ -94,6 +107,8 @@ class _MyoBandInfoCard extends StatelessWidget {
           leading: const Icon(Icons.error_outline, color: Colors.red),
           title: Text(fallbackName),
           subtitle: Text(connection.errorMessage ?? 'Failed to read device info'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onTap,
         ),
       );
     }
@@ -115,6 +130,8 @@ class _MyoBandInfoCard extends StatelessWidget {
           ' · Type: $typeLabel',
         ),
         isThreeLine: true,
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
