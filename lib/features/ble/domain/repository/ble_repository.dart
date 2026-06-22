@@ -6,11 +6,16 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 
 import '../entities/ble_device_info.dart';
 import '../entities/ble_discovered_device.dart';
+import '../entities/ble_device_stream_snapshot.dart';
 
 abstract class BleRepository {
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus();
 
   Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults();
+
+  Stream<Either<Failure, BleDeviceStreamSnapshot>>? watchDeviceData(
+    String deviceId,
+  );
 
   Future<Either<Failure, Unit>> startScan({
     List<VulcanDeviceType>? filterTypes,
