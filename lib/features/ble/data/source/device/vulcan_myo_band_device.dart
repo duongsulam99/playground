@@ -11,7 +11,6 @@ import 'flutter_blue_plus_private_device.dart';
 class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
-  StreamSubscription<List<int>>? _signalDataSubscription;
   bool _isStreamingSignal = false;
 
   final _logger = const Logger(className: 'VulcanMyoBandDevice');
@@ -60,25 +59,11 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   }
 
   Future<void> _setupNotifyListening() async {
-    await _signalDataSubscription?.cancel();
-    _signalDataSubscription = null;
     _isStreamingSignal = false;
 
     try {
       await writeData(BleAdapterKey.signal, utf8.encode('255'));
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
-
-      _signalDataSubscription = notifyDataStream?.listen(
-        (frame) {
-          _logger.debug(
-            'myoBandSignal',
-            '${frame.length} bytes: ${_formatBytes(frame)}',
-          );
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          _logger.error('myoBandSignal', 'Stream error: $error');
-        },
-      );
 
       _isStreamingSignal = true;
       _logger.debug(
@@ -86,8 +71,6 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
         'Notify stream ready for $deviceId',
       );
     } catch (e, st) {
-      await _signalDataSubscription?.cancel();
-      _signalDataSubscription = null;
       _isStreamingSignal = false;
       _logger.error(
         'setupNotifyListening',
@@ -97,9 +80,6 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   }
 
   Future<void> _stopSignalListening() async {
-    await _signalDataSubscription?.cancel();
-    _signalDataSubscription = null;
-
     if (!_isStreamingSignal || characteristics.isEmpty) return;
 
     try {
@@ -112,11 +92,5 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     } finally {
       _isStreamingSignal = false;
     }
-  }
-
-  String _formatBytes(List<int> bytes) {
-    return bytes
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join(' ');
   }
 }

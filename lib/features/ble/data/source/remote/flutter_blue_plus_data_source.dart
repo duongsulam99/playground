@@ -7,7 +7,9 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart'
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
 import '../../model/ble_device_info.dart';
+import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
+import '../helper/device_stream_aggregator.dart';
 import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';
 import 'ble_remote_data_source.dart';
@@ -122,6 +124,14 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       if (e is BleException) rethrow;
       throw BleException('Failed to connect: $e', deviceId: deviceId);
     }
+  }
+
+  @override
+  Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
+    final raw = _connectedDevices[deviceId]?.notifyDataStream;
+    if (raw == null) return null;
+
+    return DeviceStreamAggregator(deviceId: deviceId, source: raw).stream;
   }
 
   @override

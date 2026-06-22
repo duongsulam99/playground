@@ -8,6 +8,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 
 import '../../domain/entities/ble_device_info.dart';
 import '../../domain/entities/ble_discovered_device.dart';
+import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/ble_remote_data_source.dart';
 
@@ -31,6 +32,20 @@ class BleRepositoryImpl implements BleRepository {
     return _remoteDataSource
         .watchScanResults()
         .map((devices) => Right<Failure, Map<String, BleDiscoveredDevice>>(devices))
+        .handleError((Object error, StackTrace stackTrace) {
+          throw _mapException(error);
+        });
+  }
+
+  @override
+  Stream<Either<Failure, BleDeviceStreamSnapshot>>? watchDeviceData(
+    String deviceId,
+  ) {
+    final stream = _remoteDataSource.watchDeviceData(deviceId);
+    if (stream == null) return null;
+
+    return stream
+        .map((snapshot) => Right<Failure, BleDeviceStreamSnapshot>(snapshot))
         .handleError((Object error, StackTrace stackTrace) {
           throw _mapException(error);
         });
