@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/package/line_chart_core_widget.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
@@ -46,6 +47,14 @@ class BleDeviceInfoPage extends StatelessWidget {
                   snapshot: viewState.streamSnapshot,
                   displayName: viewState.displayName,
                   supportsDataStream: viewState.supportsDataStream,
+                ),
+
+                const AspectRatio(
+                  aspectRatio: 1.70,
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.all(16),
+                    child: LineChartCoreWidget(),
+                  ),
                 ),
               ],
             ),
@@ -152,9 +161,9 @@ class _DeviceHeader extends StatelessWidget {
       children: [
         Text(
           displayName,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(deviceId, style: Theme.of(context).textTheme.bodySmall),
@@ -242,10 +251,7 @@ class _DeviceMetadataCard extends StatelessWidget {
 }
 
 class _MetadataBody extends StatelessWidget {
-  const _MetadataBody({
-    required this.info,
-    required this.fallbackName,
-  });
+  const _MetadataBody({required this.info, required this.fallbackName});
 
   final BleDeviceInfo info;
   final String fallbackName;
@@ -259,9 +265,9 @@ class _MetadataBody extends StatelessWidget {
       children: [
         Text(
           'Device metadata',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         ListTile(
