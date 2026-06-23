@@ -64,7 +64,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
   final Map<String, StreamSubscription<dynamic>> _deviceDataSubscriptions = {};
-  final Map<String, StreamSubscription<dynamic>> _deviceConnectionSubscriptions = {};
+  final Map<String, StreamSubscription<dynamic>>
+  _deviceConnectionSubscriptions = {};
 
   void _subscribeAdapterStream() {
     if (_adapterSubscription != null) return;
@@ -530,12 +531,17 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     BleDeviceInfo? existingInfo,
     BleDeviceInfo? newInfo,
   }) {
+    /// Clear Everything When clearDeviceInfo Flag is true
     if (clearDeviceInfo) return null;
-    if (newInfo != null) return newInfo;
-    if (existingInfo == null) return null;
 
-    /// Keep existing info
-    return existingInfo;
+    /// clearDeviceInfo Flag is false || newInfo is not null
+    if (newInfo != null) return newInfo;
+
+    /// clearDeviceInfo Flag is false || existingInfo is not null
+    if (existingInfo != null) return existingInfo;
+
+    /// Everything else is null
+    return null;
   }
 
   Map<String, BleActiveConnection> _removeConnection(

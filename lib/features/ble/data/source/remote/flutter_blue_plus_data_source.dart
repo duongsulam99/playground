@@ -131,6 +131,9 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     final raw = _connectedDevices[deviceId]?.notifyDataStream;
     if (raw == null) return null;
 
+    //TODO: Add stream decoder here
+
+    /// Aggregate device data stream
     return DeviceStreamAggregator(deviceId: deviceId, source: raw).stream;
   }
 
