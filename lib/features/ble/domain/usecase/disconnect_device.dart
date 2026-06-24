@@ -10,7 +10,7 @@ class DisconnectDeviceParams {
 }
 
 class DisconnectDevice implements Usecase<Unit, DisconnectDeviceParams> {
-  DisconnectDevice({required this.repository});
+  const DisconnectDevice({required this.repository});
 
   final BleRepository repository;
 

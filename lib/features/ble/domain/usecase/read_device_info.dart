@@ -10,9 +10,8 @@ class ReadDeviceInfoParams {
   final String deviceId;
 }
 
-class ReadDeviceInfo
-    implements Usecase<BleDeviceInfo, ReadDeviceInfoParams> {
-  ReadDeviceInfo({required this.repository});
+class ReadDeviceInfo implements Usecase<BleDeviceInfo, ReadDeviceInfoParams> {
+  const ReadDeviceInfo({required this.repository});
 
   final BleRepository repository;
 

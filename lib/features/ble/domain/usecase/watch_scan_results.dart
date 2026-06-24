@@ -4,8 +4,8 @@ import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
 
-class WatchScanResults extends StreamUsecase<Map<String, BleDiscoveredDevice>, NoParams>{
-  WatchScanResults({required this.repository});
+class WatchScanResults implements StreamUsecase<Map<String, BleDiscoveredDevice>, NoParams>{
+  const WatchScanResults({required this.repository});
 
   final BleRepository repository;
 

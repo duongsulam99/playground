@@ -4,7 +4,7 @@ import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
 
 class StopScan implements Usecase<Unit, NoParams> {
-  StopScan({required this.repository});
+  const StopScan({required this.repository});
 
   final BleRepository repository;
 

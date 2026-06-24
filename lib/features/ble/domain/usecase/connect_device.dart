@@ -10,9 +10,8 @@ class ConnectDeviceParams {
   final String deviceId;
 }
 
-class ConnectDevice
-    implements Usecase<BleConnectionStatus, ConnectDeviceParams> {
-  ConnectDevice({required this.repository});
+class ConnectDevice implements Usecase<BleConnectionStatus, ConnectDeviceParams> {
+  const ConnectDevice({required this.repository});
 
   final BleRepository repository;
 

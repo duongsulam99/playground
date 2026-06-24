@@ -10,7 +10,7 @@ class WatchDeviceConnectionParams {
 }
 
 class WatchDeviceConnection {
-  WatchDeviceConnection({required this.repository});
+  const WatchDeviceConnection({required this.repository});
 
   final BleRepository repository;
 

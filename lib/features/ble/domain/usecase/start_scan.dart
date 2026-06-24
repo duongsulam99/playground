@@ -11,7 +11,7 @@ class StartScanParams {
 }
 
 class StartScan implements Usecase<Unit, StartScanParams> {
-  StartScan({required this.repository});
+  const StartScan({required this.repository});
 
   final BleRepository repository;
 

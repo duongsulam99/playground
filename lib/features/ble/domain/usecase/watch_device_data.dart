@@ -10,7 +10,7 @@ class WatchDeviceDataParams {
 }
 
 class WatchDeviceData {
-  WatchDeviceData({required this.repository});
+  const WatchDeviceData({required this.repository});
 
   final BleRepository repository;
 
