@@ -6,10 +6,10 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
-import '../../domain/entities/ble_device_info.dart';
-import '../../domain/entities/ble_discovered_device.dart';
-import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
+import '../model/ble_device_info_model.dart';
+import '../model/ble_device_stream_snapshot_model.dart';
+import '../model/ble_discovered_device_model.dart';
 import '../source/remote/ble_remote_data_source.dart';
 
 class BleRepositoryImpl implements BleRepository {
@@ -28,24 +28,24 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults() {
+  Stream<Either<Failure, Map<String, BleDiscoveredDeviceModel>>> watchScanResults() {
     return _remoteDataSource
         .watchScanResults()
-        .map((devices) => Right<Failure, Map<String, BleDiscoveredDevice>>(devices))
+        .map((devices) => Right<Failure, Map<String, BleDiscoveredDeviceModel>>(devices))
         .handleError((Object error, StackTrace stackTrace) {
           throw _mapException(error);
         });
   }
 
   @override
-  Stream<Either<Failure, BleDeviceStreamSnapshot>>? watchDeviceData(
+  Stream<Either<Failure, BleDeviceStreamSnapshotModel>>? watchDeviceData(
     String deviceId,
   ) {
     final stream = _remoteDataSource.watchDeviceData(deviceId);
     if (stream == null) return null;
 
     return stream
-        .map((snapshot) => Right<Failure, BleDeviceStreamSnapshot>(snapshot))
+        .map((snapshot) => Right<Failure, BleDeviceStreamSnapshotModel>(snapshot))
         .handleError((Object error, StackTrace stackTrace) {
           throw _mapException(error);
         });
@@ -108,7 +108,7 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Future<Either<Failure, BleDeviceInfo>> readDeviceInfo(String deviceId) async {
+  Future<Either<Failure, BleDeviceInfoModel>> readDeviceInfo(String deviceId) async {
     try {
       final info = await _remoteDataSource.readDeviceInfo(deviceId);
       return Right(info);

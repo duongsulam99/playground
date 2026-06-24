@@ -7,9 +7,9 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_pro
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../model/ble_device_info.dart';
-import '../helper/device_connection_handler.dart';
-import '../remote/ble_device_remote_data_source.dart';
+import '../../../model/ble_device_info_model.dart';
+import '../../helper/device_connection_handler.dart';
+import '../ble_device_remote_data_source.dart';
 
 class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   FlutterBluePlusPrivateDevice({

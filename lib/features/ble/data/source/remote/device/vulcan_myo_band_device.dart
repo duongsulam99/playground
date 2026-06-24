@@ -4,8 +4,8 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../gatt/myo_band_device_info_reader.dart';
-import '../../model/ble_device_info.dart';
+import '../../../gatt/myo_band_device_info_reader.dart';
+import '../../../model/ble_device_info_model.dart';
 import 'flutter_blue_plus_private_device.dart';
 
 class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {

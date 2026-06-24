@@ -2,7 +2,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
-import '../../model/ble_device_info.dart';
+import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
 
