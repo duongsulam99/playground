@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
@@ -19,26 +21,16 @@ class BleRepositoryImpl implements BleRepository {
 
   @override
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus() {
-    return _remoteDataSource
-        .watchAdapterStatus()
-        .map((status) => Right<Failure, BleAdapterStatus>(status))
-        .handleError((Object error, StackTrace stackTrace) {
-          throw _mapException(error);
-        });
+    return _mapStreamToEither(_remoteDataSource.watchAdapterStatus());
   }
 
   @override
   Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults() {
-    return _remoteDataSource
-        .watchScanResults()
-        .map(
-          (devices) => Right<Failure, Map<String, BleDiscoveredDevice>>(
-            devices.map((key, model) => MapEntry(key, model.toEntity())),
-          ),
-        )
-        .handleError((Object error, StackTrace stackTrace) {
-          throw _mapException(error);
-        });
+    return _mapStreamToEither(
+      _remoteDataSource.watchScanResults().map(
+        (devices) => devices.map((key, model) => MapEntry(key, model.toEntity())),
+      ),
+    );
   }
 
   @override
@@ -48,13 +40,7 @@ class BleRepositoryImpl implements BleRepository {
     final stream = _remoteDataSource.watchDeviceData(deviceId);
     if (stream == null) return null;
 
-    return stream
-        .map((snapshot) {
-          return Right<Failure, BleDeviceStreamSnapshot>(snapshot.toEntity());
-        })
-        .handleError((Object error, StackTrace stackTrace) {
-          throw _mapException(error);
-        });
+    return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
   }
 
   @override
@@ -64,11 +50,7 @@ class BleRepositoryImpl implements BleRepository {
     final stream = _remoteDataSource.watchConnectionStatus(deviceId);
     if (stream == null) return null;
 
-    return stream
-        .map((status) => Right<Failure, BleConnectionStatus>(status))
-        .handleError((Object error, StackTrace stackTrace) {
-          throw _mapException(error);
-        });
+    return _mapStreamToEither(stream);
   }
 
   @override
@@ -121,6 +103,20 @@ class BleRepositoryImpl implements BleRepository {
     } catch (error) {
       return Left(_mapException(error));
     }
+  }
+
+  Stream<Either<Failure, T>> _mapStreamToEither<T>(Stream<T> source) {
+    return source.transform(
+      StreamTransformer<T, Either<Failure, T>>.fromHandlers(
+        /// Handle success data
+        handleData: (data, sink) => sink.add(Right(data)),
+
+        /// Handle errors
+        handleError: (error, stackTrace, sink) {
+          sink.add(Left(_mapException(error)));
+        },
+      ),
+    );
   }
 
   Failure _mapException(Object error) {

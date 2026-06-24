@@ -78,10 +78,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           (status) => add(BleEvent.adapterStatusUpdated(status: status)),
         );
       },
-      onError: (Object error) {
-        if (isClosed) return;
-        add(BleEvent.streamFailed(message: error.toString()));
-      },
     );
   }
 
@@ -95,10 +91,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           (failure) => add(BleEvent.streamFailed(message: failure.message)),
           (devices) => add(BleEvent.scanResultsUpdated(savedDevices: devices)),
         );
-      },
-      onError: (Object error) {
-        if (isClosed) return;
-        add(BleEvent.streamFailed(message: error.toString()));
       },
     );
   }
@@ -422,10 +414,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           ),
         );
       },
-      onError: (Object error) {
-        if (isClosed) return;
-        add(BleEvent.streamFailed(message: error.toString()));
-      },
     );
   }
 
@@ -460,10 +448,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
             }
           },
         );
-      },
-      onError: (Object error) {
-        if (isClosed) return;
-        add(BleEvent.streamFailed(message: error.toString()));
       },
     );
   }
