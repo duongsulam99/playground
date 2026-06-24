@@ -1,16 +1,23 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:vulcan_mobile_playground/core/ble/ble_advertisement_parser.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../domain/entities/ble_discovered_device.dart';
 
-class BleDiscoveredDeviceModel extends BleDiscoveredDevice {
+class BleDiscoveredDeviceModel {
   const BleDiscoveredDeviceModel({
-    required super.id,
-    required super.name,
-    required super.rssi,
-    required super.isConnectable,
-    required super.deviceType,
+    required this.id,
+    required this.name,
+    required this.rssi,
+    required this.isConnectable,
+    required this.deviceType,
   });
+
+  final String id;
+  final String name;
+  final int rssi;
+  final bool isConnectable;
+  final VulcanDeviceType deviceType;
 
   factory BleDiscoveredDeviceModel.fromScanResult(ScanResult result) {
     final advertisementData = result.advertisementData;
@@ -20,9 +27,15 @@ class BleDiscoveredDeviceModel extends BleDiscoveredDevice {
       name: advertisementData.advName,
       rssi: result.rssi,
       isConnectable: advertisementData.connectable,
-
-      /// Specific device type [VulcanDeviceType]
       deviceType: BleAdvertisementParser.parse(advertisementData),
     );
   }
+
+  BleDiscoveredDevice toEntity() => BleDiscoveredDevice(
+    id: id,
+    name: name,
+    rssi: rssi,
+    isConnectable: isConnectable,
+    deviceType: deviceType,
+  );
 }
