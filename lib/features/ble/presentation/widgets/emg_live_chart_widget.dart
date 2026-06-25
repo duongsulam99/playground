@@ -9,12 +9,16 @@ class EmgLiveChartWidget extends StatefulWidget {
     required this.latestSnapshot,
     required this.isStreaming,
     required this.supportsDataStream,
+    required this.emgLower,
+    required this.emgUpper,
     super.key,
   });
 
   final EmgStreamSnapshot? latestSnapshot;
   final bool isStreaming;
   final bool supportsDataStream;
+  final int emgLower;
+  final int emgUpper;
 
   @override
   State<EmgLiveChartWidget> createState() => _EmgLiveChartWidgetState();
@@ -24,9 +28,7 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
   static const _dataLiveLim = 300;
   static const _stepCounter = 0.01;
 
-  final _ch0Signal = <FlSpot>[const FlSpot(0, 0)];
-  final _ch1Signal = <FlSpot>[const FlSpot(0, 0)];
-  final _ch2Signal = <FlSpot>[const FlSpot(0, 0)];
+  final _emgTotalSignal = <FlSpot>[const FlSpot(0, 0)];
 
   double _xValue = 0;
   DateTime? _lastProcessedTimestamp;
@@ -50,17 +52,14 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     final emg0 = voltages.elementAtOrNull(0) ?? 0;
     final emg1 = voltages.elementAtOrNull(1) ?? 0;
     final emg2 = voltages.elementAtOrNull(2) ?? 0;
+    final totaldata = max(0, min(emg0 + emg1 + emg2, 1000)).toDouble();
 
-    while (_ch0Signal.length > _dataLiveLim) {
-      _ch0Signal.removeAt(0);
-      _ch1Signal.removeAt(0);
-      _ch2Signal.removeAt(0);
+    while (_emgTotalSignal.length > _dataLiveLim) {
+      _emgTotalSignal.removeAt(0);
     }
 
     setState(() {
-      _ch0Signal.add(FlSpot(_xValue, emg0));
-      _ch1Signal.add(FlSpot(_xValue, emg1));
-      _ch2Signal.add(FlSpot(_xValue, emg2));
+      _emgTotalSignal.add(FlSpot(_xValue, totaldata));
       _xValue += _stepCounter;
     });
   }
@@ -69,13 +68,7 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     setState(() {
       _xValue = 0;
       _lastProcessedTimestamp = null;
-      _ch0Signal
-        ..clear()
-        ..add(const FlSpot(0, 0));
-      _ch1Signal
-        ..clear()
-        ..add(const FlSpot(0, 0));
-      _ch2Signal
+      _emgTotalSignal
         ..clear()
         ..add(const FlSpot(0, 0));
     });
@@ -108,8 +101,8 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
             LineChartData(
               minY: 0,
               maxY: maxY,
-              minX: _ch0Signal.first.x,
-              maxX: _ch0Signal.last.x,
+              minX: _emgTotalSignal.first.x,
+              maxX: _emgTotalSignal.last.x,
               lineTouchData: const LineTouchData(enabled: false),
               clipData: const FlClipData.all(),
               gridData: FlGridData(
@@ -121,10 +114,29 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
               ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
-                _lineBar(_ch0Signal, Colors.redAccent),
-                _lineBar(_ch1Signal, Colors.blue),
-                _lineBar(_ch2Signal, Colors.yellow),
+                LineChartBarData(
+                  spots: _emgTotalSignal,
+                  dotData: const FlDotData(show: false),
+                  color: Colors.white,
+                  barWidth: 3,
+                ),
               ],
+              extraLinesData: ExtraLinesData(
+                horizontalLines: [
+                  HorizontalLine(
+                    y: widget.emgLower.toDouble(),
+                    color: Colors.green,
+                    dashArray: const [20, 10],
+                    strokeWidth: 2,
+                  ),
+                  HorizontalLine(
+                    y: widget.emgUpper.toDouble(),
+                    color: Colors.orange,
+                    dashArray: const [20, 10],
+                    strokeWidth: 2,
+                  ),
+                ],
+              ),
               titlesData: FlTitlesData(
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
@@ -144,6 +156,15 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     );
   }
 
+  /// Legacy basic mode: scale Y to fit current EMG peak and upper threshold.
+  double _resolveMaxY() {
+    final maxSignalY = _emgTotalSignal.isEmpty
+        ? 0.0
+        : _emgTotalSignal.map((spot) => spot.y).reduce(max);
+    final peak = max(maxSignalY, widget.emgUpper.toDouble());
+    return ((peak ~/ 10) + 1) * 10.0;
+  }
+
   Widget _placeholder(BuildContext context, String message) {
     return AspectRatio(
       aspectRatio: 1.70,
@@ -158,28 +179,6 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
           ),
         ),
       ),
-    );
-  }
-
-  double _resolveMaxY() {
-    final maxVal = max(
-      _maxSpotY(_ch0Signal),
-      max(_maxSpotY(_ch1Signal), _maxSpotY(_ch2Signal)),
-    );
-    return max(10, ((maxVal ~/ 10) + 1) * 10).toDouble();
-  }
-
-  double _maxSpotY(List<FlSpot> points) {
-    if (points.isEmpty) return 0;
-    return points.map((spot) => spot.y).reduce(max);
-  }
-
-  LineChartBarData _lineBar(List<FlSpot> points, Color color) {
-    return LineChartBarData(
-      spots: points,
-      dotData: const FlDotData(show: false),
-      color: color,
-      barWidth: 3,
     );
   }
 

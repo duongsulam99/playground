@@ -54,6 +54,10 @@ class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
           final emgSnapshot = viewState.streamSnapshot is EmgStreamSnapshot
               ? viewState.streamSnapshot! as EmgStreamSnapshot
               : null;
+          final threshold =
+              viewState.connection?.deviceInfo?.thresholdConfig?.threshold;
+          final emgLower = threshold?.elementAtOrNull(1) ?? 30;
+          final emgUpper = threshold?.elementAtOrNull(2) ?? 50;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -79,6 +83,8 @@ class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
                   latestSnapshot: emgSnapshot,
                   isStreaming: viewState.isStreaming,
                   supportsDataStream: viewState.supportsDataStream,
+                  emgLower: emgLower,
+                  emgUpper: emgUpper,
                 ),
               ],
             ),
@@ -327,10 +333,6 @@ class _ThresholdSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final threshold = config.threshold;
-    final emgLower = threshold.elementAtOrNull(1);
-    final emgUpper = threshold.elementAtOrNull(2);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -342,7 +344,6 @@ class _ThresholdSummary extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'EMG lower: ${emgLower ?? '-'} · EMG upper: ${emgUpper ?? '-'}\n'
           'Hand up: ${config.handUp}° · Hand down: ${config.handDown}°\n'
           'Move: ${config.move.toStringAsFixed(2)}',
           style: Theme.of(context).textTheme.bodySmall,
