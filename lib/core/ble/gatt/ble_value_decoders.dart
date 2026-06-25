@@ -1,9 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
+import 'package:flutter_supper_app_core/core.dart';
 
 class BleValueDecoders {
   const BleValueDecoders._();
+
+  static final _logger = const Logger(className: 'BleValueDecoders');
 
   static String decodeUtf8(List<int> bytes) {
     if (bytes.isEmpty) return '';
@@ -29,6 +30,8 @@ class BleValueDecoders {
   static List<double> decodeEmgVoltages(List<int> rawBytes) {
     if (rawBytes.length < 32) return [];
 
+    // _logger.debug('rawBytes', rawBytes);
+
     // Chuyển List<int> → Uint8List → ByteData
     final bytes = Uint8List.fromList(rawBytes);
     final Float32List floats = Float32List.view(
@@ -37,11 +40,29 @@ class BleValueDecoders {
       8, // số float trong gói
     );
 
+    _logger.debug('floats', floats);
+
     // Bắt đầu giải mã
+    // 3 floats đầu là EMG: emg0, emg1, emg2
     final double emg0 = floats[0];
     final double emg1 = floats[1];
     final double emg2 = floats[2];
 
-    return [emg0, emg1, emg2];
+    // float 4 là: Magnitude Gyro
+    final double magGyro = floats[3];
+
+    // float 5 là: Pitch
+    final double pitch = floats[4];
+
+    // float 6 là: Roll
+    final double roll = floats[5];
+
+    // float 7 là: Yaw
+    final double yaw = floats[6];
+
+    // float 8 là: Timestamp
+    final double timestamp = floats[7];
+
+    return [emg0, emg1, emg2, magGyro, pitch, roll, yaw, timestamp];
   }
 }
