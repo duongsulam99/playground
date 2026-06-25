@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
@@ -309,6 +310,42 @@ class _MetadataBody extends StatelessWidget {
             ' · Type: $typeLabel',
           ),
           isThreeLine: true,
+        ),
+        if (info.thresholdConfig != null) ...[
+          const SizedBox(height: 8),
+          _ThresholdSummary(config: info.thresholdConfig!),
+        ],
+      ],
+    );
+  }
+}
+
+class _ThresholdSummary extends StatelessWidget {
+  const _ThresholdSummary({required this.config});
+
+  final RingThresholdConfig config;
+
+  @override
+  Widget build(BuildContext context) {
+    final threshold = config.threshold;
+    final emgLower = threshold.elementAtOrNull(1);
+    final emgUpper = threshold.elementAtOrNull(2);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Threshold config',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'EMG lower: ${emgLower ?? '-'} · EMG upper: ${emgUpper ?? '-'}\n'
+          'Hand up: ${config.handUp}° · Hand down: ${config.handDown}°\n'
+          'Move: ${config.move.toStringAsFixed(2)}',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );

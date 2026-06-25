@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 
 class BleDeviceInfo extends Equatable {
   const BleDeviceInfo({
@@ -8,6 +9,7 @@ class BleDeviceInfo extends Equatable {
     required this.hardwareId,
     required this.resolvedType,
     required this.batteryPercent,
+    this.thresholdConfig,
   });
 
   final String name;
@@ -15,6 +17,7 @@ class BleDeviceInfo extends Equatable {
   final String hardwareId;
   final VulcanDeviceType resolvedType;
   final int batteryPercent;
+  final RingThresholdConfig? thresholdConfig;
 
   @override
   List<Object?> get props => [
@@ -23,5 +26,6 @@ class BleDeviceInfo extends Equatable {
     hardwareId,
     resolvedType,
     batteryPercent,
+    thresholdConfig,
   ];
 }

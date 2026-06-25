@@ -84,10 +84,7 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
   @override
   Widget build(BuildContext context) {
     if (!widget.supportsDataStream) {
-      return _placeholder(
-        context,
-        'No data stream available for this device.',
-      );
+      return _placeholder(context, 'No data stream available for this device.');
     }
 
     if (!widget.isStreaming) {
@@ -116,7 +113,6 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
               lineTouchData: const LineTouchData(enabled: false),
               clipData: const FlClipData.all(),
               gridData: FlGridData(
-                show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) => FlLine(
                   color: Colors.white.withValues(alpha: 0.1),
@@ -155,9 +151,9 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
         child: Center(
           child: Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 
 import '../../domain/entities/ble_device_info.dart';
 
@@ -9,6 +10,7 @@ class BleDeviceInfoModel {
     required this.hardwareId,
     required this.resolvedType,
     required this.batteryPercent,
+    this.thresholdConfig,
   });
 
   final String name;
@@ -16,6 +18,7 @@ class BleDeviceInfoModel {
   final String hardwareId;
   final VulcanDeviceType resolvedType;
   final int batteryPercent;
+  final RingThresholdConfig? thresholdConfig;
 
   BleDeviceInfo toEntity() => BleDeviceInfo(
     name: name,
@@ -23,5 +26,6 @@ class BleDeviceInfoModel {
     hardwareId: hardwareId,
     resolvedType: resolvedType,
     batteryPercent: batteryPercent,
+    thresholdConfig: thresholdConfig,
   );
 }
