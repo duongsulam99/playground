@@ -1,6 +1,3 @@
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-
 /// Advertisement service UUIDs used for BLE scan filtering (Vulcan devices).
 class BleAdvUuids {
   const BleAdvUuids._();
@@ -16,65 +13,4 @@ class BleAdvUuids {
 
   /// Old ring firmware (< 0.7).
   static const String advUUIDRingOld = 'efedd9eb-24a9-492a-b66a-ed8543ee096e';
-
-  static const List<String> allAdvUuids = <String>[
-    advUUIDHand,
-    advUUIDElbow,
-    advUUIDCoaxial,
-    advUUIDRing,
-    advUUIDRingOld,
-    advUUIDSensorbox,
-    advUUIDBleadapter,
-  ];
-
-  /// All Vulcan advertisement UUIDs for unfiltered scan.
-  static List<Guid> allVulcanScanGuids() {
-    return allAdvUuids.map(Guid.new).toList();
-  }
-
-  /// Maps [types] to native scan service UUIDs (deduplicated).
-  static List<Guid> scanGuidsForDeviceTypes(List<VulcanDeviceType> types) {
-    final addedUuids = <String>{};
-    final guids = <Guid>[];
-
-    void addUuid(String uuid) {
-      if (addedUuids.add(uuid)) {
-        guids.add(Guid(uuid));
-      }
-    }
-
-    for (final type in types) {
-      switch (type) {
-        case VulcanDeviceType.hand:
-        case VulcanDeviceType.handOld:
-          addUuid(advUUIDHand);
-        case VulcanDeviceType.elbow:
-          addUuid(advUUIDElbow);
-        case VulcanDeviceType.coaxial:
-          addUuid(advUUIDCoaxial);
-        case VulcanDeviceType.wrist:
-          addUuid(advUUIDElbow);
-        case VulcanDeviceType.ring:
-        case VulcanDeviceType.ringNrf:
-        case VulcanDeviceType.ringDev3ch:
-        case VulcanDeviceType.ringDev6ch:
-        case VulcanDeviceType.ringWrist:
-        case VulcanDeviceType.ringMedical:
-        case VulcanDeviceType.myoLink:
-          addUuid(advUUIDRing);
-          addUuid(advUUIDRingOld);
-        case VulcanDeviceType.sensorBox:
-          addUuid(advUUIDSensorbox);
-        case VulcanDeviceType.elbowAdapter:
-        case VulcanDeviceType.bleAdapter:
-          addUuid(advUUIDBleadapter);
-        case VulcanDeviceType.otherHand:
-        case VulcanDeviceType.electrode:
-        case VulcanDeviceType.none:
-          break;
-      }
-    }
-
-    return guids;
-  }
 }

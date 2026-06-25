@@ -1,6 +1,6 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/ble_adv_uuids.dart';
+import 'package:vulcan_mobile_playground/core/ble/ble_vulcan_profiles.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
@@ -283,10 +283,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   List<Guid> _getScanGuids(List<VulcanDeviceType>? filterTypes) {
     /// If no filter types are provided, return all scan GUIDs
-    if (filterTypes == null) return BleAdvUuids.allVulcanScanGuids();
+    if (filterTypes == null) return BleVulcanProfiles.allVulcanScanGuids();
 
     /// Map filter types to native scan service UUIDs
-    return BleAdvUuids.scanGuidsForDeviceTypes(filterTypes);
+    return BleVulcanProfiles.scanGuidsForDeviceTypes(filterTypes);
   }
 
   BleAdapterStatus _mapAdapterState(BluetoothAdapterState state) {

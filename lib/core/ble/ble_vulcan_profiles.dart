@@ -1,4 +1,8 @@
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:vulcan_mobile_playground/core/ble/ble_adv_uuids.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ble_device_profile.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 
 /// Source-of-truth UUID Vulcan — ported từ va_client BLE.
@@ -16,14 +20,14 @@ class BleVulcanProfiles {
   // Hand (Vulcan Hand 9.9 / 9.7) — nguồn: handProcess.dart
   // ---------------------------------------------------------------------------
 
-  static const handServices = HandBleServices(
+  static const _handServices = HandBleServices(
     // HAND_INFOR_SERVICE — metadata thiết bị (tên, firmware, hardware ID, pin)
     inforServiceUuid: '390950ed-51ff-445f-a6c6-f6a95a6a465f',
     // HAND_CONTROL_SERVICE — điều khiển tay, góc, cài đặt sensor
     controlServiceUuid: '7a59faa0-48b6-49db-80bc-2c94f0c6283b',
   );
 
-  static const handCharacteristics = HandBleCharacteristics(
+  static const _handCharacteristics = HandBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: '76095ead-54c4-4883-88a6-8297ba18211a',
     // NAME_CHAR_UUID — Read/Write | UTF-8 string | tên hiển thị thiết bị
@@ -46,18 +50,24 @@ class BleVulcanProfiles {
     batteryUuid: 'fd932c13-8aab-484d-b8b3-2e56591a7f9d',
   );
 
+  static const hand = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDHand,
+    services: _handServices,
+    characteristics: _handCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // Elbow — nguồn: elbowProcess.dart
   // ---------------------------------------------------------------------------
 
-  static const elbowServices = ElbowBleServices(
+  static const _elbowServices = ElbowBleServices(
     // ELBOW_INFOR_SERVICE — metadata thiết bị
     inforServiceUuid: 'cfb227d4-4fa1-11ee-be56-0242ac120002',
     // ELBOW_CONTROL_SERVICE — điều khiển + sensor binding
     controlServiceUuid: '546afe6a-6299-11ee-8c99-0242ac120002',
   );
 
-  static const elbowCharacteristics = ElbowBleCharacteristics(
+  static const _elbowCharacteristics = ElbowBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: '01621cb0-979a-4f74-8920-1c6ff6eb3e97',
     // NAME_UUID — Read/Write | UTF-8 string | tên hiển thị
@@ -78,11 +88,17 @@ class BleVulcanProfiles {
     connectUuid: 'f15421bd-25be-48a5-98c2-9aeed640bac6',
   );
 
+  static const elbow = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDElbow,
+    services: _elbowServices,
+    characteristics: _elbowCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // Coaxial (Partner Hand BLE) — nguồn: coaxialProcess.dart
   // ---------------------------------------------------------------------------
 
-  static const coaxialServices = CoaxialBleServices(
+  static const _coaxialServices = CoaxialBleServices(
     // COAXIAL_INFOR_SERVICE — metadata thiết bị
     inforServiceUuid: '9d9db9d1-cd4e-4a4c-a391-ab35f79b74ef',
     // COAXIAL_CONTROL_SERVICE — điều khiển + sensor binding
@@ -91,7 +107,7 @@ class BleVulcanProfiles {
     smpServiceUuid: '8D53DC1D-1DB7-4CD3-868B-8A527460AA84',
   );
 
-  static const coaxialCharacteristics = CoaxialBleCharacteristics(
+  static const _coaxialCharacteristics = CoaxialBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: 'fff8ba54-fa86-49cb-afea-20c370f8dccd',
     // NAME_CHAR_UUID — Read/Write | UTF-8 string | tên hiển thị
@@ -108,11 +124,17 @@ class BleVulcanProfiles {
     batteryUuid: '97e119d2-383c-4af0-80fd-b16b60611619',
   );
 
+  static const coaxial = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDCoaxial,
+    services: _coaxialServices,
+    characteristics: _coaxialCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // Wrist — nguồn: wristProcess.dart (UUID map gần giống Elbow)
   // ---------------------------------------------------------------------------
 
-  static const wristServices = WristBleServices(
+  static const _wristServices = WristBleServices(
     // WRIST_INFOR_SERVICE — metadata thiết bị
     inforServiceUuid: 'cfb227d4-4fa1-11ee-be56-0242ac120002',
     // WRIST_CONTROL_SERVICE — điều khiển + sensor binding
@@ -121,7 +143,7 @@ class BleVulcanProfiles {
     smpServiceUuid: '8D53DC1D-1DB7-4CD3-868B-8A527460AA84',
   );
 
-  static const wristCharacteristics = WristBleCharacteristics(
+  static const _wristCharacteristics = WristBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: '01621cb0-979a-4f74-8920-1c6ff6eb3e97',
     // NAME_UUID — Read/Write | UTF-8 string | tên hiển thị
@@ -142,11 +164,17 @@ class BleVulcanProfiles {
     connectUuid: 'f15421bd-25be-48a5-98c2-9aeed640bac6',
   );
 
+  static const wrist = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDElbow,
+    services: _wristServices,
+    characteristics: _wristCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // Ring / MyoBand — nguồn: ringProcess.dart, ringThreshold.dart, ringSync.dart
   // ---------------------------------------------------------------------------
 
-  static const ringServices = RingBleServices(
+  static const _ringServices = RingBleServices(
     // RING_SERVICE — service chính Myoband
     ringServiceUuid: 'db1df223-4020-4c5a-930c-1989ea04991f',
     // SENSOR_SERVICE — legacy ring firmware <0.7 (advertising cũ)
@@ -155,7 +183,7 @@ class BleVulcanProfiles {
     smpServiceUuid: '8d53dc1d-1db7-4cd3-868b-8a527460aa84',
   );
 
-  static const ringCharacteristics = RingBleCharacteristics(
+  static const _ringCharacteristics = RingBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: '149f93ef-7481-4536-8f75-50b5b55ab058',
     // NAME_CHAR_UUID — Read/Write | UTF-8 string | tên hiển thị thiết bị
@@ -190,18 +218,25 @@ class BleVulcanProfiles {
     settingUuid: '54a46f3b-4f3a-48ee-8dca-f42358b7483e',
   );
 
+  static const ring = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDRing,
+    additionalAdvUuids: [BleAdvUuids.advUUIDRingOld],
+    services: _ringServices,
+    characteristics: _ringCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // SensorBox — nguồn: sensorboxProcess.dart
   // ---------------------------------------------------------------------------
 
-  static const sensorBoxServices = SensorBoxBleServices(
+  static const _sensorBoxServices = SensorBoxBleServices(
     // SENSORBOX_SERVICE — service chính Sensorbox
     sensorBoxServiceUuid: 'ffee1404-bbaa-9988-7766-554433221100',
     // SENSORBOX_INFOR_SERVICE — GAP 0x1800 (device name chuẩn BLE)
     inforServiceUuid: '1800',
   );
 
-  static const sensorBoxCharacteristics = SensorBoxBleCharacteristics(
+  static const _sensorBoxCharacteristics = SensorBoxBleCharacteristics(
     // NAME_CHAR_UUID (GAP 0x2A00) — Read | UTF-8 string | tên thiết bị chuẩn BLE
     nameCharUuid: '2a00',
     // STATE_CONTROL_UUID — Notify | 3 bytes control[0..2] | stream trạng thái điều khiển sensor
@@ -210,18 +245,24 @@ class BleVulcanProfiles {
     batteryUuid: 'ffee2806-bbaa-9988-7766-554433221100',
   );
 
+  static const sensorBox = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDSensorbox,
+    services: _sensorBoxServices,
+    characteristics: _sensorBoxCharacteristics,
+  );
+
   // ---------------------------------------------------------------------------
   // BLE Adapter (Electrode) — nguồn: bleadapterProcess.dart
   // ---------------------------------------------------------------------------
 
-  static const bleAdapterServices = BleAdapterBleServices(
+  static const _bleAdapterServices = BleAdapterBleServices(
     // BLEADAPTER_INFOR_SERVICE — metadata thiết bị (cùng UUID family với Elbow/Wrist)
     inforServiceUuid: 'cfb227d4-4fa1-11ee-be56-0242ac120002',
     // BLEADAPTER_CONTROL_SERVICE — điều khiển adapter
     controlServiceUuid: '546afe6a-6299-11ee-8c99-0242ac120002',
   );
 
-  static const bleAdapterCharacteristics = BleAdapterBleCharacteristics(
+  static const _bleAdapterCharacteristics = BleAdapterBleCharacteristics(
     // OTA_UUID — Read | UTF-8 string | phiên bản firmware
     otaUuid: '01621cb0-979a-4f74-8920-1c6ff6eb3e97',
     // NAME_CHAR_UUID — Read/Write | UTF-8 string | tên hiển thị
@@ -237,7 +278,58 @@ class BleVulcanProfiles {
     // BATTERY_UUID — Read/Notify | Read: UTF-8 int; Notify: byte[0] | mức pin
     batteryUuid: 'e18abb38-4f9c-11ee-be56-0242ac120002',
   );
+
+  static const bleAdapter = BleDeviceProfile(
+    advUuid: BleAdvUuids.advUUIDBleadapter,
+    services: _bleAdapterServices,
+    characteristics: _bleAdapterCharacteristics,
+  );
+
+  /// Tất cả profile GATT đã đăng ký.
+  static const List<BleDeviceProfile> all = [
+    hand,
+    elbow,
+    coaxial,
+    wrist,
+    ring,
+    sensorBox,
+    bleAdapter,
+  ];
+
+  /// Tất cả advertisement UUIDs cho scan không lọc.
+  static List<Guid> allVulcanScanGuids() {
+    return List.generate(all.length, (index) => Guid(all[index].advUuid));
+    // return BleAdvUuids.allAdvUuids.map(Guid.new).toList();
+  }
+
+  /// Map [types] sang native scan service UUIDs (deduplicated).
+  static List<Guid> scanGuidsForDeviceTypes(List<VulcanDeviceType> types) {
+    final addedUuids = <String>{};
+    final guids = <Guid>[];
+
+    void addUuid(String uuid) {
+      if (addedUuids.add(uuid)) {
+        guids.add(Guid(uuid));
+      }
+    }
+
+    for (final type in types) {
+      final profile = type.profile;
+      if (profile == null) continue;
+
+      for (final uuid in profile.allAdvUuids) {
+        addUuid(uuid);
+      }
+
+      // elbowAdapter: scan-only, không có GATT profile
+      if (type == VulcanDeviceType.elbowAdapter) {
+        addUuid(BleAdvUuids.advUUIDBleadapter);
+      }
+    }
+
+    return guids;
+  }
 }
 
 /// Backward-compatible alias while migrating call sites.
-typedef BleVulcanUuids = BleVulcanProfiles;
+// typedef BleVulcanUuids = BleVulcanProfiles;
