@@ -40,23 +40,29 @@ class BleDeviceStreamPanel extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    if (snapshot != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Frames: ${snapshot!.frameCount}'),
-          Text('Total bytes: ${snapshot!.totalBytes}'),
-          Text('FPS: ${snapshot!.framesPerSecond}'),
-          Text('Last frame: ${snapshot!.lastFrameLength} bytes'),
-          const SizedBox(height: 4),
-          Text(
-            snapshot!.hexPreview,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
+    final currentSnapshot = snapshot;
+    if (currentSnapshot != null) {
+      return switch (currentSnapshot) {
+        EmgStreamSnapshot(:final voltages, :final rawBytes) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('EMG channels: ${voltages.length}'),
+            if (voltages.isNotEmpty) ...[
+              Text('CH0: ${voltages.elementAtOrNull(0) ?? '-'}'),
+              Text('CH1: ${voltages.elementAtOrNull(1) ?? '-'}'),
+              Text('CH2: ${voltages.elementAtOrNull(2) ?? '-'}'),
+            ],
+            Text('Raw bytes: ${rawBytes.length}'),
+            const SizedBox(height: 4),
+            Text(
+              _formatHexPreview(rawBytes),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+              ),
             ),
-          ),
-        ],
-      );
+          ],
+        ),
+      };
     }
 
     if (connection?.status.isConnected != true) {
@@ -78,5 +84,19 @@ class BleDeviceStreamPanel extends StatelessWidget {
         color: Colors.grey,
       ),
     );
+  }
+
+  String _formatHexPreview(List<int> bytes, {int maxBytes = 32}) {
+    final limit = bytes.length < maxBytes ? bytes.length : maxBytes;
+    final preview = bytes
+        .take(limit)
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join(' ');
+
+    if (bytes.length > maxBytes) {
+      return '$preview …';
+    }
+
+    return preview;
   }
 }

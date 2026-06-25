@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import '../data/source/stream/ble_stream_decoder_factory.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/ble_device_data_source_factory.dart';
 import '../data/source/remote/ble_remote_data_source.dart';
@@ -20,9 +21,13 @@ void initBleInjection(GetIt sl) {
   if (sl.isRegistered<BleBloc>()) return;
 
   sl.registerFactory(BleDeviceDataSourceFactory.new);
+  sl.registerFactory(BleStreamDecoderFactory.new);
 
   sl.registerLazySingleton<BleRemoteDataSource>(
-    () => FlutterBluePlusDataSource(deviceFactory: sl()),
+    () => FlutterBluePlusDataSource(
+      deviceFactory: sl(),
+      decoderFactory: sl(),
+    ),
   );
 
   sl.registerLazySingleton<BleRepository>(

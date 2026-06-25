@@ -1,32 +1,25 @@
-import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 
-class BleDeviceStreamSnapshot extends Equatable {
+@immutable
+sealed class BleDeviceStreamSnapshot {
+  final String deviceId;
+  final DateTime timestamp;
+
   const BleDeviceStreamSnapshot({
     required this.deviceId,
-    required this.frameCount,
-    required this.totalBytes,
-    required this.framesPerSecond,
-    required this.lastFrameLength,
-    required this.hexPreview,
-    required this.updatedAt,
+    required this.timestamp,
   });
+}
 
-  final String deviceId;
-  final int frameCount;
-  final int totalBytes;
-  final int framesPerSecond;
-  final int lastFrameLength;
-  final String hexPreview;
-  final DateTime updatedAt;
+@immutable
+final class EmgStreamSnapshot extends BleDeviceStreamSnapshot {
+  final List<double> voltages;
+  final List<int> rawBytes;
 
-  @override
-  List<Object?> get props => [
-    deviceId,
-    frameCount,
-    totalBytes,
-    framesPerSecond,
-    lastFrameLength,
-    hexPreview,
-    updatedAt,
-  ];
+  const EmgStreamSnapshot({
+    required super.deviceId,
+    required super.timestamp,
+    required this.voltages,
+    required this.rawBytes,
+  });
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../../model/ble_device_stream_snapshot_model.dart';
+import 'device_stream_metrics.dart';
 
 class DeviceStreamAggregator {
   DeviceStreamAggregator({
@@ -17,8 +17,8 @@ class DeviceStreamAggregator {
   final Duration throttleInterval;
   final int hexPreviewMaxBytes;
 
-  Stream<BleDeviceStreamSnapshotModel> get stream {
-    late final StreamController<BleDeviceStreamSnapshotModel> controller;
+  Stream<DeviceStreamMetrics> get stream {
+    late final StreamController<DeviceStreamMetrics> controller;
     StreamSubscription<List<int>>? subscription;
     Timer? throttleTimer;
 
@@ -36,7 +36,7 @@ class DeviceStreamAggregator {
       );
 
       controller.add(
-        BleDeviceStreamSnapshotModel(
+        DeviceStreamMetrics(
           deviceId: deviceId,
           frameCount: frameCount,
           totalBytes: totalBytes,
@@ -64,7 +64,7 @@ class DeviceStreamAggregator {
       });
     }
 
-    controller = StreamController<BleDeviceStreamSnapshotModel>(
+    controller = StreamController<DeviceStreamMetrics>(
       onListen: () {
         subscription = source.listen(
           (frame) {

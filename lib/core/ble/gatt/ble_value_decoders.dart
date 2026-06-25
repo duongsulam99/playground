@@ -24,22 +24,24 @@ class BleValueDecoders {
     return hardwareId.trim();
   }
 
-  List<double> decodeEMG3chPacket(List<int> data) {
-    // x x x x | x x x x | x x x x | x x x x
-    // channel_0, channel_1, channel_2, timestring
-    // data is in Float32 format
+  /// Trả về 3 kênh voltage. Tham khảo logic legacy:
+  /// ringCalibEMG.dart (Float32List.view, floats[0..2] = emg0/emg1/emg2)
+  static List<double> decodeEmgVoltages(List<int> rawBytes) {
+    if (rawBytes.length < 32) return [];
 
-    /// Check data length
-    if (data.length != 16) return [];
+    // Chuyển List<int> → Uint8List → ByteData
+    final bytes = Uint8List.fromList(rawBytes);
+    final Float32List floats = Float32List.view(
+      bytes.buffer,
+      bytes.offsetInBytes,
+      8, // số float trong gói
+    );
 
-    /// Convert to ByteData
-    final byteData = ByteData.sublistView(Uint8List.fromList(data));
+    // Bắt đầu giải mã
+    final double emg0 = floats[0];
+    final double emg1 = floats[1];
+    final double emg2 = floats[2];
 
-    // return [channel0, channel1, channel2, timestamp];
-    return [
-      byteData.getFloat32(0, Endian.little),
-      byteData.getFloat32(4, Endian.little),
-      byteData.getFloat32(8, Endian.little),
-    ];
+    return [emg0, emg1, emg2];
   }
 }

@@ -9,15 +9,19 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
-import '../helper/device_stream_aggregator.dart';
+import '../stream/ble_stream_decoder_factory.dart';
 import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';
 import 'ble_remote_data_source.dart';
 
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
-  FlutterBluePlusDataSource({required this._deviceFactory});
+  FlutterBluePlusDataSource({
+    required this._deviceFactory,
+    required this._decoderFactory,
+  });
 
   final BleDeviceDataSourceFactory _deviceFactory;
+  final BleStreamDecoderFactory _decoderFactory;
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
   final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
   final Map<String, BluetoothDevice> _bluetoothDevices = {};
@@ -128,13 +132,22 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
-    final raw = _connectedDevices[deviceId]?.notifyDataStream;
-    if (raw == null) return null;
+    final deviceSource = _connectedDevices[deviceId];
+    final raw = deviceSource?.notifyDataStream;
+    if (deviceSource == null || raw == null) return null;
 
-    //TODO: Add stream decoder here
+    final decoder = _decoderFactory.create(deviceSource.deviceType);
+    if (decoder == null) {
+      throw BleException(
+        'No stream decoder for ${deviceSource.deviceType.name}',
+        deviceId: deviceId,
+      );
+    }
 
-    /// Aggregate device data stream
-    return DeviceStreamAggregator(deviceId: deviceId, source: raw).stream;
+    return raw.map(
+      (bytes) =>
+          decoder.decode(deviceId: deviceId, rawBytes: List<int>.from(bytes)),
+    );
   }
 
   @override

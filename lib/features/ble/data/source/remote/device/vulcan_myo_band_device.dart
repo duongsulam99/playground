@@ -62,7 +62,10 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     _isStreamingSignal = false;
 
     try {
+      /// Write start command to open signal stream
       await writeData(BleAdapterKey.signal, utf8.encode('255'));
+
+      /// Start listening to signal
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
 
       _isStreamingSignal = true;
@@ -83,6 +86,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     if (!_isStreamingSignal || characteristics.isEmpty) return;
 
     try {
+      /// Write stop command to close signal stream
       await writeData(BleAdapterKey.signal, utf8.encode('000'));
     } catch (e) {
       _logger.warning(

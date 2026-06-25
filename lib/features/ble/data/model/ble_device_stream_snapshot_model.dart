@@ -1,31 +1,34 @@
 import '../../domain/entities/ble_device_stream_snapshot.dart';
 
-class BleDeviceStreamSnapshotModel {
-  const BleDeviceStreamSnapshotModel({
+sealed class BleDeviceStreamSnapshotModel {
+  String get deviceId;
+  DateTime get timestamp;
+
+  BleDeviceStreamSnapshot toEntity();
+}
+
+final class EmgStreamSnapshotModel extends BleDeviceStreamSnapshotModel {
+  EmgStreamSnapshotModel({
     required this.deviceId,
-    required this.frameCount,
-    required this.totalBytes,
-    required this.framesPerSecond,
-    required this.lastFrameLength,
-    required this.hexPreview,
-    required this.updatedAt,
+    required this.timestamp,
+    required this.voltages,
+    required this.rawBytes,
   });
 
+  @override
   final String deviceId;
-  final int frameCount;
-  final int totalBytes;
-  final int framesPerSecond;
-  final int lastFrameLength;
-  final String hexPreview;
-  final DateTime updatedAt;
 
-  BleDeviceStreamSnapshot toEntity() => BleDeviceStreamSnapshot(
+  @override
+  final DateTime timestamp;
+
+  final List<double> voltages;
+  final List<int> rawBytes;
+
+  @override
+  EmgStreamSnapshot toEntity() => EmgStreamSnapshot(
     deviceId: deviceId,
-    frameCount: frameCount,
-    totalBytes: totalBytes,
-    framesPerSecond: framesPerSecond,
-    lastFrameLength: lastFrameLength,
-    hexPreview: hexPreview,
-    updatedAt: updatedAt,
+    timestamp: timestamp,
+    voltages: voltages,
+    rawBytes: rawBytes,
   );
 }
