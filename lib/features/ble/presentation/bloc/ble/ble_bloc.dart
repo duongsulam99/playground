@@ -14,7 +14,9 @@ import '../../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../../domain/usecase/connect_device.dart';
 import '../../../domain/usecase/disconnect_device.dart';
 import '../../../domain/usecase/read_device_info.dart';
+import '../../../domain/usecase/start_device_stream.dart';
 import '../../../domain/usecase/start_scan.dart';
+import '../../../domain/usecase/stop_device_stream.dart';
 import '../../../domain/usecase/stop_scan.dart';
 import '../../../domain/usecase/watch_adapter_status.dart';
 import '../../../domain/usecase/watch_device_connection.dart';
@@ -36,6 +38,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required this._connectDevice,
     required this._disconnectDevice,
     required this._readDeviceInfo,
+    required this._startDeviceStream,
+    required this._stopDeviceStream,
   }) : super(const BleState()) {
     on<BleScanFilterUpdated>(_onScanFilterUpdated);
     on<BleStartScan>(_onStartScan);
@@ -47,6 +51,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     on<BleStreamFailed>(_onStreamFailed);
     on<BleConnectRequested>(_onConnectRequested);
     on<BleDisconnectRequested>(_onDisconnectRequested);
+    on<BleStartDeviceStream>(_onStartDeviceStream);
+    on<BleStopDeviceStream>(_onStopDeviceStream);
 
     _subscribeAdapterStream();
   }
@@ -60,6 +66,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final ConnectDevice _connectDevice;
   final DisconnectDevice _disconnectDevice;
   final ReadDeviceInfo _readDeviceInfo;
+  final StartDeviceStream _startDeviceStream;
+  final StopDeviceStream _stopDeviceStream;
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
@@ -290,7 +298,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       ),
     );
 
-    _subscribeDeviceDataStream(deviceId);
     _subscribeDeviceConnectionStream(deviceId);
 
     if (!_isMyoBandDevice(deviceId)) return;
@@ -343,6 +350,10 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   ) async {
     final deviceId = event.deviceId;
 
+    if (state.isDeviceStreaming(deviceId)) {
+      await _stopDeviceStreaming(deviceId, emit);
+    }
+
     emit(
       state.copyWith(
         status: BleStatus.loading,
@@ -387,8 +398,93 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     if (connection == null) return;
     if (connection.status == BleConnectionStatus.disconnecting) return;
 
+    if (state.isDeviceStreaming(deviceId)) {
+      await _stopDeviceStreaming(deviceId, emit, stopHardware: false);
+    }
+
     await _clearDeviceSubscriptions(deviceId);
     _emitDeviceDisconnected(emit, deviceId);
+  }
+
+  Future<void> _onStartDeviceStream(
+    BleStartDeviceStream event,
+    Emitter<BleState> emit,
+  ) async {
+    final deviceId = event.deviceId;
+
+    if (!state.isDeviceConnected(deviceId)) return;
+    if (state.isDeviceStreaming(deviceId)) return;
+
+    emit(state.copyWith(status: BleStatus.loading, errorMessage: null));
+
+    final result = await _startDeviceStream(
+      StartDeviceStreamParams(deviceId: deviceId),
+    );
+
+    if (result.isLeft()) {
+      final failure = result.fold((left) => left, (_) => throw StateError(''));
+      emit(
+        state.copyWith(
+          errorMessage: failure.message,
+          status: BleStatus.failure,
+        ),
+      );
+      return;
+    }
+
+    _subscribeDeviceDataStream(deviceId);
+
+    emit(
+      state.copyWith(
+        streamingDeviceIds: {...state.streamingDeviceIds, deviceId},
+        status: BleStatus.success,
+        errorMessage: null,
+      ),
+    );
+  }
+
+  Future<void> _onStopDeviceStream(
+    BleStopDeviceStream event,
+    Emitter<BleState> emit,
+  ) async {
+    await _stopDeviceStreaming(event.deviceId, emit);
+  }
+
+  Future<void> _stopDeviceStreaming(
+    String deviceId,
+    Emitter<BleState> emit, {
+    bool stopHardware = true,
+  }) async {
+    if (!state.isDeviceStreaming(deviceId)) return;
+
+    await _unsubscribeDeviceDataStream(deviceId);
+
+    emit(
+      state.copyWith(
+        streamingDeviceIds: Set<String>.from(state.streamingDeviceIds)
+          ..remove(deviceId),
+        deviceStreamSnapshots: _removeStreamSnapshot(
+          state.deviceStreamSnapshots,
+          deviceId,
+        ),
+      ),
+    );
+
+    if (!stopHardware) return;
+
+    final result = await _stopDeviceStream(
+      StopDeviceStreamParams(deviceId: deviceId),
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          errorMessage: failure.message,
+          status: BleStatus.failure,
+        ),
+      ),
+      (_) => emit(state.copyWith(status: BleStatus.success, errorMessage: null)),
+    );
   }
 
   bool _isMyoBandDevice(String deviceId) {
@@ -477,6 +573,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           state.deviceStreamSnapshots,
           deviceId,
         ),
+        streamingDeviceIds: Set<String>.from(state.streamingDeviceIds)
+          ..remove(deviceId),
         status: BleStatus.success,
         errorMessage: null,
       ),
@@ -556,6 +654,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         .where((connection) => connection.status.isConnected)
         .map((connection) => connection.deviceId)
         .toList();
+
+    for (final deviceId in state.streamingDeviceIds.toList()) {
+      await _stopDeviceStream(StopDeviceStreamParams(deviceId: deviceId));
+      await _unsubscribeDeviceDataStream(deviceId);
+    }
 
     for (final deviceId in connectedDeviceIds) {
       await _disconnectDevice(DisconnectDeviceParams(deviceId: deviceId));

@@ -105,6 +105,26 @@ class BleRepositoryImpl implements BleRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> startDeviceStream(String deviceId) async {
+    try {
+      await _remoteDataSource.startDeviceStream(deviceId);
+      return const Right(unit);
+    } catch (error) {
+      return Left(_mapException(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> stopDeviceStream(String deviceId) async {
+    try {
+      await _remoteDataSource.stopDeviceStream(deviceId);
+      return const Right(unit);
+    } catch (error) {
+      return Left(_mapException(error));
+    }
+  }
+
   Stream<Either<Failure, T>> _mapStreamToEither<T>(Stream<T> source) {
     return source.transform(
       StreamTransformer<T, Either<Failure, T>>.fromHandlers(

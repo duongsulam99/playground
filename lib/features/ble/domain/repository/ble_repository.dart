@@ -32,4 +32,8 @@ abstract class BleRepository {
   Future<Either<Failure, Unit>> disconnect(String deviceId);
 
   Future<Either<Failure, BleDeviceInfo>> readDeviceInfo(String deviceId);
+
+  Future<Either<Failure, Unit>> startDeviceStream(String deviceId);
+
+  Future<Either<Failure, Unit>> stopDeviceStream(String deviceId);
 }

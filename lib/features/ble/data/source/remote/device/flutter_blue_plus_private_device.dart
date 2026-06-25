@@ -204,6 +204,17 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   }
 
   @override
+  Future<void> startDeviceStream() {
+    throw BleException(
+      'Device stream is not supported for ${deviceType.name}',
+      deviceId: deviceId,
+    );
+  }
+
+  @override
+  Future<void> stopDeviceStream() async {}
+
+  @override
   Future<void> disconnect() async {
     try {
       await onNotifyStopListening?.call();

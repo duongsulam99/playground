@@ -24,4 +24,8 @@ abstract class BleRemoteDataSource {
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
 
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
+
+  Future<void> startDeviceStream(String deviceId);
+
+  Future<void> stopDeviceStream(String deviceId);
 }

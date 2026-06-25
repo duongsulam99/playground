@@ -10,6 +10,7 @@ abstract class BleState with _$BleState {
     @Default({}) Map<String, BleDiscoveredDevice> savedDevices,
     @Default({}) Map<String, BleActiveConnection> activeConnections,
     @Default({}) Map<String, BleDeviceStreamSnapshot> deviceStreamSnapshots,
+    @Default({}) Set<String> streamingDeviceIds,
     String? errorMessage,
     @Default(BleStatus.initial) BleStatus status,
     List<VulcanDeviceType>? scanFilterTypes,
@@ -54,6 +55,9 @@ extension BleStateX on BleState {
 
   bool isDeviceConnected(String deviceId) =>
       activeConnectionFor(deviceId)?.status.isConnected ?? false;
+
+  bool isDeviceStreaming(String deviceId) =>
+      streamingDeviceIds.contains(deviceId);
 
   BleConnectionStatus connectionStatusFor(String deviceId) =>
       activeConnectionFor(deviceId)?.status ?? BleConnectionStatus.disconnected;

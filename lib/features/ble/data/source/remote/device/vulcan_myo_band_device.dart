@@ -1,6 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/keys/adapter/key.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
@@ -19,14 +18,13 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   Stream<List<int>>? get notifyDataStream => watchDeviceData();
 
   @override
-  Future<void> Function()? get onNotifyStopListening => _stopSignalListening;
+  Future<void> Function()? get onNotifyStopListening => stopSignalStream;
 
   @override
-  Future<BleConnectionStatus> connect() async {
-    final status = await super.connect();
-    await _setupNotifyListening();
-    return status;
-  }
+  Future<void> startDeviceStream() => startSignalStream();
+
+  @override
+  Future<void> stopDeviceStream() => stopSignalStream();
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo() async {
@@ -58,40 +56,49 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> _setupNotifyListening() async {
+  Future<void> startSignalStream() async {
     _isStreamingSignal = false;
+    ensureConnected();
 
     try {
-      /// Write start command to open signal stream
+      /// SET START SIGNAL STREAM TO DEVICE
       await writeData(BleAdapterKey.signal, utf8.encode('255'));
 
-      /// Start listening to signal
+      /// START LISTENING STREAM DATA FROM DEVICE
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
 
       _isStreamingSignal = true;
-      _logger.debug(
-        'setupNotifyListening',
-        'Notify stream ready for $deviceId',
-      );
+      _logger.debug('startSignalStream', 'Notify stream ready for $deviceId');
     } catch (e, st) {
       _isStreamingSignal = false;
       _logger.error(
-        'setupNotifyListening',
+        'startSignalStream',
         'Failed to setup MyoBand notify stream: $e\n$st',
+      );
+
+      /// THROW EXCEPTION
+      if (e is BleException) rethrow;
+      throw BleException(
+        'Failed to start MyoBand signal stream: $e',
+        deviceId: deviceId,
       );
     }
   }
 
-  Future<void> _stopSignalListening() async {
+  Future<void> stopSignalStream() async {
     if (!_isStreamingSignal || characteristics.isEmpty) return;
 
     try {
-      /// Write stop command to close signal stream
       await writeData(BleAdapterKey.signal, utf8.encode('000'));
     } catch (e) {
       _logger.warning(
-        'stopSignalListening',
+        'stopSignalStream',
         'Failed to stop MyoBand signal for $deviceId: $e',
+      );
+      if (e is BleException) rethrow;
+      throw BleException(
+        'Failed to stop MyoBand signal stream: $e',
+        deviceId: deviceId,
       );
     } finally {
       _isStreamingSignal = false;

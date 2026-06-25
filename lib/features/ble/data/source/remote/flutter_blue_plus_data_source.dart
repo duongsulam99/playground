@@ -132,11 +132,16 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
-    final deviceSource = _connectedDevices[deviceId];
-    final raw = deviceSource?.notifyDataStream;
-    if (deviceSource == null || raw == null) return null;
+    final deviceSource = _findDeviceConnected(deviceId);
 
+    /// RETURN NULL IF DEVICE DOESN'T SUPPORT STREAM
+    final raw = deviceSource.notifyDataStream;
+    if (raw == null) return null;
+
+    /// CREATE STREAM DECODER
     final decoder = _decoderFactory.create(deviceSource.deviceType);
+
+
     if (decoder == null) {
       throw BleException(
         'No stream decoder for ${deviceSource.deviceType.name}',
@@ -144,16 +149,15 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       );
     }
 
+    /// RETURN STREAM
     return raw.map(
-      (bytes) =>
-          decoder.decode(deviceId: deviceId, rawBytes: List<int>.from(bytes)),
+      (bytes) => decoder.decode(deviceId: deviceId, rawBytes: bytes),
     );
   }
 
   @override
   Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId) {
-    final deviceSource = _connectedDevices[deviceId];
-    if (deviceSource == null) return null;
+    final deviceSource = _findDeviceConnected(deviceId);
 
     return deviceSource.watchConnectionStatus().map((status) {
       if (status == BleConnectionStatus.disconnected) {
@@ -165,13 +169,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
-    final deviceSource = _connectedDevices[deviceId];
-    if (deviceSource == null) {
-      throw BleNotConnectedException(
-        'Device $deviceId is not connected',
-        deviceId: deviceId,
-      );
-    }
+    final deviceSource = _findDeviceConnected(deviceId);
 
     try {
       return await deviceSource.readDeviceInfo();
@@ -183,13 +181,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<void> disconnect(String deviceId) async {
-    final deviceSource = _connectedDevices.remove(deviceId);
-    if (deviceSource == null) {
-      throw BleNotConnectedException(
-        'Device $deviceId is not connected',
-        deviceId: deviceId,
-      );
-    }
+    final deviceSource = _findDeviceConnected(deviceId);
+
+    /// REMOVE DEVICE FROM CONNECTED MAP
+    _connectedDevices.remove(deviceId);
 
     try {
       await deviceSource.disconnect();
@@ -197,6 +192,46 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       if (e is BleException) rethrow;
       throw BleException('Failed to disconnect: $e', deviceId: deviceId);
     }
+  }
+
+  @override
+  Future<void> startDeviceStream(String deviceId) async {
+    final deviceSource = _findDeviceConnected(deviceId);
+
+    try {
+      await deviceSource.startDeviceStream();
+    } catch (e) {
+      if (e is BleException) rethrow;
+      throw BleException('Failed to start device stream: $e', deviceId: deviceId);
+    }
+  }
+
+  @override
+  Future<void> stopDeviceStream(String deviceId) async {
+    final deviceSource = _findDeviceConnected(deviceId);
+
+    try {
+      await deviceSource.stopDeviceStream();
+    } catch (e) {
+      if (e is BleException) rethrow;
+      throw BleException('Failed to stop device stream: $e', deviceId: deviceId);
+    }
+  }
+
+  BleDeviceRemoteDataSource _findDeviceConnected(String deviceId) {
+    /// FIND DEVICE IN LINKED MAP O(1) WITH ID
+    final deviceSource = _connectedDevices[deviceId];
+
+    /// THROW EXCEPTION
+    if (deviceSource == null) {
+      throw BleNotConnectedException(
+        'Device $deviceId is not connected',
+        deviceId: deviceId,
+      );
+    }
+
+    /// RETURN DEVICE
+    return deviceSource;
   }
 
   BluetoothDevice _resolveBluetoothDevice(String deviceId) {

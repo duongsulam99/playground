@@ -16,6 +16,12 @@ sealed class BleEvent with _$BleEvent {
   const factory BleEvent.disconnectRequested({required String deviceId}) =
       BleDisconnectRequested;
 
+  const factory BleEvent.startDeviceStream({required String deviceId}) =
+      BleStartDeviceStream;
+
+  const factory BleEvent.stopDeviceStream({required String deviceId}) =
+      BleStopDeviceStream;
+
   const factory BleEvent.adapterStatusUpdated({
     required BleAdapterStatus status,
   }) = BleAdapterStatusUpdated;

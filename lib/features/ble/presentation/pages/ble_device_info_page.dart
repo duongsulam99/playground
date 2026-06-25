@@ -2,26 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/core/package/line_chart_core_widget.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_device_stream_panel.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_live_chart_widget.dart';
 
 import '../bloc/ble/ble_bloc.dart';
 
-class BleDeviceInfoPage extends StatelessWidget {
+class BleDeviceInfoPage extends StatefulWidget {
   const BleDeviceInfoPage({required this.deviceId, super.key});
 
   final String deviceId;
+
+  @override
+  State<BleDeviceInfoPage> createState() => _BleDeviceInfoPageState();
+}
+
+class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
+  BleBloc? _bleBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startStreamIfNeeded());
+  }
+
+  @override
+  void dispose() {
+    _bleBloc?.add(BleEvent.stopDeviceStream(deviceId: widget.deviceId));
+    super.dispose();
+  }
+
+  void _startStreamIfNeeded() {
+    _bleBloc ??= context.read<BleBloc>();
+    final state = _bleBloc!.state;
+    final viewState = _DeviceInfoViewState.from(state, widget.deviceId);
+
+    if (viewState.supportsDataStream && viewState.isConnected) {
+      _bleBloc!.add(BleEvent.startDeviceStream(deviceId: widget.deviceId));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Device info')),
       body: BlocSelector<BleBloc, BleState, _DeviceInfoViewState>(
-        selector: (state) => _DeviceInfoViewState.from(state, deviceId),
+        selector: (state) => _DeviceInfoViewState.from(state, widget.deviceId),
         builder: (context, viewState) {
+          final emgSnapshot = viewState.streamSnapshot is EmgStreamSnapshot
+              ? viewState.streamSnapshot! as EmgStreamSnapshot
+              : null;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -33,7 +65,7 @@ class BleDeviceInfoPage extends StatelessWidget {
                 ],
                 _DeviceHeader(
                   displayName: viewState.displayName,
-                  deviceId: deviceId,
+                  deviceId: widget.deviceId,
                   connectionStatus: viewState.connectionStatus,
                 ),
                 const SizedBox(height: 16),
@@ -42,19 +74,10 @@ class BleDeviceInfoPage extends StatelessWidget {
                   displayName: viewState.displayName,
                 ),
                 const SizedBox(height: 16),
-                BleDeviceStreamPanel(
-                  connection: viewState.connection,
-                  snapshot: viewState.streamSnapshot,
-                  displayName: viewState.displayName,
+                EmgLiveChartWidget(
+                  latestSnapshot: emgSnapshot,
+                  isStreaming: viewState.isStreaming,
                   supportsDataStream: viewState.supportsDataStream,
-                ),
-
-                const AspectRatio(
-                  aspectRatio: 1.70,
-                  child: Padding(
-                    padding: EdgeInsetsGeometry.all(16),
-                    child: LineChartCoreWidget(),
-                  ),
                 ),
               ],
             ),
@@ -73,6 +96,7 @@ class _DeviceInfoViewState {
     required this.streamSnapshot,
     required this.supportsDataStream,
     required this.isConnected,
+    required this.isStreaming,
   });
 
   final String displayName;
@@ -81,6 +105,7 @@ class _DeviceInfoViewState {
   final BleDeviceStreamSnapshot? streamSnapshot;
   final bool supportsDataStream;
   final bool isConnected;
+  final bool isStreaming;
 
   factory _DeviceInfoViewState.from(BleState state, String deviceId) {
     final connection = state.activeConnectionFor(deviceId);
@@ -100,6 +125,7 @@ class _DeviceInfoViewState {
       streamSnapshot: state.streamSnapshotFor(deviceId),
       supportsDataStream: supportsDataStream,
       isConnected: connection?.status.isConnected ?? false,
+      isStreaming: state.isDeviceStreaming(deviceId),
     );
   }
 
@@ -111,7 +137,8 @@ class _DeviceInfoViewState {
         connection == other.connection &&
         streamSnapshot == other.streamSnapshot &&
         supportsDataStream == other.supportsDataStream &&
-        isConnected == other.isConnected;
+        isConnected == other.isConnected &&
+        isStreaming == other.isStreaming;
   }
 
   @override
@@ -122,6 +149,7 @@ class _DeviceInfoViewState {
     streamSnapshot,
     supportsDataStream,
     isConnected,
+    isStreaming,
   );
 }
 

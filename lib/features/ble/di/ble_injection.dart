@@ -9,7 +9,9 @@ import '../domain/repository/ble_repository.dart';
 import '../domain/usecase/connect_device.dart';
 import '../domain/usecase/disconnect_device.dart';
 import '../domain/usecase/read_device_info.dart';
+import '../domain/usecase/start_device_stream.dart';
 import '../domain/usecase/start_scan.dart';
+import '../domain/usecase/stop_device_stream.dart';
 import '../domain/usecase/stop_scan.dart';
 import '../domain/usecase/watch_adapter_status.dart';
 import '../domain/usecase/watch_device_connection.dart';
@@ -43,6 +45,8 @@ void initBleInjection(GetIt sl) {
   sl.registerFactory(() => ConnectDevice(repository: sl()));
   sl.registerFactory(() => DisconnectDevice(repository: sl()));
   sl.registerFactory(() => ReadDeviceInfo(repository: sl()));
+  sl.registerFactory(() => StartDeviceStream(repository: sl()));
+  sl.registerFactory(() => StopDeviceStream(repository: sl()));
 
   sl.registerLazySingleton<BleBloc>(
     () => BleBloc(
@@ -55,6 +59,8 @@ void initBleInjection(GetIt sl) {
       connectDevice: sl(),
       disconnectDevice: sl(),
       readDeviceInfo: sl(),
+      startDeviceStream: sl(),
+      stopDeviceStream: sl(),
     ),
   );
 
