@@ -6,6 +6,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
 
 import 'ble_package_accumulator.dart';
+import 'stream_monitor.dart';
 
 class DeviceConnectionHandler {
   DeviceConnectionHandler({
@@ -16,7 +17,6 @@ class DeviceConnectionHandler {
   final String deviceId;
   final BluetoothDevice _bleDevice;
   final BlePacketAccumulator _accumulator = BlePacketAccumulator();
-  final Logger _logger = const Logger(className: 'DeviceConnectionHandler');
 
   // CONFIGURATION
   static const int DEFAULT_MTU = 23;
@@ -26,6 +26,9 @@ class DeviceConnectionHandler {
   StreamSubscription<List<int>>? _notificationSubscription;
 
   StreamController<List<int>>? _cleanDataStreamController;
+
+  final Logger _logger = const Logger(className: 'DeviceConnectionHandler');
+  final _streamMonitor = EMGStreamMonitor();
 
   Future<void> _queueLock = Future.value();
   int _currentMtu = DEFAULT_MTU;
@@ -122,6 +125,9 @@ class DeviceConnectionHandler {
         _logger.error('startListeningData', 'Notify stream error: $error');
       },
     );
+
+    _streamMonitor.stop();
+    _streamMonitor.start(cleanDataStream.map((_) => 0.0));
   }
 
   Future<void> writeData(
@@ -154,6 +160,7 @@ class DeviceConnectionHandler {
     _notificationSubscription?.cancel();
     _notificationSubscription = null;
     _accumulator.clear();
+    _streamMonitor.stop();
     _cleanDataStreamController?.close();
     _cleanDataStreamController = null;
 

@@ -6,7 +6,7 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_live_chart_widget.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_widget.dart';
 
 import '../bloc/ble/ble_bloc.dart';
 
