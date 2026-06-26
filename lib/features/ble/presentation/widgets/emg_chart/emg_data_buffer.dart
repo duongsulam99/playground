@@ -4,6 +4,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+// This Buffer is used to store EMG data from the BLE Stream.
+// It is a circular buffer with a fixed size.
+// It is used to display EMG data in a chart.
+// Improve performance by using Float64List instead of List<double> about 1.5x faster.
 class EMGDataBuffer extends ChangeNotifier {
   EMGDataBuffer({this.maxDisplayPoints = 200}) {
     _ringBuffer = Float64List(maxDisplayPoints);

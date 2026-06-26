@@ -26,7 +26,7 @@ class EmgLiveChartWidget extends StatefulWidget {
 }
 
 class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
-  static const _dataLiveLim = 300;
+  // static const _dataLiveLim = 200;
   static const _stepCounter = 0.01;
   static const _emgSignalCeiling = 1000;
 
@@ -36,7 +36,7 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
   @override
   void initState() {
     super.initState();
-    _buffer = EMGDataBuffer(maxDisplayPoints: _dataLiveLim);
+    _buffer = EMGDataBuffer();
     _buffer.startUiFlush();
   }
 
@@ -108,10 +108,7 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     final startX = (buffer.totalPointsWritten - count) * _stepCounter;
 
     return List.generate(count, (index) {
-      return FlSpot(
-        startX + index * _stepCounter,
-        buffer.valueAt(index),
-      );
+      return FlSpot(startX + index * _stepCounter, buffer.valueAt(index));
     });
   }
 
