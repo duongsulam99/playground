@@ -100,11 +100,19 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     return ((resolvedMaxY ~/ 10) + 1) * 10.0;
   }
 
-  List<FlSpot> _spotsFromBuffer(List<double> values) {
-    return List.generate(
-      values.length,
-      (index) => FlSpot(index * _stepCounter, values[index]),
-    );
+  List<FlSpot> _spotsFromBuffer(EMGDataBuffer buffer) {
+    final count = buffer.displayCount;
+    if (count == 0) return const [];
+
+    // Trục X cuộn liên tục: điểm mới nhất luôn có x lớn hơn điểm cũ.
+    final startX = (buffer.totalPointsWritten - count) * _stepCounter;
+
+    return List.generate(count, (index) {
+      return FlSpot(
+        startX + index * _stepCounter,
+        buffer.valueAt(index),
+      );
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -130,19 +138,17 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     return ListenableBuilder(
       listenable: _buffer,
       builder: (context, _) {
-        final values = _buffer.points;
-
-        if (values.isEmpty) {
+        if (_buffer.displayCount == 0) {
           return const _EmgChartPlaceholder(message: 'Waiting for EMG data…');
         }
 
         final maxY = _computeRoundedMaxY(
-          peakSignalY: values.reduce(max),
+          peakSignalY: _buffer.peakValue,
           upperThreshold: widget.emgUpper.toDouble(),
         );
 
         return _EmgLiveLineChartView(
-          spots: _spotsFromBuffer(values),
+          spots: _spotsFromBuffer(_buffer),
           maxY: maxY,
           emgLower: widget.emgLower,
           emgUpper: widget.emgUpper,
@@ -197,57 +203,59 @@ class _EmgLiveLineChartView extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: LineChart(
-            duration: Duration.zero,
-            LineChartData(
-              minY: 0,
-              maxY: maxY,
-              minX: spots.first.x,
-              maxX: spots.last.x,
-              lineTouchData: const LineTouchData(enabled: false),
-              clipData: const FlClipData.all(),
-              gridData: FlGridData(
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  strokeWidth: 1,
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: spots,
-                  dotData: const FlDotData(show: false),
-                  color: Colors.red,
-                  barWidth: 3,
-                ),
-              ],
-              extraLinesData: ExtraLinesData(
-                horizontalLines: [
-                  HorizontalLine(
-                    y: emgLower.toDouble(),
-                    color: Colors.green,
-                    dashArray: const [20, 10],
+          child: RepaintBoundary(
+            child: LineChart(
+              duration: Duration.zero,
+              LineChartData(
+                minY: 0,
+                maxY: maxY,
+                minX: spots.first.x,
+                maxX: spots.last.x,
+                lineTouchData: const LineTouchData(enabled: false),
+                clipData: const FlClipData.all(),
+                gridData: FlGridData(
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    strokeWidth: 1,
                   ),
-                  HorizontalLine(
-                    y: emgUpper.toDouble(),
-                    color: Colors.orange,
-                    dashArray: const [20, 10],
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    dotData: const FlDotData(show: false),
+                    color: Colors.red,
+                    barWidth: 3,
                   ),
                 ],
-              ),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 36,
-                    getTitlesWidget: (value, meta) =>
-                        _EmgChartLeftTitle(value: value, meta: meta),
-                  ),
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    HorizontalLine(
+                      y: emgLower.toDouble(),
+                      color: Colors.green,
+                      dashArray: const [20, 10],
+                    ),
+                    HorizontalLine(
+                      y: emgUpper.toDouble(),
+                      color: Colors.orange,
+                      dashArray: const [20, 10],
+                    ),
+                  ],
                 ),
-                rightTitles: const AxisTitles(),
-                topTitles: const AxisTitles(),
-                bottomTitles: const AxisTitles(),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 36,
+                      getTitlesWidget: (value, meta) =>
+                          _EmgChartLeftTitle(value: value, meta: meta),
+                    ),
+                  ),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
+                  bottomTitles: const AxisTitles(),
+                ),
               ),
             ),
           ),
