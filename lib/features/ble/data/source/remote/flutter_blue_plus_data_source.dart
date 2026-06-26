@@ -141,13 +141,14 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     /// CREATE STREAM DECODER
     final decoder = _decoderFactory.create(deviceSource.deviceType);
 
-
     if (decoder == null) {
       throw BleException(
         'No stream decoder for ${deviceSource.deviceType.name}',
         deviceId: deviceId,
       );
     }
+
+    //TODO: Add Isolate to decode stream
 
     /// RETURN STREAM
     return raw.map(
@@ -202,7 +203,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       await deviceSource.startDeviceStream();
     } catch (e) {
       if (e is BleException) rethrow;
-      throw BleException('Failed to start device stream: $e', deviceId: deviceId);
+      throw BleException(
+        'Failed to start device stream: $e',
+        deviceId: deviceId,
+      );
     }
   }
 
@@ -214,7 +218,10 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
       await deviceSource.stopDeviceStream();
     } catch (e) {
       if (e is BleException) rethrow;
-      throw BleException('Failed to stop device stream: $e', deviceId: deviceId);
+      throw BleException(
+        'Failed to stop device stream: $e',
+        deviceId: deviceId,
+      );
     }
   }
 
