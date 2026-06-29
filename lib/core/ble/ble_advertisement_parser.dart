@@ -13,6 +13,10 @@ class BleAdvertisementParser {
       final uuidStr = element.str.toLowerCase();
 
       switch (uuidStr) {
+        // TODO: [Add New Device] Step 3: Thêm case so khớp UUID quảng cáo của thiết bị mới tại đây.
+        // Nếu thiết bị cần định danh động (như Ring/Elbow qua serviceData),
+        // gọi hàm phân giải hardwareId từ Adv.
+
         case BleAdvUuids.advUUIDHand:
           return VulcanDeviceType.hand;
 
@@ -42,14 +46,23 @@ class BleAdvertisementParser {
     return VulcanDeviceType.none;
   }
 
-  static VulcanDeviceType _hardwareIdFromAdv(AdvertisementData advertisementData) {
+  /// Function return Vulcan device type from Advertisement data
+  /// NOTE: Chỉ dùng để phân biệt remoteId trong Advertisement data
+  static VulcanDeviceType _hardwareIdFromAdv(
+    AdvertisementData advertisementData,
+  ) {
+    /// Parse serviceData from advertisement
     final serviceData = advertisementData.serviceData[Guid(deviceTypeUuid)];
     if (serviceData == null) return VulcanDeviceType.none;
 
+    /// Parse hardwareId from serviceData
     var hardwareId = String.fromCharCodes(serviceData);
+
+    /// Remove null bytes
     hardwareId = hardwareId.replaceAll('\x00', '').trim().toUpperCase();
     if (hardwareId.isEmpty) return VulcanDeviceType.none;
 
+    /// return Vulcan device type from hardwareId
     return VulcanDeviceType.fromHardwareId(hardwareId);
   }
 }

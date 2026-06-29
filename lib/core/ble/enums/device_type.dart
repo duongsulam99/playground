@@ -114,6 +114,9 @@ enum VulcanDeviceType {
     genName: null,
     isHasBle: false,
   ),
+  // TODO: [Add New Device] Step 2: Thêm giá trị enum cho thiết bị mới tại đây
+
+  // (profile định nghĩa ở Step 1, hardwareId, isHasBle, ...).
   none(name: 'None', hardwareId: 'NONE', genName: null, isHasBle: false);
 
   const VulcanDeviceType({
@@ -155,6 +158,8 @@ extension VulcanDeviceTypeX on VulcanDeviceType {
       VulcanDeviceType.ringWrist ||
       VulcanDeviceType.ringMedical ||
       VulcanDeviceType.myoLink => true,
+      // TODO: [Add New Device] Step 2b: Nếu thiết bị mới thuộc nhóm MyoBand,
+      // bổ sung case return true tại đây để kích hoạt luồng xử lý EMG.
       _ => false,
     };
   }
