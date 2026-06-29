@@ -142,6 +142,7 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
     }
 
     final services = await _discoverServices();
+
     _collectCharacteristics(
       services: services,
       servicesProfile: servicesProfile,
@@ -179,10 +180,7 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
         ),
       );
 
-    _logger.debug(
-      'collectCharacteristics',
-      'Collected ${_characteristics.length} characteristics',
-    );
+    _logger.debug('COLLECTED', '${_characteristics.length} characteristics');
 
     if (_characteristics.isEmpty) {
       throw BleException(

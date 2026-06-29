@@ -29,7 +29,10 @@ class BleGattCollector {
       final serviceUuid = service.serviceUuid.toString();
 
       /// If not in profile, skip it
-      if (!serviceProfileUuids.contains(serviceUuid)) continue;
+      if (!serviceProfileUuids.contains(serviceUuid)) {
+        logger.debug('service', 'Service $serviceUuid not in profile');
+        continue;
+      }
 
       /// If in profile, loop through every characteristic
       for (final characteristic in service.characteristics) {
@@ -39,7 +42,15 @@ class BleGattCollector {
         );
 
         /// If characteristic UUID is not in profile, SKIP
-        if (key == null || key.isEmpty) continue;
+        if (key == null || key.isEmpty) {
+          logger.debug(
+            'CHARACTERISTIC NOT FOUND',
+            '${characteristic.uuid} not in profile and skipped',
+          );
+          continue;
+        }
+
+        logger.debug('FOUND', '[$key] for $serviceUuid');
 
         /// Add characteristic to map
         characteristics[key] = characteristic;
