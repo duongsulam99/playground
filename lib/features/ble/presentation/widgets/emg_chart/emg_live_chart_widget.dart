@@ -26,7 +26,6 @@ class EmgLiveChartWidget extends StatefulWidget {
 }
 
 class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
-  // static const _dataLiveLim = 200;
   static const _stepCounter = 0.01;
   static const _emgSignalCeiling = 1000;
 
