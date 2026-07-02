@@ -1,13 +1,10 @@
-import 'dart:math';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_data_buffer.dart';
 
-class EmgLiveChartWidget extends StatefulWidget {
+class EmgLiveChartWidget extends StatelessWidget {
   const EmgLiveChartWidget({
-    required this.latestSnapshot,
+    required this.buffer,
     required this.isStreaming,
     required this.supportsDataStream,
     required this.emgLower,
@@ -15,87 +12,21 @@ class EmgLiveChartWidget extends StatefulWidget {
     super.key,
   });
 
-  final EmgStreamSnapshot? latestSnapshot;
+  final EMGDataBuffer buffer;
   final bool isStreaming;
   final bool supportsDataStream;
   final int emgLower;
   final int emgUpper;
 
-  @override
-  State<EmgLiveChartWidget> createState() => _EmgLiveChartWidgetState();
-}
-
-class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
   static const _stepCounter = 0.01;
-  static const _emgSignalCeiling = 1000;
-
-  late final EMGDataBuffer _buffer;
-  DateTime? _lastProcessedTimestamp;
-
-  @override
-  void initState() {
-    super.initState();
-    _buffer = EMGDataBuffer();
-    _buffer.startUiFlush();
-  }
-
-  @override
-  void dispose() {
-    _buffer.dispose();
-    super.dispose();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Snapshot ingestion — push vào buffer, không setState
-  // ---------------------------------------------------------------------------
-
-  @override
-  void didUpdateWidget(covariant EmgLiveChartWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (!widget.isStreaming || widget.latestSnapshot == null) {
-      if (oldWidget.isStreaming && oldWidget.latestSnapshot != null) {
-        _resetBuffers();
-      }
-      return;
-    }
-
-    final snapshot = widget.latestSnapshot!;
-    if (_isDuplicateSnapshot(snapshot)) return;
-
-    _lastProcessedTimestamp = snapshot.timestamp;
-    _buffer.push(_computeTotalEmg(snapshot));
-  }
-
-  bool _isDuplicateSnapshot(EmgStreamSnapshot snapshot) {
-    return _lastProcessedTimestamp == snapshot.timestamp;
-  }
-
-  double _computeTotalEmg(EmgStreamSnapshot snapshot) {
-    final voltages = snapshot.voltages;
-    final channelSum =
-        (voltages.elementAtOrNull(0) ?? 0) +
-        (voltages.elementAtOrNull(1) ?? 0) +
-        (voltages.elementAtOrNull(2) ?? 0);
-
-    return max(0, min(channelSum, _emgSignalCeiling)).toDouble();
-  }
-
-  void _resetBuffers() {
-    _buffer.stopProcessing();
-    _lastProcessedTimestamp = null;
-    _buffer.startUiFlush();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Trục Y
-  // ---------------------------------------------------------------------------
 
   double _computeRoundedMaxY({
     required double peakSignalY,
     required double upperThreshold,
   }) {
-    final resolvedMaxY = max(peakSignalY, upperThreshold);
+    final resolvedMaxY = peakSignalY > upperThreshold
+        ? peakSignalY
+        : upperThreshold;
     return ((resolvedMaxY ~/ 10) + 1) * 10.0;
   }
 
@@ -103,7 +34,6 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     final count = buffer.displayCount;
     if (count == 0) return const [];
 
-    // Trục X cuộn liên tục: điểm mới nhất luôn có x lớn hơn điểm cũ.
     final startX = (buffer.totalPointsWritten - count) * _stepCounter;
 
     return List.generate(count, (index) {
@@ -111,43 +41,35 @@ class _EmgLiveChartWidgetState extends State<EmgLiveChartWidget> {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // UI
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
-    if (!widget.supportsDataStream) {
+    if (!supportsDataStream) {
       return const _EmgChartPlaceholder(
         message: 'No data stream available for this device.',
       );
     }
 
-    if (!widget.isStreaming) {
+    if (!isStreaming) {
       return const _EmgChartPlaceholder(message: 'Stream is not active.');
     }
 
-    if (widget.latestSnapshot == null) {
-      return const _EmgChartPlaceholder(message: 'Waiting for EMG data…');
-    }
-
     return ListenableBuilder(
-      listenable: _buffer,
+      listenable: buffer,
       builder: (context, _) {
-        if (_buffer.displayCount == 0) {
+        if (buffer.displayCount == 0) {
           return const _EmgChartPlaceholder(message: 'Waiting for EMG data…');
         }
 
         final maxY = _computeRoundedMaxY(
-          peakSignalY: _buffer.peakValue,
-          upperThreshold: widget.emgUpper.toDouble(),
+          peakSignalY: buffer.peakValue,
+          upperThreshold: emgUpper.toDouble(),
         );
 
         return _EmgLiveLineChartView(
-          spots: _spotsFromBuffer(_buffer),
+          spots: _spotsFromBuffer(buffer),
           maxY: maxY,
-          emgLower: widget.emgLower,
-          emgUpper: widget.emgUpper,
+          emgLower: emgLower,
+          emgUpper: emgUpper,
         );
       },
     );

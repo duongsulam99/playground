@@ -30,10 +30,8 @@ sealed class BleEvent with _$BleEvent {
     required Map<String, BleDiscoveredDevice> savedDevices,
   }) = BleScanResultsUpdated;
 
-  const factory BleEvent.deviceStreamUpdated({
-    required String deviceId,
-    required BleDeviceStreamSnapshot snapshot,
-  }) = BleDeviceStreamUpdated;
+  const factory BleEvent.listenDeviceData({required String deviceId}) =
+      BleListenDeviceData;
 
   const factory BleEvent.connectionLost({required String deviceId}) =
       BleConnectionLost;

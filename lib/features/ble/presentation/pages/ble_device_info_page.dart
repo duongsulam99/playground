@@ -5,8 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_stream_snapshot.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_widget.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_section.dart';
 
 import '../bloc/ble/ble_bloc.dart';
 
@@ -51,9 +50,6 @@ class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
       body: BlocSelector<BleBloc, BleState, _DeviceInfoViewState>(
         selector: (state) => _DeviceInfoViewState.from(state, widget.deviceId),
         builder: (context, viewState) {
-          final emgSnapshot = viewState.streamSnapshot is EmgStreamSnapshot
-              ? viewState.streamSnapshot! as EmgStreamSnapshot
-              : null;
           final threshold =
               viewState.connection?.deviceInfo?.thresholdConfig?.threshold;
           final emgLower = threshold?.elementAtOrNull(1) ?? 30;
@@ -79,10 +75,8 @@ class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
                   displayName: viewState.displayName,
                 ),
                 const SizedBox(height: 16),
-                EmgLiveChartWidget(
-                  latestSnapshot: emgSnapshot,
-                  isStreaming: viewState.isStreaming,
-                  supportsDataStream: viewState.supportsDataStream,
+                EmgLiveChartSection(
+                  deviceId: widget.deviceId,
                   emgLower: emgLower,
                   emgUpper: emgUpper,
                 ),
@@ -100,7 +94,6 @@ class _DeviceInfoViewState {
     required this.displayName,
     required this.connectionStatus,
     required this.connection,
-    required this.streamSnapshot,
     required this.supportsDataStream,
     required this.isConnected,
     required this.isStreaming,
@@ -109,7 +102,6 @@ class _DeviceInfoViewState {
   final String displayName;
   final BleConnectionStatus connectionStatus;
   final BleActiveConnection? connection;
-  final BleDeviceStreamSnapshot? streamSnapshot;
   final bool supportsDataStream;
   final bool isConnected;
   final bool isStreaming;
@@ -129,7 +121,6 @@ class _DeviceInfoViewState {
       displayName: displayName,
       connectionStatus: state.connectionStatusFor(deviceId),
       connection: connection,
-      streamSnapshot: state.streamSnapshotFor(deviceId),
       supportsDataStream: supportsDataStream,
       isConnected: connection?.status.isConnected ?? false,
       isStreaming: state.isDeviceStreaming(deviceId),
@@ -142,7 +133,6 @@ class _DeviceInfoViewState {
         displayName == other.displayName &&
         connectionStatus == other.connectionStatus &&
         connection == other.connection &&
-        streamSnapshot == other.streamSnapshot &&
         supportsDataStream == other.supportsDataStream &&
         isConnected == other.isConnected &&
         isStreaming == other.isStreaming;
@@ -153,7 +143,6 @@ class _DeviceInfoViewState {
     displayName,
     connectionStatus,
     connection,
-    streamSnapshot,
     supportsDataStream,
     isConnected,
     isStreaming,

@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:dartz/dartz.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_constant.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
 
@@ -46,13 +49,13 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     on<BleStopScan>(_onStopScan);
     on<BleAdapterStatusUpdated>(_onAdapterStatusUpdated);
     on<BleScanResultsUpdated>(_onScanResultsUpdated);
-    on<BleDeviceStreamUpdated>(_onDeviceStreamUpdated);
     on<BleConnectionLost>(_onConnectionLost);
     on<BleStreamFailed>(_onStreamFailed);
     on<BleConnectRequested>(_onConnectRequested);
     on<BleDisconnectRequested>(_onDisconnectRequested);
     on<BleStartDeviceStream>(_onStartDeviceStream);
     on<BleStopDeviceStream>(_onStopDeviceStream);
+    on<BleListenDeviceData>(_onListenDeviceData, transformer: concurrent());
 
     _subscribeAdapterStream();
   }
@@ -71,36 +74,35 @@ class BleBloc extends Bloc<BleEvent, BleState> {
 
   StreamSubscription<dynamic>? _adapterSubscription;
   StreamSubscription<dynamic>? _scanResultsSubscription;
-  final Map<String, StreamSubscription<dynamic>> _deviceDataSubscriptions = {};
   final Map<String, StreamSubscription<dynamic>>
   _deviceConnectionSubscriptions = {};
 
   void _subscribeAdapterStream() {
     if (_adapterSubscription != null) return;
 
-    _adapterSubscription = _watchAdapterStatus(const NoParams()).listen(
-      (result) {
-        if (isClosed) return;
-        result.fold(
-          (failure) => add(BleEvent.streamFailed(message: failure.message)),
-          (status) => add(BleEvent.adapterStatusUpdated(status: status)),
-        );
-      },
-    );
+    _adapterSubscription = _watchAdapterStatus(const NoParams()).listen((
+      result,
+    ) {
+      if (isClosed) return;
+      result.fold(
+        (failure) => add(BleEvent.streamFailed(message: failure.message)),
+        (status) => add(BleEvent.adapterStatusUpdated(status: status)),
+      );
+    });
   }
 
   void _subscribeScanResultsStream() {
     if (_scanResultsSubscription != null) return;
 
-    _scanResultsSubscription = _watchScanResults(const NoParams()).listen(
-      (result) {
-        if (isClosed) return;
-        result.fold(
-          (failure) => add(BleEvent.streamFailed(message: failure.message)),
-          (devices) => add(BleEvent.scanResultsUpdated(savedDevices: devices)),
-        );
-      },
-    );
+    _scanResultsSubscription = _watchScanResults(const NoParams()).listen((
+      result,
+    ) {
+      if (isClosed) return;
+      result.fold(
+        (failure) => add(BleEvent.streamFailed(message: failure.message)),
+        (devices) => add(BleEvent.scanResultsUpdated(savedDevices: devices)),
+      );
+    });
   }
 
   Future<void> _unsubscribeScanResultsStream() async {
@@ -191,21 +193,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       state.copyWith(
         savedDevices: event.savedDevices,
         status: BleStatus.success,
-      ),
-    );
-  }
-
-  Future<void> _onDeviceStreamUpdated(
-    BleDeviceStreamUpdated event,
-    Emitter<BleState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        status: BleStatus.success,
-        deviceStreamSnapshots: {
-          ...state.deviceStreamSnapshots,
-          event.deviceId: event.snapshot,
-        },
       ),
     );
   }
@@ -411,15 +398,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     Emitter<BleState> emit,
   ) async {
     final deviceId = event.deviceId;
-
-    if (!state.isDeviceConnected(deviceId)) return;
-    if (state.isDeviceStreaming(deviceId)) return;
+    if (!_canStartDeviceStream(deviceId)) return;
 
     emit(state.copyWith(status: BleStatus.loading, errorMessage: null));
 
-    final result = await _startDeviceStream(
-      StartDeviceStreamParams(deviceId: deviceId),
-    );
+    final result = await _startHardwareStream(deviceId);
 
     if (result.isLeft()) {
       final failure = result.fold((left) => left, (_) => throw StateError(''));
@@ -432,15 +415,46 @@ class BleBloc extends Bloc<BleEvent, BleState> {
       return;
     }
 
-    _subscribeDeviceDataStream(deviceId);
+    /// Add the device to the list of streaming devices
+    emit(_stateWithStreamingStarted(deviceId));
 
-    emit(
-      state.copyWith(
-        streamingDeviceIds: {...state.streamingDeviceIds, deviceId},
-        status: BleStatus.success,
-        errorMessage: null,
+    /// Start listening for device data
+    add(BleEvent.listenDeviceData(deviceId: deviceId));
+  }
+
+  Future<void> _onListenDeviceData(
+    BleListenDeviceData event,
+    Emitter<BleState> emit,
+  ) async {
+    final deviceId = event.deviceId;
+    if (!state.isDeviceStreaming(deviceId)) return;
+
+    final stream = _resolveDeviceDataStream(deviceId);
+    if (stream == null) return;
+
+    await emit.forEach<Either<Failure, BleDeviceStreamSnapshot>>(
+      stream,
+      onData: (result) {
+        // Stop listening if the device is no longer streaming
+        if (!state.streamingDeviceIds.contains(deviceId)) return state;
+
+        // Update the snapshot
+        return result.fold(
+          _stateWithStreamFailure,
+          (snapshot) => _stateWithStreamSnapshot(deviceId, snapshot),
+        );
+      },
+      onError: (error, _) => state.copyWith(
+        errorMessage: error.toString(),
+        status: BleStatus.failure,
       ),
     );
+
+    // If Stream ended unexpectedly
+    // While still marked as streaming — cleanup state.
+    if (state.streamingDeviceIds.contains(deviceId)) {
+      emit(_stateWithStreamingStopped(deviceId));
+    }
   }
 
   Future<void> _onStopDeviceStream(
@@ -457,24 +471,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   }) async {
     if (!state.isDeviceStreaming(deviceId)) return;
 
-    await _unsubscribeDeviceDataStream(deviceId);
-
-    emit(
-      state.copyWith(
-        streamingDeviceIds: Set<String>.from(state.streamingDeviceIds)
-          ..remove(deviceId),
-        deviceStreamSnapshots: _removeStreamSnapshot(
-          state.deviceStreamSnapshots,
-          deviceId,
-        ),
-      ),
-    );
+    emit(_stateWithStreamingStopped(deviceId));
 
     if (!stopHardware) return;
 
-    final result = await _stopDeviceStream(
-      StopDeviceStreamParams(deviceId: deviceId),
-    );
+    final result = await _stopHardwareStream(deviceId);
 
     result.fold(
       (failure) => emit(
@@ -483,7 +484,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           status: BleStatus.failure,
         ),
       ),
-      (_) => emit(state.copyWith(status: BleStatus.success, errorMessage: null)),
+      (_) =>
+          emit(state.copyWith(status: BleStatus.success, errorMessage: null)),
     );
   }
 
@@ -491,38 +493,79 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     return state.savedDevices[deviceId]?.deviceType.isMyoBandFamily ?? false;
   }
 
-  void _subscribeDeviceDataStream(String deviceId) {
-    if (_deviceDataSubscriptions.containsKey(deviceId)) return;
+  // ---------------------------------------------------------------------------
+  // Device stream: guards
+  // ---------------------------------------------------------------------------
 
-    final stream = _watchDeviceData(WatchDeviceDataParams(deviceId: deviceId));
-    if (stream == null) return;
+  bool _canStartDeviceStream(String deviceId) {
+    return state.isDeviceConnected(deviceId) &&
+        !state.isDeviceStreaming(deviceId);
+  }
 
-    _deviceDataSubscriptions[deviceId] = stream.listen(
-      (result) {
-        if (isClosed) return;
-        result.fold(
-          (failure) => add(BleEvent.streamFailed(message: failure.message)),
-          (snapshot) => add(
-            BleEvent.deviceStreamUpdated(
-              deviceId: deviceId,
-              snapshot: snapshot,
-            ),
-          ),
-        );
+  // ---------------------------------------------------------------------------
+  // Device stream: hardware lifecycle
+  // ---------------------------------------------------------------------------
+
+  Future<Either<Failure, Unit>> _startHardwareStream(String deviceId) {
+    return _startDeviceStream(StartDeviceStreamParams(deviceId: deviceId));
+  }
+
+  Future<Either<Failure, Unit>> _stopHardwareStream(String deviceId) {
+    return _stopDeviceStream(StopDeviceStreamParams(deviceId: deviceId));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Device stream: stream resolution
+  // ---------------------------------------------------------------------------
+
+  Stream<Either<Failure, BleDeviceStreamSnapshot>>? _resolveDeviceDataStream(
+    String deviceId,
+  ) {
+    return _watchDeviceData(WatchDeviceDataParams(deviceId: deviceId));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Device stream: state mapping
+  // ---------------------------------------------------------------------------
+
+  BleState _stateWithStreamingStarted(String deviceId) {
+    return state.copyWith(
+      streamingDeviceIds: {...state.streamingDeviceIds, deviceId},
+      status: BleStatus.success,
+      errorMessage: null,
+    );
+  }
+
+  BleState _stateWithStreamingStopped(String deviceId) {
+    return state.copyWith(
+      // streamingDeviceIds: Set<String>.from(state.streamingDeviceIds)
+      //   ..remove(deviceId),
+      streamingDeviceIds: state.streamingDeviceIds..remove(deviceId),
+      deviceStreamSnapshots: _removeStreamSnapshot(
+        state.deviceStreamSnapshots,
+        deviceId,
+      ),
+    );
+  }
+
+  BleState _stateWithStreamSnapshot(
+    String deviceId,
+    BleDeviceStreamSnapshot snapshot,
+  ) {
+    return state.copyWith(
+      status: BleStatus.success,
+      deviceStreamSnapshots: {
+        ...state.deviceStreamSnapshots,
+        deviceId: snapshot,
       },
     );
   }
 
-  Future<void> _unsubscribeDeviceDataStream(String deviceId) async {
-    await _deviceDataSubscriptions.remove(deviceId)?.cancel();
-  }
-
-  Future<void> _unsubscribeAllDeviceDataStreams() async {
-    final subscriptions = _deviceDataSubscriptions.values.toList();
-    _deviceDataSubscriptions.clear();
-    for (final subscription in subscriptions) {
-      await subscription.cancel();
-    }
+  BleState _stateWithStreamFailure(Failure failure) {
+    return state.copyWith(
+      errorMessage: failure.message,
+      status: BleStatus.failure,
+    );
   }
 
   void _subscribeDeviceConnectionStream(String deviceId) {
@@ -533,19 +576,17 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     );
     if (stream == null) return;
 
-    _deviceConnectionSubscriptions[deviceId] = stream.listen(
-      (result) {
-        if (isClosed) return;
-        result.fold(
-          (failure) => add(BleEvent.streamFailed(message: failure.message)),
-          (status) {
-            if (status == BleConnectionStatus.disconnected) {
-              add(BleEvent.connectionLost(deviceId: deviceId));
-            }
-          },
-        );
-      },
-    );
+    _deviceConnectionSubscriptions[deviceId] = stream.listen((result) {
+      if (isClosed) return;
+      result.fold(
+        (failure) => add(BleEvent.streamFailed(message: failure.message)),
+        (status) {
+          if (status == BleConnectionStatus.disconnected) {
+            add(BleEvent.connectionLost(deviceId: deviceId));
+          }
+        },
+      );
+    });
   }
 
   Future<void> _unsubscribeDeviceConnectionStream(String deviceId) async {
@@ -561,7 +602,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   }
 
   Future<void> _clearDeviceSubscriptions(String deviceId) async {
-    await _unsubscribeDeviceDataStream(deviceId);
     await _unsubscribeDeviceConnectionStream(deviceId);
   }
 
@@ -644,7 +684,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   Future<void> close() async {
     await _adapterSubscription?.cancel();
     await _unsubscribeScanResultsStream();
-    await _unsubscribeAllDeviceDataStreams();
     await _unsubscribeAllDeviceConnectionStreams();
     if (state.isScanning) {
       await _stopScan(const NoParams());
@@ -656,8 +695,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
         .toList();
 
     for (final deviceId in state.streamingDeviceIds.toList()) {
-      await _stopDeviceStream(StopDeviceStreamParams(deviceId: deviceId));
-      await _unsubscribeDeviceDataStream(deviceId);
+      await _stopHardwareStream(deviceId);
     }
 
     for (final deviceId in connectedDeviceIds) {
