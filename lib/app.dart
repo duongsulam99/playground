@@ -20,30 +20,53 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Sizer(
+      // OrientationBuilder and DeviceTypeBuilder
+      // Trigger when device orientation or type changes
       builder: (context, orientation, deviceType) {
         return ListenableBuilder(
           listenable: _localeController,
+
+          // Locale changes will rebuild of the GlobalMainApp
+          // Trigger when locale changes
           builder: (context, _) {
             return BlocProvider.value(
               value: serviceLocator<BleBloc>(),
-              child: MaterialApp(
-                title: 'Vulcan Playground',
-                debugShowCheckedModeBanner: false,
-                locale: _localeController.value,
-                localizationsDelegates:
-                    AppLocalizations.localizationsDelegates,
-                supportedLocales: AppLocalizations.supportedLocales,
-                theme: PlaygroundTheme.light,
-                darkTheme: PlaygroundTheme.dark,
-                themeMode: ThemeMode.light,
-                initialRoute: AppRouter.home,
-                onGenerateRoute: route.onGenerateRoute,
-                onUnknownRoute: route.unknownRoute,
+              child: GlobalMainApp(
+                localeController: _localeController,
+                route: route,
               ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class GlobalMainApp extends StatelessWidget {
+  const GlobalMainApp({
+    super.key,
+    required this.localeController,
+    required this.route,
+  });
+
+  final AbstractLocaleController localeController;
+  final AppRouter route;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Vulcan Playground',
+      debugShowCheckedModeBanner: false,
+      locale: localeController.value,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: PlaygroundTheme.light,
+      darkTheme: PlaygroundTheme.dark,
+      themeMode: ThemeMode.light,
+      initialRoute: AppRouter.home,
+      onGenerateRoute: route.onGenerateRoute,
+      onUnknownRoute: route.unknownRoute,
     );
   }
 }
