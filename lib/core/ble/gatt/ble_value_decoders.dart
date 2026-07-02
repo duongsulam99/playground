@@ -52,7 +52,7 @@ class BleValueDecoders {
       8, // số float trong gói
     );
 
-    _logger.debug('floats', floats);
+    _logger.debug('raw bytesdecodeEmgVoltages', floats);
 
     // Bắt đầu giải mã
     // 3 floats đầu là EMG: emg0, emg1, emg2

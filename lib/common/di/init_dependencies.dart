@@ -17,5 +17,5 @@ Future<void> initDependencies() async {
     ),
   );
 
-  initBleInjection(serviceLocator);
+  await initBleInjection(serviceLocator);
 }

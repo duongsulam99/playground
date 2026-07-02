@@ -55,7 +55,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     on<BleDisconnectRequested>(_onDisconnectRequested);
     on<BleStartDeviceStream>(_onStartDeviceStream);
     on<BleStopDeviceStream>(_onStopDeviceStream);
-    on<BleListenDeviceData>(_onListenDeviceData, transformer: concurrent());
+    on<BleListenDeviceData>(_onListenDeviceData, transformer: restartable());
 
     _subscribeAdapterStream();
   }
@@ -537,10 +537,11 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   }
 
   BleState _stateWithStreamingStopped(String deviceId) {
+    final updated = Set<String>.from(state.streamingDeviceIds)
+      ..remove(deviceId);
+
     return state.copyWith(
-      // streamingDeviceIds: Set<String>.from(state.streamingDeviceIds)
-      //   ..remove(deviceId),
-      streamingDeviceIds: state.streamingDeviceIds..remove(deviceId),
+      streamingDeviceIds: updated,
       deviceStreamSnapshots: _removeStreamSnapshot(
         state.deviceStreamSnapshots,
         deviceId,
