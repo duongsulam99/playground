@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
 import 'package:vulcan_mobile_playground/common/router/app_router.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/app_localizations.dart';
+import 'package:vulcan_mobile_playground/theme/playground_theme.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -32,11 +33,9 @@ class _MyAppState extends State<MyApp> {
                 localizationsDelegates:
                     AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
-                theme: ThemeData(
-                  colorScheme:
-                      ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-                  useMaterial3: true,
-                ),
+                theme: PlaygroundTheme.light,
+                darkTheme: PlaygroundTheme.dark,
+                themeMode: ThemeMode.light,
                 initialRoute: AppRouter.home,
                 onGenerateRoute: route.onGenerateRoute,
                 onUnknownRoute: route.unknownRoute,

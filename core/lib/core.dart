@@ -39,6 +39,9 @@ export 'animations/swipe_up_animation.dart';
 export 'locale/abstract_locale_controller.dart';
 export 'locale/abstract_locale_repository.dart';
 
+/** THEME **/
+export 'theme/index.dart';
+
 /** COMPONENTS **/
 export 'components/animated_loading/animated_loading.dart';
 export 'components/animated_state_switcher/animated_state_switcher.dart';

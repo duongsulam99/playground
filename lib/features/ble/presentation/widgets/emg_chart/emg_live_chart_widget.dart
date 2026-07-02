@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_data_buffer.dart';
+import 'package:vulcan_mobile_playground/theme/playground_colors.dart';
 
 class EmgLiveChartWidget extends StatelessWidget {
   const EmgLiveChartWidget({
@@ -89,9 +90,9 @@ class _EmgChartPlaceholder extends StatelessWidget {
         child: Center(
           child: Text(
             message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            style: context.textTheme.bodyMedium.copyWith(
+              color: context.colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -120,7 +121,7 @@ class _EmgLiveLineChartView extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(context.dimensions.spacing12),
           child: RepaintBoundary(
             child: LineChart(
               duration: Duration.zero,
@@ -133,8 +134,8 @@ class _EmgLiveLineChartView extends StatelessWidget {
                 clipData: const FlClipData.all(),
                 gridData: FlGridData(
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.white.withValues(alpha: 0.1),
+                  getDrawingHorizontalLine: (value) => const FlLine(
+                    color: PlaygroundColors.chartGrid,
                     strokeWidth: 1,
                   ),
                 ),
@@ -143,7 +144,7 @@ class _EmgLiveLineChartView extends StatelessWidget {
                   LineChartBarData(
                     spots: spots,
                     dotData: const FlDotData(show: false),
-                    color: Colors.red,
+                    color: PlaygroundColors.chartSignal,
                     barWidth: 3,
                   ),
                 ],
@@ -151,12 +152,12 @@ class _EmgLiveLineChartView extends StatelessWidget {
                   horizontalLines: [
                     HorizontalLine(
                       y: emgLower.toDouble(),
-                      color: Colors.green,
+                      color: PlaygroundColors.chartLower,
                       dashArray: const [20, 10],
                     ),
                     HorizontalLine(
                       y: emgUpper.toDouble(),
-                      color: Colors.orange,
+                      color: PlaygroundColors.chartUpper,
                       dashArray: const [20, 10],
                     ),
                   ],
@@ -195,7 +196,9 @@ class _EmgChartLeftTitle extends StatelessWidget {
       meta: meta,
       child: Text(
         '${value.toInt()}',
-        style: const TextStyle(fontSize: 10, color: Colors.grey),
+        style: context.textTheme.caption.copyWith(
+          color: context.colors.textSecondary,
+        ),
       ),
     );
   }
