@@ -1,4 +1,5 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/ble_adv_uuids.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
@@ -7,15 +8,17 @@ class BleAdvertisementParser {
   const BleAdvertisementParser._();
 
   static const String deviceTypeUuid = '0100';
+  static const _logger = Logger(className: 'BleAdvertisementParser');
 
   static VulcanDeviceType parse(AdvertisementData advertisementData) {
     for (final element in advertisementData.serviceUuids) {
+      _logger.debug('serviceUuid', element.str);
       final uuidStr = element.str.toLowerCase();
 
       switch (uuidStr) {
-        // TODO: [Add New Device] Step 3: Thêm case so khớp UUID quảng cáo của thiết bị mới tại đây.
         // Nếu thiết bị cần định danh động (như Ring/Elbow qua serviceData),
         // gọi hàm phân giải hardwareId từ Adv.
+        //TODO:[Add New Device] Step 3: Thêm case so khớp UUID quảng cáo của thiết bị mới tại đây.
 
         case BleAdvUuids.advUUIDHand:
           return VulcanDeviceType.hand;
@@ -46,23 +49,23 @@ class BleAdvertisementParser {
     return VulcanDeviceType.none;
   }
 
-  /// Function return Vulcan device type from Advertisement data
-  /// NOTE: Chỉ dùng để phân biệt remoteId trong Advertisement data
+  // Function return Vulcan device type from Advertisement data
+  // NOTE: Chỉ dùng để phân biệt remoteId trong Advertisement data
   static VulcanDeviceType _hardwareIdFromAdv(
     AdvertisementData advertisementData,
   ) {
-    /// Parse serviceData from advertisement
+    // Parse serviceData from advertisement
     final serviceData = advertisementData.serviceData[Guid(deviceTypeUuid)];
     if (serviceData == null) return VulcanDeviceType.none;
 
-    /// Parse hardwareId from serviceData
+    // Parse hardwareId from serviceData
     var hardwareId = String.fromCharCodes(serviceData);
 
-    /// Remove null bytes
+    // Remove null bytes
     hardwareId = hardwareId.replaceAll('\x00', '').trim().toUpperCase();
     if (hardwareId.isEmpty) return VulcanDeviceType.none;
 
-    /// return Vulcan device type from hardwareId
+    // Return Vulcan device type from hardwareId
     return VulcanDeviceType.fromHardwareId(hardwareId);
   }
 }

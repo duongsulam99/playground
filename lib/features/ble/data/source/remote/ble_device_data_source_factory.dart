@@ -11,10 +11,10 @@ class BleDeviceDataSourceFactory {
     required VulcanDeviceType deviceType,
   }) {
     switch (deviceType) {
-      // TODO: [Add New Device] Step 4: Map kiểu thiết bị mới sang BleDeviceRemoteDataSource cụ thể
-      // (nếu có lệnh truyền/nhận riêng). Mặc định dùng FlutterBluePlusPrivateDevice
-      // hoặc VulcanMyoBandDevice.
+      // (nếu có lệnh truyền/nhận riêng).
+      //TODO:[Add New Device] Step 4: Map kiểu thiết bị mới sang BleDeviceRemoteDataSource cụ thể
 
+      /// Mặc định dùng FlutterBluePlusPrivateDevice
       default:
 
         /// FOR ALL MYO BAND FAMILY

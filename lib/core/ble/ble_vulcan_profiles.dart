@@ -285,8 +285,8 @@ class BleVulcanProfiles {
     characteristics: _bleAdapterCharacteristics,
   );
 
-  // TODO: [Add New Device] Step 1: Định nghĩa BleDeviceProfile của thiết bị mới
   // (bao gồm GATT Services và Characteristics) và đăng ký vào danh sách `all` dưới đây.
+  //TODO:[Add New Device] Step 1: Định nghĩa BleDeviceProfile của thiết bị mới
 
   /// Tất cả profile GATT đã đăng ký.
   static const List<BleDeviceProfile> all = [

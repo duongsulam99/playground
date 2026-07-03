@@ -6,16 +6,15 @@ import 'emg_stream_decoder.dart';
 class BleStreamDecoderFactory {
   BleStreamDecoder? create(VulcanDeviceType deviceType) {
     switch (deviceType) {
-      // TODO: [Add New Device] Step 5: Decoder
       // Nếu thiết bị mới hỗ trợ stream dữ liệu thời gian thực,
       // trả về BleStreamDecoder tương ứng tại đây.
+      //TODO:[Add New Device] Step 5: Decoder
 
+      // Mặc định không dùng decoder (trả về null)
       default:
-        if (deviceType.isMyoBandFamily) {
-          return const EmgStreamDecoder();
-        }
+        if (deviceType.isMyoBandFamily) return const EmgStreamDecoder();
 
-        /// FOR UNKNOW DEVICES
+        // Cho những thiết bị không hỗ trợ stream
         return null;
     }
   }
