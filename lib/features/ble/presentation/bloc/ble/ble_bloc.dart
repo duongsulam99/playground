@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:dartz/dartz.dart';
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_constant.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
@@ -76,6 +76,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   StreamSubscription<dynamic>? _scanResultsSubscription;
   final Map<String, StreamSubscription<dynamic>>
   _deviceConnectionSubscriptions = {};
+
+  // static const _logger = Logger(className: 'BleBloc');
 
   void _subscribeAdapterStream() {
     if (_adapterSubscription != null) return;

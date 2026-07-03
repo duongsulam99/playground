@@ -97,6 +97,9 @@ class DeviceConnectionHandler {
     /// Send Notify Value Request To Device
     await _enqueueOperation(() => characteristic.setNotifyValue(true));
 
+    // Start monitoring the EMG stream to measure the sampling rate
+    _streamMonitor.start(cleanDataStream.map((_) => 0.0));
+
     /// Listen to value received from characteristic
     _notificationSubscription = characteristic.onValueReceived.listen(
       (rawChunk) {
@@ -121,13 +124,21 @@ class DeviceConnectionHandler {
       },
 
       /// Handle Errors When Start Listening
-      onError: (Object error, StackTrace stackTrace) {
-        _logger.error('startListeningData', 'Notify stream error: $error');
-      },
-    );
+      onError: _onErrorListeningData,
 
+      /// Handle Done Listening
+      onDone: _onDoneListeningData,
+    );
+  }
+
+  void _onErrorListeningData(Object error, StackTrace stackTrace) {
     _streamMonitor.stop();
-    _streamMonitor.start(cleanDataStream.map((_) => 0.0));
+    _logger.error('startListeningData', 'Notify stream error: $error');
+  }
+
+  void _onDoneListeningData() {
+    _streamMonitor.stop();
+    _logger.debug('startListeningData', 'Notify stream done.');
   }
 
   Future<void> writeData(

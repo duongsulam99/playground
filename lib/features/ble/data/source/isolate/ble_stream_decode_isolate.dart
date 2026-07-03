@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
@@ -25,6 +25,9 @@ class BleStreamDecodeIsolate {
 
   final Map<int, Completer<List<double>>> _pending = {};
   int _nextRequestId = 0;
+  int droppedFramesCount = 0;
+
+  static const _logger = Logger(className: 'BleStreamDecodeIsolate');
 
   /// Spawns the worker isolate and waits for the SendPort handshake.
   static Future<BleStreamDecodeIsolate> create() async {
@@ -169,6 +172,11 @@ class BleStreamDecodeIsolate {
       final bytes = rawBytes.toUint8List();
 
       if (inFlight) {
+        if (latestPending != null) {
+          _onFramePending(bytes);
+        }
+
+        // Always override the latest pending frame, dropping the previous one.
         latestPending = bytes;
         return;
       }
@@ -244,5 +252,13 @@ class BleStreamDecodeIsolate {
 
     readyCompleter.complete(message);
     return true;
+  }
+
+  void _onFramePending(Uint8List rawBytes) {
+    if (_pending.isEmpty) return;
+
+    droppedFramesCount++;
+    _logger.debug("droppedFrames", "Dropped frame count: $droppedFramesCount");
+    // _logger.debug('_onFramePending', rawBytes);
   }
 }

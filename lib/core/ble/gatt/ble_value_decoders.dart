@@ -5,10 +5,9 @@ import '../models/ring_threshold_config.dart';
 
 extension ListIntExtension on List<int> {
   Uint8List toUint8List() {
-    if (this is Uint8List) {
-      return this as Uint8List;
-    }
+    if (this is Uint8List) return this as Uint8List;
 
+    /// Convert List<int> to Uint8List
     return Uint8List.fromList(this);
   }
 }
@@ -29,12 +28,17 @@ class BleValueDecoders {
   }
 
   static String decodeHardwareId(List<int> bytes) {
+    // Decode bytes to UTF-8 string
     var hardwareId = decodeUtf8(bytes);
+
+    // Remove any trailing slash
     final slashIndex = hardwareId.indexOf('/');
-    if (slashIndex > 0) {
-      hardwareId = hardwareId.substring(0, slashIndex);
-    }
-    return hardwareId.trim();
+
+    // If there is no slash, return the trimmed hardwareId
+    if (slashIndex == -1) return hardwareId.trim();
+
+    // Return the substring before the first slash
+    return hardwareId = hardwareId.substring(0, slashIndex);
   }
 
   /// Trả về 3 kênh voltage. Tham khảo logic legacy:
@@ -46,13 +50,16 @@ class BleValueDecoders {
 
     // Chuyển List<int> → Uint8List → ByteData
     final bytes = rawBytes.toUint8List();
+
+    _logger.debug('bytesAfterConvert', bytes);
+
     final Float32List floats = Float32List.view(
       bytes.buffer,
       bytes.offsetInBytes,
       8, // số float trong gói
     );
 
-    _logger.debug('raw bytesdecodeEmgVoltages', floats);
+    // _logger.debug('decodedFloats', floats);
 
     // Bắt đầu giải mã
     // 3 floats đầu là EMG: emg0, emg1, emg2

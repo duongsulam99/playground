@@ -1,5 +1,4 @@
-import 'dart:async';
-import 'dart:developer' as developer;
+import 'package:flutter_supper_app_core/core.dart';
 
 /// Class chịu trách nhiệm đo đạc tần số lấy mẫu (Sampling Rate) của luồng EMG.
 /// Thiết kế theo mô hình độc lập, dễ dàng cắm vào (Plug-and-play) bất kỳ Stream nào.
@@ -13,6 +12,8 @@ class EMGStreamMonitor {
 
   EMGStreamMonitor({this.onHzMeasured});
 
+  static const _logger = Logger(className: 'EMGStreamMonitor');
+
   /// Bắt đầu lắng nghe Stream và đo tần số
   void start(Stream<double> emgStream) {
     // Đảm bảo dọn dẹp các tiến trình cũ trước khi chạy tiến trình mới
@@ -25,39 +26,33 @@ class EMGStreamMonitor {
       final int currentHz = _counter;
       _counter = 0; // Reset bộ đếm cho giây kế tiếp
 
-      // Ghi log vào hệ thống DevTools của Flutter
-      developer.log(
-        '=== [EMG PERFORMANCE] Actual Sampling Rate: $currentHz Hz ===',
-        name: 'hardware.emg',
-        level: 800, // Tương đương mức INFO
-      );
+      // Nếu người dùng không cung cấp callback return liền
+      if (onHzMeasured == null) return;
 
       // Nếu người dùng cấu hình callback, đẩy dữ liệu về cho họ
-      if (onHzMeasured != null) {
-        onHzMeasured!(currentHz);
-      }
+      onHzMeasured!(currentHz);
     });
 
     // Lắng nghe luồng dữ liệu từ cảm biến
     _subscription = emgStream.listen(
-      (dataPoint) {
-        _counter++; // Tăng biến đếm mỗi khi có 1 điểm dữ liệu đổ về
-      },
-      onError: (error) {
-        developer.log(
-          'Lỗi xảy ra trong luồng EMG Stream',
-          error: error,
-          name: 'hardware.emg',
-        );
-      },
-      onDone: () {
-        developer.log(
-          'Luồng EMG Stream đã đóng ngắt kết nối',
-          name: 'hardware.emg',
-        );
-        stop();
-      },
+      // Mỗi khi nhận được dữ liệu, tăng bộ đếm lên 1
+      (dataPoint) => _counter++,
+
+      // Xử lý lỗi nếu có
+      onError: _onError,
+
+      // Xử lý khi luồng dữ liệu kết thúc
+      onDone: _onDone,
     );
+  }
+
+  void _onError(Object error) {
+    _logger.error('EMGStreamMonitor', 'Error in EMG stream: $error');
+  }
+
+  void _onDone() {
+    _logger.debug('EMGStreamMonitor', 'EMG stream has been closed.');
+    stop();
   }
 
   /// Hủy bỏ lắng nghe và xóa Timer để tránh Memory Leak (Bắt buộc gọi khi hủy Widget)
