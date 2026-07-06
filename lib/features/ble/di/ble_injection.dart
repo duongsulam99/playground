@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 
-import '../data/source/isolate/ble_stream_decode_isolate.dart';
+import '../data/source/isolate/stream_decode/ble_stream_decode_isolate.dart';
 import '../data/source/stream/ble_stream_decoder_factory.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/ble_device_data_source_factory.dart';

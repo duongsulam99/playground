@@ -51,8 +51,6 @@ class BleValueDecoders {
     // Chuyển List<int> → Uint8List → ByteData
     final bytes = rawBytes.toUint8List();
 
-    _logger.debug('bytesAfterConvert', bytes);
-
     final Float32List floats = Float32List.view(
       bytes.buffer,
       bytes.offsetInBytes,

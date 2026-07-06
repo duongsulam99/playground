@@ -1,71 +1,48 @@
-import 'dart:isolate';
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
+import 'package:vulcan_mobile_playground/features/ble/data/source/helper/ble_stream_temporal_buffer.dart';
 
-import '../../model/ble_device_stream_snapshot_model.dart';
+import '../../../model/ble_device_stream_snapshot_model.dart';
+import '../ble_action_isolate.dart';
 import 'ble_stream_decode_messages.dart';
 import 'ble_stream_decode_worker.dart';
 
 /// Long-lived isolate bridge: forwards raw BLE bytes to a worker for EMG decode.
-class BleStreamDecodeIsolate {
-  BleStreamDecodeIsolate._({
-    required this._isolate,
-    required this._workerSendPort,
-    required this._responsePort,
-    required this._responseSubscription,
+class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {
+  BleStreamDecodeIsolate({
+    required super.isolate,
+    required super.workerSendPort,
+    required super.responsePort,
+    required super.responseSubscription,
   });
 
-  final Isolate _isolate;
-  final SendPort _workerSendPort;
-  final ReceivePort _responsePort;
-  final StreamSubscription<Object?> _responseSubscription;
-
-  final Map<int, Completer<List<double>>> _pending = {};
-  int _nextRequestId = 0;
   int droppedFramesCount = 0;
 
   static const _logger = Logger(className: 'BleStreamDecodeIsolate');
 
   /// Spawns the worker isolate and waits for the SendPort handshake.
-  static Future<BleStreamDecodeIsolate> create() async {
-    final responsePort = ReceivePort();
-    final readyCompleter = Completer<BleStreamDecodeWorkerReady>();
-    late final BleStreamDecodeIsolate instance;
-
-    final responseSubscription = responsePort.listen((message) {
-      if (_isWorkerReadyHandshake(message, readyCompleter)) return;
-      instance._handleWorkerMessage(message);
-    });
-
-    final isolate = await Isolate.spawn(
-      bleStreamDecodeWorkerMain,
-      responsePort.sendPort,
-    );
-
-    final readyMessage = await readyCompleter.future;
-    instance = BleStreamDecodeIsolate._(
-      isolate: isolate,
-      workerSendPort: readyMessage.sendPort,
-      responsePort: responsePort,
-      responseSubscription: responseSubscription,
-    );
-
-    return instance;
-  }
+  static Future<BleStreamDecodeIsolate> create() => BleActionIsolate.create(
+    workerEntryPoint: bleStreamDecodeWorkerMain,
+    constructor: BleStreamDecodeIsolate.new,
+  );
 
   /// Bridges a raw byte stream to decoded [BleDeviceStreamSnapshotModel] events.
   ///
-  /// Drop-oldest (depth = 1): while a decode is in-flight, only the latest
-  /// pending frame is kept.
+  /// Fixed-size frames are accumulated in a [BleStreamTemporalBuffer] and flushed
+  /// on a time window. Each flushed batch is then decoded with drop-oldest
+  /// (depth = 1): while a decode is in-flight, only the latest pending batch
+  /// is kept.
   Stream<BleDeviceStreamSnapshotModel> decodeStream({
     required Stream<List<int>> source,
     required String deviceId,
   }) {
     late final StreamController<BleDeviceStreamSnapshotModel> controller;
     StreamSubscription<List<int>>? sourceSubscription;
+    BleStreamTemporalBuffer? temporalBuffer;
 
     // Per-subscription backpressure + lifecycle flags.
     var inFlight = false;
@@ -84,16 +61,13 @@ class BleStreamDecodeIsolate {
 
     void cleanupRequest(int requestId) {
       activeRequestIds.remove(requestId);
-      _pending.remove(requestId);
+      removePendingRequest(requestId);
     }
 
     void cancelActiveRequests() {
       for (final requestId in activeRequestIds.toList()) {
-        final completer = _pending[requestId];
-        if (completer != null && !completer.isCompleted) {
-          completer.completeError(StateError('Decode stream cancelled'));
-        }
-        cleanupRequest(requestId);
+        cancelPendingRequest(requestId, StateError('Decode stream cancelled'));
+        activeRequestIds.remove(requestId);
       }
       activeRequestIds.clear();
     }
@@ -126,14 +100,13 @@ class BleStreamDecodeIsolate {
     }
 
     int registerDecodeRequest(Completer<List<double>> completer) {
-      final requestId = _nextRequestId++;
+      final requestId = registerRequest(completer);
       activeRequestIds.add(requestId);
-      _pending[requestId] = completer;
       return requestId;
     }
 
-    void dispatchToWorker(int requestId, Uint8List rawBytes) {
-      _workerSendPort.send(
+    void dispatchDecodeRequest(int requestId, Uint8List rawBytes) {
+      sendToWorker(
         BleStreamDecodeRequest(requestId: requestId, rawBytes: rawBytes),
       );
     }
@@ -142,7 +115,7 @@ class BleStreamDecodeIsolate {
       final completer = Completer<List<double>>();
       final requestId = registerDecodeRequest(completer);
 
-      dispatchToWorker(requestId, rawBytes);
+      dispatchDecodeRequest(requestId, rawBytes);
 
       try {
         final voltages = await completer.future;
@@ -156,7 +129,7 @@ class BleStreamDecodeIsolate {
         /// so [Drop-oldest chain] have to declare here
         cleanupRequest(requestId);
 
-        // Drop-oldest chain: process the single buffered frame, or release inFlight.
+        // Drop-oldest chain: process the single buffered batch, or release inFlight.
         if (latestPending == null) {
           inFlight = false;
           maybeCloseController();
@@ -168,24 +141,29 @@ class BleStreamDecodeIsolate {
       }
     }
 
-    void onRawChunk(List<int> rawBytes) {
-      final bytes = rawBytes.toUint8List();
+    void onBatchReady(Uint8List batch) {
+      if (batch.isEmpty) return;
 
       if (inFlight) {
         if (latestPending != null) {
-          _onFramePending(bytes);
+          _onBatchDropped(batch);
         }
 
-        // Always override the latest pending frame, dropping the previous one.
-        latestPending = bytes;
+        // Always override the latest pending batch, dropping the previous one.
+        latestPending = batch;
         return;
       }
 
       inFlight = true;
-      unawaited(sendDecode(bytes));
+      unawaited(sendDecode(batch));
+    }
+
+    void onRawChunk(List<int> rawBytes) {
+      temporalBuffer?.add(rawBytes.toUint8List());
     }
 
     void onSourceDone() {
+      temporalBuffer?.flushNow();
       sourceDone = true;
       maybeCloseController();
     }
@@ -194,11 +172,14 @@ class BleStreamDecodeIsolate {
       latestPending = null;
       inFlight = false;
       cancelActiveRequests();
+      temporalBuffer?.dispose();
+      temporalBuffer = null;
       await sourceSubscription?.cancel();
     }
 
     controller = StreamController<BleDeviceStreamSnapshotModel>(
       onListen: () {
+        temporalBuffer = BleStreamTemporalBuffer(onFlush: onBatchReady);
         sourceSubscription = source.listen(
           onRawChunk,
           onError: controller.addError,
@@ -211,54 +192,11 @@ class BleStreamDecodeIsolate {
     return controller.stream;
   }
 
-  /// Resolves an RPC response from the worker into the matching completer.
-  void _handleWorkerMessage(Object? message) {
-    if (message is BleStreamDecodeSuccess) {
-      _completePendingSuccess(message);
-      return;
-    }
-
-    if (message is BleStreamDecodeFailure) {
-      _completePendingFailure(message);
-    }
-  }
-
-  void _completePendingSuccess(BleStreamDecodeSuccess message) {
-    final completer = _pending[message.requestId];
-    if (completer == null || completer.isCompleted) return;
-    completer.complete(message.voltages);
-  }
-
-  void _completePendingFailure(BleStreamDecodeFailure message) {
-    final completer = _pending[message.requestId];
-    if (completer == null || completer.isCompleted) return;
-    completer.completeError(BleException(message.errorMessage));
-  }
-
-  Future<void> dispose() async {
-    await _responseSubscription.cancel();
-    _responsePort.close();
-    _isolate.kill(priority: Isolate.immediate);
-    _pending.clear();
-  }
-
-  static bool _isWorkerReadyHandshake(
-    Object? message,
-    Completer<BleStreamDecodeWorkerReady> readyCompleter,
-  ) {
-    if (message is! BleStreamDecodeWorkerReady || readyCompleter.isCompleted) {
-      return false;
-    }
-
-    readyCompleter.complete(message);
-    return true;
-  }
-
-  void _onFramePending(Uint8List rawBytes) {
-    if (_pending.isEmpty) return;
+  void _onBatchDropped(Uint8List batch) {
+    if (!hasPendingRequests) return;
 
     droppedFramesCount++;
-    _logger.debug("droppedFrames", "Dropped frame count: $droppedFramesCount");
-    // _logger.debug('_onFramePending', rawBytes);
+    _logger.debug('droppedFrames', 'Dropped batch count: $droppedFramesCount');
+    // _logger.debug('_onBatchDropped', batch);
   }
 }

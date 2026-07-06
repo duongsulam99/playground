@@ -9,7 +9,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.da
 import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
-import '../isolate/ble_stream_decode_isolate.dart';
+import '../isolate/stream_decode/ble_stream_decode_isolate.dart';
 import '../stream/ble_stream_decoder_factory.dart';
 import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';

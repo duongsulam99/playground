@@ -20,7 +20,6 @@ class EmgStreamDecoder implements BleStreamDecoder {
         timestamp: DateTime.now(),
         voltages: voltages,
         rawBytes: rawBytes,
-        // rawBytes: List<int>.from(rawBytes),
       );
     } catch (error) {
       if (error is BleException) rethrow;
