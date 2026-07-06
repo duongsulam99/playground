@@ -30,12 +30,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo() async {
-    if (!deviceType.isMyoBandFamily) {
-      throw BleException(
-        'Device type ${deviceType.name} is not a MyoBand family device',
-        deviceId: deviceId,
-      );
-    }
+    ensureIsMyoBandFamily();
 
     ensureConnected();
 
@@ -44,7 +39,6 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
         characteristics: characteristics,
         scannedType: deviceType,
       );
-
       final threshold = await readThreshold();
 
       return BleDeviceInfoModel(
@@ -79,6 +73,15 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   @override
   Future<void> writeThreshold(RingThresholdConfig config) {
     throw UnimplementedError('writeThreshold is not implemented yet');
+  }
+
+  void ensureIsMyoBandFamily() {
+    if (!deviceType.isMyoBandFamily) {
+      throw BleException(
+        'Device type ${deviceType.name} is not a MyoBand family device',
+        deviceId: deviceId,
+      );
+    }
   }
 
   Future<void> startSignalStream() async {

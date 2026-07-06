@@ -5,14 +5,12 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 
-import '../../domain/entities/myo_band_device_info.dart';
+import '../../domain/entities/ble_device_info.dart';
 
 class MyoBandDeviceInfoReader {
-  const MyoBandDeviceInfoReader._();
-
   static const logger = Logger(className: 'MyoBandDeviceInfoReader');
 
-  static Future<MyoBandDeviceInfo> read({
+  static Future<BleDeviceInfo> read({
     required Map<String, BluetoothCharacteristic> characteristics,
     required VulcanDeviceType scannedType,
   }) async {
@@ -33,18 +31,21 @@ class MyoBandDeviceInfoReader {
       BleAdapterKey.battery,
     );
 
+    final name = BleValueDecoders.decodeUtf8(nameBytes);
+    final firmwareVersion = BleValueDecoders.decodeUtf8(versionBytes);
     final hardwareId = BleValueDecoders.decodeHardwareId(hardwareBytes);
+    final batteryPercent = BleValueDecoders.decodeBatteryPercent(batteryBytes);
     final resolvedType = VulcanDeviceType.fromHardwareId(hardwareId);
     final effectiveType = resolvedType == VulcanDeviceType.none
         ? scannedType
         : resolvedType;
 
-    return MyoBandDeviceInfo(
-      name: BleValueDecoders.decodeUtf8(nameBytes),
-      firmwareVersion: BleValueDecoders.decodeUtf8(versionBytes),
+    return BleDeviceInfo(
+      name: name,
+      firmwareVersion: firmwareVersion,
       hardwareId: hardwareId,
       resolvedType: effectiveType,
-      batteryPercent: BleValueDecoders.decodeBatteryPercent(batteryBytes),
+      batteryPercent: batteryPercent,
     );
   }
 }
