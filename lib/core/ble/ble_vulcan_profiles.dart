@@ -14,8 +14,6 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.da
 ///
 /// Chỉ ghi chú — không thay đổi giá trị UUID.
 class BleVulcanProfiles {
-  const BleVulcanProfiles._();
-
   // ---------------------------------------------------------------------------
   // Hand (Vulcan Hand 9.9 / 9.7) — nguồn: handProcess.dart
   // ---------------------------------------------------------------------------

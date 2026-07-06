@@ -12,6 +12,9 @@ import '../../features/ble/presentation/widgets/home_myo_band_info_section.dart'
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  
+  static const String path = '/';
+
   @override
   Widget build(BuildContext context) {
     final localeController = serviceLocator<AbstractLocaleController>();

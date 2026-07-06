@@ -10,7 +10,6 @@ import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
 import '../isolate/stream_decode/ble_stream_decode_isolate.dart';
-import '../stream/ble_stream_decoder_factory.dart';
 import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';
 import 'ble_remote_data_source.dart';
@@ -18,13 +17,13 @@ import 'ble_remote_data_source.dart';
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
   FlutterBluePlusDataSource({
     required this._deviceFactory,
-    required this._decoderFactory,
     required this._decodeIsolate,
   });
 
   final BleDeviceDataSourceFactory _deviceFactory;
-  final BleStreamDecoderFactory _decoderFactory;
   final BleStreamDecodeIsolate _decodeIsolate;
+
+  // SAVED DEVICES
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
   final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
   final Map<String, BluetoothDevice> _bluetoothDevices = {};
@@ -141,20 +140,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     final raw = deviceSource.notifyDataStream;
     if (raw == null) return null;
 
-    /// CREATE STREAM DECODER
-    final decoder = _decoderFactory.create(deviceSource.deviceType);
-
-    if (decoder == null) {
-      throw BleException(
-        'No stream decoder for ${deviceSource.deviceType.name}',
-        deviceId: deviceId,
-      );
-    }
-
-    return _decodeIsolate.decodeStream(
-      source: raw,
-      deviceId: deviceId,
-    );
+    return _decodeIsolate.decodeStream(source: raw, deviceId: deviceId);
   }
 
   @override

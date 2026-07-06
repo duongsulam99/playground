@@ -1,7 +1,6 @@
 import 'package:get_it/get_it.dart';
 
 import '../data/source/isolate/stream_decode/ble_stream_decode_isolate.dart';
-import '../data/source/stream/ble_stream_decoder_factory.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/ble_device_data_source_factory.dart';
 import '../data/source/remote/ble_remote_data_source.dart';
@@ -24,7 +23,6 @@ Future<void> initBleInjection(GetIt sl) async {
   if (sl.isRegistered<BleBloc>()) return;
 
   sl.registerFactory(BleDeviceDataSourceFactory.new);
-  sl.registerFactory(BleStreamDecoderFactory.new);
   sl.registerSingletonAsync<BleStreamDecodeIsolate>(
     BleStreamDecodeIsolate.create,
   );
@@ -32,7 +30,6 @@ Future<void> initBleInjection(GetIt sl) async {
   sl.registerLazySingleton<BleRemoteDataSource>(
     () => FlutterBluePlusDataSource(
       deviceFactory: sl(),
-      decoderFactory: sl(),
       decodeIsolate: sl<BleStreamDecodeIsolate>(),
     ),
   );

@@ -64,7 +64,7 @@ class GlobalMainApp extends StatelessWidget {
       theme: PlaygroundTheme.light,
       darkTheme: PlaygroundTheme.dark,
       themeMode: ThemeMode.light,
-      initialRoute: AppRouter.home,
+      // initialRoute: route.,
       onGenerateRoute: route.onGenerateRoute,
       onUnknownRoute: route.unknownRoute,
     );

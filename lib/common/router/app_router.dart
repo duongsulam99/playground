@@ -7,12 +7,11 @@ import '../screens/error_page.dart';
 import '../screens/home_page.dart';
 
 class AppRouter extends SuperAppRoute {
-  static const String home = '/';
-
+  /// Resolve the route based on the settings.
   @override
   Route<dynamic>? resolveRoute(RouteSettings settings) {
     switch (settings.name) {
-      case home:
+      case HomePage.path:
         return MaterialPageRoute(builder: (_) => const HomePage());
       case BleRoute.path:
         final filterTypes = settings.arguments as List<VulcanDeviceType>?;
@@ -25,6 +24,7 @@ class AppRouter extends SuperAppRoute {
     }
   }
 
+  /// Build the unknown route.
   @override
   Route<dynamic> unknownRoute(RouteSettings settings) {
     return MaterialPageRoute(builder: (_) => const ErrorPage());
