@@ -12,7 +12,6 @@ import 'dfu_strategy.dart';
 class Esp32OtaStrategy implements DfuStrategy {
   const Esp32OtaStrategy();
 
-  static const int _defaultPacketSize = 515;
   static const int _maxPacketPayload = 512;
   static const int _ackTimeoutSeconds = 2;
 
@@ -49,8 +48,8 @@ class Esp32OtaStrategy implements DfuStrategy {
         },
       );
 
-      final mtu = await transport.requestMtu(deviceId, _defaultPacketSize);
-      final bytePacket = min(_maxPacketPayload, mtu - 3);
+      final mtu = transport.getNegotiatedMtu(deviceId);
+      final bytePacket = min(_maxPacketPayload, max(mtu - 3, 1));
 
       await transport.writeOta(deviceId, utf8.encode('START_OTA'));
       await Future<void>.delayed(const Duration(seconds: 2));

@@ -240,8 +240,8 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
-  Future<int> requestDeviceMtu(String deviceId, int preferredMtu) {
-    return _findDeviceConnected(deviceId).requestDeviceMtu(preferredMtu);
+  int getNegotiatedMtu(String deviceId) {
+    return _findDeviceConnected(deviceId).getNegotiatedMtu();
   }
 
   BleDeviceRemoteDataSource _findDeviceConnected(String deviceId) {

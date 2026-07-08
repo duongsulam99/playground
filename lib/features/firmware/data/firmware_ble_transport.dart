@@ -1,5 +1,3 @@
-
-
 import '../../ble/data/source/remote/ble_remote_data_source.dart';
 
 class FirmwareBleTransport {
@@ -27,8 +25,8 @@ class FirmwareBleTransport {
     return _bleRemoteDataSource.watchOtaNotifications(deviceId);
   }
 
-  Future<int> requestMtu(String deviceId, int preferredMtu) {
-    return _bleRemoteDataSource.requestDeviceMtu(deviceId, preferredMtu);
+  int getNegotiatedMtu(String deviceId) {
+    return _bleRemoteDataSource.getNegotiatedMtu(deviceId);
   }
 
   String getBleDeviceId(String deviceId) => deviceId;

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
@@ -254,12 +252,7 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   }
 
   @override
-  Future<int> requestDeviceMtu(int preferredMtu) async {
-    if (Platform.isAndroid) {
-      await _device.requestMtu(preferredMtu).catchError((_) => negotiatedMtu);
-    }
-    return _device.mtuNow;
-  }
+  int getNegotiatedMtu() => negotiatedMtu;
 
   @override
   Future<void> disconnect() async {

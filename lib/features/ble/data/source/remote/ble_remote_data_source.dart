@@ -41,5 +41,5 @@ abstract class BleRemoteDataSource {
 
   Stream<List<int>> watchOtaNotifications(String deviceId);
 
-  Future<int> requestDeviceMtu(String deviceId, int preferredMtu);
+  int getNegotiatedMtu(String deviceId);
 }
