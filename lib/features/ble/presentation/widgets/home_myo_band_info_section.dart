@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';

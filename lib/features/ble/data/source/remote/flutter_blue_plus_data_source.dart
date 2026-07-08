@@ -3,8 +3,8 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/ble_vulcan_profiles.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
@@ -210,6 +210,38 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
         deviceId: deviceId,
       );
     }
+  }
+
+  @override
+  Future<List<int>> readOtaCharacteristic(String deviceId) {
+    return _findDeviceConnected(deviceId).readOtaCharacteristic();
+  }
+
+  @override
+  Future<void> writeOtaCharacteristic(
+    String deviceId,
+    List<int> data, {
+    int timeout = 15,
+  }) {
+    return _findDeviceConnected(deviceId).writeOtaCharacteristic(
+      data,
+      timeout: timeout,
+    );
+  }
+
+  @override
+  Future<void> setOtaNotifyEnabled(String deviceId, bool enabled) {
+    return _findDeviceConnected(deviceId).setOtaNotifyEnabled(enabled);
+  }
+
+  @override
+  Stream<List<int>> watchOtaNotifications(String deviceId) {
+    return _findDeviceConnected(deviceId).watchOtaNotifications();
+  }
+
+  @override
+  Future<int> requestDeviceMtu(String deviceId, int preferredMtu) {
+    return _findDeviceConnected(deviceId).requestDeviceMtu(preferredMtu);
   }
 
   BleDeviceRemoteDataSource _findDeviceConnected(String deviceId) {

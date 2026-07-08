@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
@@ -220,6 +222,44 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
 
   @override
   Future<void> stopDeviceStream() async {}
+
+  static const String _otaKey = 'OTA_UUID';
+
+  @override
+  Future<List<int>> readOtaCharacteristic() async {
+    ensureConnected();
+    final characteristic = requireCharacteristic(_otaKey);
+    return characteristic.read();
+  }
+
+  @override
+  Future<void> writeOtaCharacteristic(List<int> data, {int timeout = 15}) async {
+    ensureConnected();
+    final characteristic = requireCharacteristic(_otaKey);
+    await characteristic.write(data, timeout: timeout);
+  }
+
+  @override
+  Future<void> setOtaNotifyEnabled(bool enabled) async {
+    ensureConnected();
+    final characteristic = requireCharacteristic(_otaKey);
+    await characteristic.setNotifyValue(enabled);
+  }
+
+  @override
+  Stream<List<int>> watchOtaNotifications() {
+    ensureConnected();
+    final characteristic = requireCharacteristic(_otaKey);
+    return characteristic.onValueReceived;
+  }
+
+  @override
+  Future<int> requestDeviceMtu(int preferredMtu) async {
+    if (Platform.isAndroid) {
+      await _device.requestMtu(preferredMtu).catchError((_) => negotiatedMtu);
+    }
+    return _device.mtuNow;
+  }
 
   @override
   Future<void> disconnect() async {

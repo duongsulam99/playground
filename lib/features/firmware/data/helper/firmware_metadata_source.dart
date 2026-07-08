@@ -1,0 +1,4 @@
+enum FirmwareMetadataSource {
+  firebase,
+  rest,
+}

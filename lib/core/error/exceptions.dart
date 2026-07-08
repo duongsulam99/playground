@@ -23,3 +23,12 @@ class BleAdapterException extends BleException {
 class BleCharacteristicNotFoundException extends BleException {
   const BleCharacteristicNotFoundException(super.message, {super.deviceId});
 }
+
+class FirmwareException implements Exception {
+  const FirmwareException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'FirmwareException: $message';
+}

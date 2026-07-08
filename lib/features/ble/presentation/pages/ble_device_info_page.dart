@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_section.dart';
+import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_args.dart';
+import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_route.dart';
 
 import '../bloc/ble/ble_bloc.dart';
 
@@ -270,15 +273,27 @@ class _DeviceMetadataCard extends StatelessWidget {
       return const Text('Device info is not available for this device.');
     }
 
-    return _MetadataBody(info: info, fallbackName: displayName);
+    return _MetadataBody(
+      info: info,
+      fallbackName: displayName,
+      deviceId: connection!.deviceId,
+      isConnected: connection!.status.isConnected,
+    );
   }
 }
 
 class _MetadataBody extends StatelessWidget {
-  const _MetadataBody({required this.info, required this.fallbackName});
+  const _MetadataBody({
+    required this.info,
+    required this.fallbackName,
+    required this.deviceId,
+    required this.isConnected,
+  });
 
   final BleDeviceInfo info;
   final String fallbackName;
+  final String deviceId;
+  final bool isConnected;
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +324,26 @@ class _MetadataBody extends StatelessWidget {
         if (info.thresholdConfig != null) ...[
           const SizedBox(height: 8),
           _ThresholdSummary(config: info.thresholdConfig!),
+        ],
+        if (isConnected && info.resolvedType.dfuType != DfuType.none) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  FirmwareUpdateRoute.path,
+                  arguments: FirmwareUpdateArgs(
+                    deviceId: deviceId,
+                    deviceType: info.resolvedType,
+                    currentFirmwareVersion: info.firmwareVersion,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.system_update),
+              label: const Text('Check firmware update'),
+            ),
+          ),
         ],
       ],
     );

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import 'ble_device_info.dart';
 

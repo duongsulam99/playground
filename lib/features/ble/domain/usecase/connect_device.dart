@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/repository/ble_repository.dart';
 
 class ConnectDeviceParams {

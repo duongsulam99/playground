@@ -17,3 +17,7 @@ class BleFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'An unknown error occurred']);
 }
+
+class FirmwareFailure extends Failure {
+  const FirmwareFailure(super.message);
+}

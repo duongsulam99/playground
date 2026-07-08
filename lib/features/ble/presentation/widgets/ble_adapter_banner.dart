@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 
 class BleAdapterBanner extends StatelessWidget {
   const BleAdapterBanner({

@@ -4,11 +4,11 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_constant.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/usecase/usecase.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../../../domain/entities/ble_discovered_device.dart';
 import '../../../domain/entities/ble_active_connection.dart';

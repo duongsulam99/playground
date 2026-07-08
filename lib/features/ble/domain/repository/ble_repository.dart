@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_adapter_status.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/ble_connection_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../entities/ble_device_info.dart';
 import '../entities/ble_discovered_device.dart';
