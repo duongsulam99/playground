@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../data/firmware/ble_firmware_transport_adapter.dart';
-import '../data/source/isolate/stream_decode/ble_stream_decode_isolate.dart';
+import '../data/source/isolate/stream_decode/decode_isolate.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/device_factory.dart';
 import '../data/source/remote/abstract/ble_remote_data_source.dart';

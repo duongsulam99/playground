@@ -6,9 +6,19 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../model/ble_device_stream_snapshot_model.dart';
 import '../../helper/ble_stream_temporal_buffer.dart';
-import '../ble_action_isolate.dart';
-import 'ble_stream_decode_messages.dart';
-import 'ble_stream_decode_worker.dart';
+import '../isolate_action.dart';
+import 'worker.dart';
+
+/// Minimal request payload sent across the isolate boundary.
+final class BleStreamDecodeRequest {
+  const BleStreamDecodeRequest({
+    required this.requestId,
+    required this.rawBytes,
+  });
+
+  final int requestId;
+  final Uint8List rawBytes;
+}
 
 /// Long-lived isolate bridge: forwards raw BLE bytes to a worker for EMG decode.
 class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {

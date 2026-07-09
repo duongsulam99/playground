@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/ble_stream_frame_config.dart';
 import 'package:vulcan_mobile_playground/features/ble/data/model/ble_device_stream_snapshot_model.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/isolate/stream_decode/ble_stream_decode_isolate.dart';
+import 'package:vulcan_mobile_playground/features/ble/data/source/isolate/stream_decode/decode_isolate.dart';
 
 void main() {
   final batchWait = BleStreamFrameConfig.defaultBatchInterval +

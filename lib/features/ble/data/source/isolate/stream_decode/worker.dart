@@ -3,8 +3,8 @@ import 'dart:isolate';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../stream/emg_stream_decoder.dart';
-import '../ble_action_messages.dart';
-import 'ble_stream_decode_messages.dart';
+import '../action_message.dart';
+import 'decode_isolate.dart';
 
 @pragma('vm:entry-point')
 void bleStreamDecodeWorkerMain(SendPort mainSendPort) {
@@ -20,10 +20,7 @@ void bleStreamDecodeWorkerMain(SendPort mainSendPort) {
       final result = decoder.decode(deviceId: '', rawBytes: message.rawBytes);
 
       mainSendPort.send(
-        BleActionSuccess(
-          requestId: message.requestId,
-          result: result.voltages,
-        ),
+        BleActionSuccess(requestId: message.requestId, result: result.voltages),
       );
     } on BleException catch (error) {
       mainSendPort.send(

@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import 'ble_action_messages.dart';
+import 'action_message.dart';
 
 /// Base class for long-lived BLE worker isolates with RPC-style messaging.
 abstract class BleActionIsolate<TResult> {
