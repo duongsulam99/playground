@@ -1,13 +1,15 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../../model/ble_device_stream_snapshot_model.dart';
-import '../../helper/stream_temporal_buffer.dart';
-import '../isolate_action.dart';
-import 'worker.dart';
+import '../../model/ble_device_stream_snapshot_model.dart';
+import '../helper/stream_temporal_buffer.dart';
+import '../stream/emg_stream_decoder.dart';
+import 'action_message.dart';
+import 'isolate_action.dart';
 
 /// Minimal request payload sent across the isolate boundary.
 final class BleStreamDecodeRequest {
@@ -20,9 +22,43 @@ final class BleStreamDecodeRequest {
   final Uint8List rawBytes;
 }
 
+@pragma('vm:entry-point')
+void streamDecodeWorkerMain(SendPort mainSendPort) {
+  final receivePort = ReceivePort();
+  mainSendPort.send(BleWorkerReady(receivePort.sendPort));
+
+  const decoder = EmgStreamDecoder();
+
+  receivePort.listen((message) {
+    if (message is! BleStreamDecodeRequest) return;
+
+    try {
+      final result = decoder.decode(deviceId: '', rawBytes: message.rawBytes);
+
+      mainSendPort.send(
+        BleActionSuccess(requestId: message.requestId, result: result.voltages),
+      );
+    } on BleException catch (error) {
+      mainSendPort.send(
+        BleActionFailure(
+          requestId: message.requestId,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error) {
+      mainSendPort.send(
+        BleActionFailure(
+          requestId: message.requestId,
+          errorMessage: error.toString(),
+        ),
+      );
+    }
+  });
+}
+
 /// Long-lived isolate bridge: forwards raw BLE bytes to a worker for EMG decode.
-class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {
-  BleStreamDecodeIsolate({
+class StreamDecodeWorker extends BleActionIsolate<List<double>> {
+  StreamDecodeWorker({
     required super.isolate,
     required super.workerSendPort,
     required super.responsePort,
@@ -31,12 +67,12 @@ class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {
 
   int droppedFramesCount = 0;
 
-  static const _logger = Logger(className: 'BleStreamDecodeIsolate');
+  static const _logger = Logger(className: 'StreamDecodeWorker');
 
   /// Spawns the worker isolate and waits for the SendPort handshake.
-  static Future<BleStreamDecodeIsolate> create() => BleActionIsolate.create(
-    workerEntryPoint: bleStreamDecodeWorkerMain,
-    constructor: BleStreamDecodeIsolate.new,
+  static Future<StreamDecodeWorker> create() => BleActionIsolate.create(
+    workerEntryPoint: streamDecodeWorkerMain,
+    constructor: StreamDecodeWorker.new,
   );
 
   /// Bridges a raw byte stream to decoded [BleDeviceStreamSnapshotModel] events.

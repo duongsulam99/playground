@@ -9,7 +9,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
-import '../isolate/stream_decode/decode_isolate.dart';
+import '../isolate/decode_worker.dart';
 import 'device_factory.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'abstract/ble_remote_data_source.dart';
@@ -24,7 +24,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   });
 
   final BleDeviceDataSourceFactory _deviceFactory;
-  final BleStreamDecodeIsolate _decodeIsolate;
+  final StreamDecodeWorker _decodeIsolate;
 
   /// Instance đã connect — key là `deviceId` (remoteId string).
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};

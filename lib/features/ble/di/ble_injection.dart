@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../data/firmware/ble_firmware_transport_adapter.dart';
-import '../data/source/isolate/stream_decode/decode_isolate.dart';
+import '../data/source/isolate/decode_worker.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/device_factory.dart';
 import '../data/source/remote/abstract/ble_remote_data_source.dart';
@@ -21,7 +21,7 @@ import '../domain/usecase/watch_scan_results.dart';
 import '../presentation/bloc/ble/ble_bloc.dart';
 
 // Firmware transport adapter
-/// Is used to adapt the firmware transport interface 
+/// Is used to adapt the firmware transport interface
 /// to the underlying BLE data source implementation.
 import '../../firmware/data/firmware_ble_transport.dart';
 
@@ -29,14 +29,12 @@ Future<void> initBleInjection(GetIt sl) async {
   if (sl.isRegistered<BleBloc>()) return;
 
   sl.registerFactory(BleDeviceDataSourceFactory.new);
-  sl.registerSingletonAsync<BleStreamDecodeIsolate>(
-    BleStreamDecodeIsolate.create,
-  );
+  sl.registerSingletonAsync<StreamDecodeWorker>(StreamDecodeWorker.create);
 
   sl.registerLazySingleton<BleRemoteDataSourceImpl>(
     () => BleRemoteDataSourceImpl(
       deviceFactory: sl(),
-      decodeIsolate: sl<BleStreamDecodeIsolate>(),
+      decodeIsolate: sl<StreamDecodeWorker>(),
     ),
   );
 
@@ -45,9 +43,8 @@ Future<void> initBleInjection(GetIt sl) async {
   );
 
   sl.registerLazySingleton<FirmwareBleTransport>(
-    () => BleFirmwareTransportAdapter(
-      dataSource: sl<BleRemoteDataSourceImpl>(),
-    ),
+    () =>
+        BleFirmwareTransportAdapter(dataSource: sl<BleRemoteDataSourceImpl>()),
   );
 
   sl.registerLazySingleton<BleRepository>(
