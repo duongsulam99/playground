@@ -6,6 +6,8 @@ import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
 
+/// [Abstract Class]
+/// Interface for BLE remote data source
 abstract class BleRemoteDataSource {
   // BLE ADAPTER
   Stream<BleAdapterStatus> watchAdapterStatus();

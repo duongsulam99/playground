@@ -1,10 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_supper_app_core/core.dart';
 import 'package:mcumgr_flutter/mcumgr_flutter.dart' as dfu;
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
 
 import '../../domain/entity/dfu_progress.dart';
 import '../model/manifest_model.dart';
@@ -13,11 +12,13 @@ import 'dfu_strategy.dart';
 
 class NordicMcumgrStrategy implements DfuStrategy {
   NordicMcumgrStrategy({dfu.UpdateManagerFactory? updateManagerFactory})
-    : _updateManagerFactory = updateManagerFactory ?? dfu.FirmwareUpdateManagerFactory();
+    : _updateManagerFactory =
+          updateManagerFactory ?? dfu.FirmwareUpdateManagerFactory();
 
   final dfu.UpdateManagerFactory _updateManagerFactory;
 
   static const int _progressTimeoutSeconds = 600;
+  static const String _startOtaCommand = '1';
 
   @override
   DfuType get type => DfuType.nordicDfu;
@@ -57,7 +58,11 @@ class NordicMcumgrStrategy implements DfuStrategy {
         message: 'Entering bootloader',
       );
 
-      await transport.writeOta(deviceId, utf8.encode('1'));
+      await transport.writeOta(
+        deviceId,
+        BleValueEncoders.encodeUtf8(_startOtaCommand),
+      );
+
       await Future<void>.delayed(const Duration(milliseconds: 1000));
 
       final bleDeviceId = transport.getDeviceId(deviceId);

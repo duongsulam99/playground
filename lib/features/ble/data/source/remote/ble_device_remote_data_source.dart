@@ -4,6 +4,9 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 
 import '../../model/ble_device_info_model.dart';
 
+/// [Abstract Class]
+/// Interface for (each) BLE device remote data source
+/// (e.g. FlutterBluePlusPrivateDevice, VulcanMyoBandDevice)
 abstract class BleDeviceRemoteDataSource {
   String get deviceId;
 

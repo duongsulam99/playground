@@ -1,4 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
@@ -9,6 +10,9 @@ import '../../../gatt/ring_threshold_reader.dart';
 import '../../../model/ble_device_info_model.dart';
 import 'flutter_blue_plus_private_device.dart';
 
+/// [MyoBand Device]
+/// Implementation of [FlutterBluePlusPrivateDevice] for MyoBand family devices
+/// This class provides specific implementations for MyoBand devices, including reading device information, starting and stopping signal streams, and handling threshold configurations.
 class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
@@ -84,13 +88,16 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> startSignalStream() async {
+  Future<void> startSignalStream({String startSignalCommand = '255'}) async {
     _isStreamingSignal = false;
     ensureConnected();
 
     try {
       /// SET START SIGNAL STREAM TO DEVICE
-      await writeData(BleAdapterKey.signal, utf8.encode('255'));
+      await writeData(
+        BleAdapterKey.signal,
+        BleValueEncoders.encodeUtf8(startSignalCommand),
+      );
 
       /// START LISTENING STREAM DATA FROM DEVICE
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
@@ -113,11 +120,14 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> stopSignalStream() async {
+  Future<void> stopSignalStream({String stopSignalCommand = '000'}) async {
     if (!_isStreamingSignal || characteristics.isEmpty) return;
 
     try {
-      await writeData(BleAdapterKey.signal, utf8.encode('000'));
+      await writeData(
+        BleAdapterKey.signal,
+        BleValueEncoders.encodeUtf8(stopSignalCommand),
+      );
     } catch (e) {
       _logger.warning(
         'stopSignalStream',

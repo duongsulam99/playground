@@ -14,6 +14,9 @@ import 'ble_device_data_source_factory.dart';
 import 'ble_device_remote_data_source.dart';
 import 'ble_remote_data_source.dart';
 
+/// [Concrete Class]
+/// Implementation of [BleRemoteDataSource] using FlutterBluePlus library
+/// (https://pub.dev/packages/flutter_blue_plus)
 class FlutterBluePlusDataSource implements BleRemoteDataSource {
   FlutterBluePlusDataSource({
     required this._deviceFactory,
