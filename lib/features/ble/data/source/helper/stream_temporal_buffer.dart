@@ -4,8 +4,8 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/ble_stream_frame_config.dart';
 
 /// Accumulates fixed-size BLE frames and flushes them on a time window.
-class BleStreamTemporalBuffer {
-  BleStreamTemporalBuffer({
+class StreamTemporalBuffer {
+  StreamTemporalBuffer({
     this.frameSizeBytes = BleStreamFrameConfig.emgFrameSizeBytes,
     this.flushInterval = BleStreamFrameConfig.defaultBatchInterval,
     required this._onFlush,
@@ -21,7 +21,7 @@ class BleStreamTemporalBuffer {
   Timer? _timer;
   bool _isDisposed = false;
 
-  static const _logger = Logger(className: 'BleStreamTemporalBuffer');
+  static const _logger = Logger(className: 'StreamTemporalBuffer');
 
   void add(Uint8List frame) {
     if (_isDisposed) return;

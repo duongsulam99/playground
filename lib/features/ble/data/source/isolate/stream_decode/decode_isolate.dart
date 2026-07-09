@@ -5,7 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../model/ble_device_stream_snapshot_model.dart';
-import '../../helper/ble_stream_temporal_buffer.dart';
+import '../../helper/stream_temporal_buffer.dart';
 import '../isolate_action.dart';
 import 'worker.dart';
 
@@ -51,7 +51,7 @@ class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {
   }) {
     late final StreamController<BleDeviceStreamSnapshotModel> controller;
     StreamSubscription<List<int>>? sourceSubscription;
-    BleStreamTemporalBuffer? temporalBuffer;
+    StreamTemporalBuffer? temporalBuffer;
 
     // Per-subscription backpressure + lifecycle flags.
     var inFlight = false;
@@ -188,7 +188,7 @@ class BleStreamDecodeIsolate extends BleActionIsolate<List<double>> {
 
     controller = StreamController<BleDeviceStreamSnapshotModel>(
       onListen: () {
-        temporalBuffer = BleStreamTemporalBuffer(onFlush: onBatchReady);
+        temporalBuffer = StreamTemporalBuffer(onFlush: onBatchReady);
         sourceSubscription = source.listen(
           onRawChunk,
           onError: controller.addError,

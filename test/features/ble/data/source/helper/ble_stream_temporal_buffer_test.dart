@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/ble_stream_frame_config.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/helper/ble_stream_temporal_buffer.dart';
+import 'package:vulcan_mobile_playground/features/ble/data/source/helper/stream_temporal_buffer.dart';
 
 void main() {
   const frameSize = BleStreamFrameConfig.emgFrameSizeBytes;
@@ -13,7 +13,7 @@ void main() {
   test('flushes accumulated frames after flush interval', () async {
     final batches = <Uint8List>[];
 
-    final buffer = BleStreamTemporalBuffer(onFlush: batches.add);
+    final buffer = StreamTemporalBuffer(onFlush: batches.add);
 
     buffer
       ..add(frame(1))
@@ -34,7 +34,7 @@ void main() {
   test('skips frames with invalid size', () async {
     final batches = <Uint8List>[];
 
-    final buffer = BleStreamTemporalBuffer(onFlush: batches.add);
+    final buffer = StreamTemporalBuffer(onFlush: batches.add);
 
     buffer
       ..add(Uint8List(16))
@@ -53,7 +53,7 @@ void main() {
   test('dispose does not flush pending frames', () async {
     final batches = <Uint8List>[];
 
-    final buffer = BleStreamTemporalBuffer(onFlush: batches.add)..add(frame(9));
+    final buffer = StreamTemporalBuffer(onFlush: batches.add)..add(frame(9));
 
     buffer.dispose();
 
@@ -67,7 +67,7 @@ void main() {
   test('flushNow emits pending frames immediately', () {
     final batches = <Uint8List>[];
 
-    final buffer = BleStreamTemporalBuffer(
+    final buffer = StreamTemporalBuffer(
       flushInterval: const Duration(seconds: 10),
       onFlush: batches.add,
     )..add(frame(4));

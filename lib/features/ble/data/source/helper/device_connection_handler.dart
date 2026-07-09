@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
 
-import 'ble_package_accumulator.dart';
+import 'package_accumulator.dart';
 import 'stream_monitor.dart';
 
 class DeviceConnectionHandler {

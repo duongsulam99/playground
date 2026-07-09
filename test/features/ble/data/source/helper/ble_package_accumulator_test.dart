@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vulcan_mobile_playground/features/ble/data/source/helper/ble_package_accumulator.dart';
+import 'package:vulcan_mobile_playground/features/ble/data/source/helper/package_accumulator.dart';
 
 void main() {
   group('BlePacketAccumulator', () {
