@@ -134,7 +134,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     /// RETURN NULL IF DEVICE DOESN'T SUPPORT STREAM
     final raw = deviceSource.notifyDataStream;
@@ -145,7 +145,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId) {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     return deviceSource.watchConnectionStatus().map((status) {
       if (status == BleConnectionStatus.disconnected) {
@@ -157,7 +157,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     try {
       return await deviceSource.readDeviceInfo();
@@ -169,7 +169,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<void> disconnect(String deviceId) async {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     /// REMOVE DEVICE FROM CONNECTED MAP
     _connectedDevices.remove(deviceId);
@@ -184,7 +184,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<void> startDeviceStream(String deviceId) async {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     try {
       await deviceSource.startDeviceStream();
@@ -199,7 +199,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
 
   @override
   Future<void> stopDeviceStream(String deviceId) async {
-    final deviceSource = _findDeviceConnected(deviceId);
+    final deviceSource = findDeviceConnected(deviceId);
 
     try {
       await deviceSource.stopDeviceStream();
@@ -212,45 +212,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
     }
   }
 
-  @override
-  Future<List<int>> readCharacteristic(
-    String deviceId,
-    String characteristicKey,
-  ) {
-    return _findDeviceConnected(deviceId).readCharacteristic(characteristicKey);
-  }
-
-  @override
-  Future<void> writeCharacteristic(
-    String deviceId,
-    String characteristicKey,
-    List<int> data, {
-    int timeout = 15,
-  }) {
-    return _findDeviceConnected(deviceId).writeCharacteristic(
-      characteristicKey,
-      data,
-      timeout: timeout,
-    );
-  }
-
-  // Firmware update — OTA notify stream & MTU
-  @override
-  Future<void> setUpdateFirmware(String deviceId, bool enabled) {
-    return _findDeviceConnected(deviceId).setUpdateFirmware(enabled);
-  }
-
-  @override
-  Stream<List<int>> watchUpdateNotifications(String deviceId) {
-    return _findDeviceConnected(deviceId).watchUpdateNotifications();
-  }
-
-  @override
-  int getNegotiatedMtu(String deviceId) {
-    return _findDeviceConnected(deviceId).getNegotiatedMtu();
-  }
-
-  BleDeviceRemoteDataSource _findDeviceConnected(String deviceId) {
+  BleDeviceRemoteDataSource findDeviceConnected(String deviceId) {
     /// FIND DEVICE IN LINKED MAP O(1) WITH ID
     final deviceSource = _connectedDevices[deviceId];
 

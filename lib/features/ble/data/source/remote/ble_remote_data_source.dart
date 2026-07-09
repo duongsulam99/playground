@@ -25,27 +25,4 @@ abstract class BleRemoteDataSource {
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
   Future<void> startDeviceStream(String deviceId);
   Future<void> stopDeviceStream(String deviceId);
-
-  // GATT — generic read/write by characteristic key
-  Future<List<int>> readCharacteristic(
-    String deviceId,
-    String characteristicKey,
-  );
-
-  Future<void> writeCharacteristic(
-    String deviceId,
-    String characteristicKey,
-    List<int> data, {
-    int timeout = 15,
-  });
-
-  // Firmware update — OTA notify stream & MTU
-  /// Bật/tắt notify trên OTA_UUID để nhận ACK khi ESP32 OTA.
-  Future<void> setUpdateFirmware(String deviceId, bool enabled);
-
-  /// Stream raw bytes từ OTA_UUID (packet counter ACK, không phải EMG stream).
-  Stream<List<int>> watchUpdateNotifications(String deviceId);
-
-  /// MTU đã negotiate lúc connect — dùng tính bytePacket cho ESP32 OTA.
-  int getNegotiatedMtu(String deviceId);
 }

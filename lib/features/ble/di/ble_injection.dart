@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import '../data/firmware/ble_firmware_transport_adapter.dart';
 import '../data/source/isolate/stream_decode/ble_stream_decode_isolate.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/ble_device_data_source_factory.dart';
@@ -19,6 +20,11 @@ import '../domain/usecase/watch_device_data.dart';
 import '../domain/usecase/watch_scan_results.dart';
 import '../presentation/bloc/ble/ble_bloc.dart';
 
+// Firmware transport adapter
+/// Is used to adapt the firmware transport interface 
+/// to the underlying BLE data source implementation.
+import '../../firmware/data/firmware_ble_transport.dart';
+
 Future<void> initBleInjection(GetIt sl) async {
   if (sl.isRegistered<BleBloc>()) return;
 
@@ -27,10 +33,20 @@ Future<void> initBleInjection(GetIt sl) async {
     BleStreamDecodeIsolate.create,
   );
 
-  sl.registerLazySingleton<BleRemoteDataSource>(
+  sl.registerLazySingleton<FlutterBluePlusDataSource>(
     () => FlutterBluePlusDataSource(
       deviceFactory: sl(),
       decodeIsolate: sl<BleStreamDecodeIsolate>(),
+    ),
+  );
+
+  sl.registerLazySingleton<BleRemoteDataSource>(
+    () => sl<FlutterBluePlusDataSource>(),
+  );
+
+  sl.registerLazySingleton<FirmwareBleTransport>(
+    () => BleFirmwareTransportAdapter(
+      dataSource: sl<FlutterBluePlusDataSource>(),
     ),
   );
 

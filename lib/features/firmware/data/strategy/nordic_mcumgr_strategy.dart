@@ -60,7 +60,7 @@ class NordicMcumgrStrategy implements DfuStrategy {
       await transport.writeOta(deviceId, utf8.encode('1'));
       await Future<void>.delayed(const Duration(milliseconds: 1000));
 
-      final bleDeviceId = transport.getBleDeviceId(deviceId);
+      final bleDeviceId = transport.getDeviceId(deviceId);
       updateManager = await _updateManagerFactory.getUpdateManager(bleDeviceId);
       updateManager.setup();
 
