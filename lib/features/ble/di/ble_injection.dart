@@ -33,20 +33,20 @@ Future<void> initBleInjection(GetIt sl) async {
     BleStreamDecodeIsolate.create,
   );
 
-  sl.registerLazySingleton<FlutterBluePlusDataSource>(
-    () => FlutterBluePlusDataSource(
+  sl.registerLazySingleton<BleRemoteDataSourceImpl>(
+    () => BleRemoteDataSourceImpl(
       deviceFactory: sl(),
       decodeIsolate: sl<BleStreamDecodeIsolate>(),
     ),
   );
 
   sl.registerLazySingleton<BleRemoteDataSource>(
-    () => sl<FlutterBluePlusDataSource>(),
+    () => sl<BleRemoteDataSourceImpl>(),
   );
 
   sl.registerLazySingleton<FirmwareBleTransport>(
     () => BleFirmwareTransportAdapter(
-      dataSource: sl<FlutterBluePlusDataSource>(),
+      dataSource: sl<BleRemoteDataSourceImpl>(),
     ),
   );
 

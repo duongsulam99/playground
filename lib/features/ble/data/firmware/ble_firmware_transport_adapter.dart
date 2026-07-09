@@ -6,7 +6,7 @@ import '../source/remote/flutter_blue_plus_data_source.dart';
 class BleFirmwareTransportAdapter implements FirmwareBleTransport {
   const BleFirmwareTransportAdapter({required this._dataSource});
 
-  final FlutterBluePlusDataSource _dataSource;
+  final BleRemoteDataSourceImpl _dataSource;
 
   @override
   Future<void> writeOta(String deviceId, List<int> data, {int timeout = 15}) {

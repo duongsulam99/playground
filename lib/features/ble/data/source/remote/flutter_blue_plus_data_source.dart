@@ -17,8 +17,8 @@ import 'ble_remote_data_source.dart';
 /// [Concrete Class]
 /// Implementation of [BleRemoteDataSource] using FlutterBluePlus library
 /// (https://pub.dev/packages/flutter_blue_plus)
-class FlutterBluePlusDataSource implements BleRemoteDataSource {
-  FlutterBluePlusDataSource({
+class BleRemoteDataSourceImpl implements BleRemoteDataSource {
+  BleRemoteDataSourceImpl({
     required this._deviceFactory,
     required this._decodeIsolate,
   });
@@ -31,7 +31,7 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
   final Map<String, BluetoothDevice> _bluetoothDevices = {};
 
-  final _logger = const Logger(className: 'FlutterBluePlusDataSource');
+  final _logger = const Logger(className: 'BleRemoteDataSourceImpl');
 
   // STREAMS
   @override
