@@ -5,7 +5,6 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
-import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../model/ble_device_info_model.dart';
@@ -98,14 +97,6 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
       'readDeviceInfo is not supported for ${deviceType.name}',
       deviceId: deviceId,
     );
-  }
-
-  @override
-  Future<RingThresholdConfig?> readThreshold() async => null;
-
-  @override
-  Future<void> writeThreshold(RingThresholdConfig config) {
-    throw UnimplementedError('writeThreshold is not implemented yet');
   }
 
   Future<void> startListening(

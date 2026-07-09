@@ -1,16 +1,18 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 
-import '../../domain/entities/ble_device_info.dart';
+import '../../../model/ble_device_info_model.dart';
 
-class MyoBandDeviceInfoReader {
-  static const logger = Logger(className: 'MyoBandDeviceInfoReader');
+class GattRingReader {
+  static const logger = Logger(className: 'MyoBandReader');
 
-  static Future<BleDeviceInfo> read({
+  static Future<BleDeviceInfoModel> readInfo({
     required Map<String, BluetoothCharacteristic> characteristics,
     required VulcanDeviceType scannedType,
   }) async {
@@ -40,12 +42,27 @@ class MyoBandDeviceInfoReader {
         ? scannedType
         : resolvedType;
 
-    return BleDeviceInfo(
+    return BleDeviceInfoModel(
       name: name,
       firmwareVersion: firmwareVersion,
       hardwareId: hardwareId,
       resolvedType: effectiveType,
       batteryPercent: batteryPercent,
     );
+  }
+
+  static Future<RingThresholdConfig?> readThreshold(
+    Map<String, BluetoothCharacteristic> characteristics,
+  ) async {
+    if (!characteristics.containsKey(BleRingKey.threshold)) {
+      return null;
+    }
+
+    final bytes = await BleGattReader.read(
+      characteristics,
+      BleRingKey.threshold,
+    );
+
+    return BleValueDecoders.decodeRingThreshold(bytes);
   }
 }

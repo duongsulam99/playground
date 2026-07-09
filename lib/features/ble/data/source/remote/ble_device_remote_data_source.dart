@@ -1,6 +1,5 @@
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 
 import '../../model/ble_device_info_model.dart';
 
@@ -19,10 +18,6 @@ abstract class BleDeviceRemoteDataSource {
 
   // Device - Data Info
   Future<BleDeviceInfoModel> readDeviceInfo();
-
-  // Device - Threshold Config
-  Future<RingThresholdConfig?> readThreshold();
-  Future<void> writeThreshold(RingThresholdConfig config);
 
   // Device - Stream (EMG / signal)
   Stream<List<int>>? get notifyDataStream;

@@ -5,8 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../../gatt/myo_band_device_info_reader.dart';
-import '../../../gatt/ring_threshold_reader.dart';
+import '../../../gatt/ring/reader/ring_reader.dart';
 import '../../../model/ble_device_info_model.dart';
 import 'flutter_blue_plus_private_device.dart';
 
@@ -39,19 +38,9 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     ensureConnected();
 
     try {
-      final info = await MyoBandDeviceInfoReader.read(
+      return await GattRingReader.readInfo(
         characteristics: characteristics,
         scannedType: deviceType,
-      );
-      final threshold = await readThreshold();
-
-      return BleDeviceInfoModel(
-        name: info.name,
-        firmwareVersion: info.firmwareVersion,
-        hardwareId: info.hardwareId,
-        resolvedType: info.resolvedType,
-        batteryPercent: info.batteryPercent,
-        thresholdConfig: threshold,
       );
     } catch (e) {
       if (e is BleException) rethrow;
@@ -59,12 +48,11 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  @override
   Future<RingThresholdConfig?> readThreshold() async {
     ensureConnected();
 
     try {
-      return await RingThresholdReader.read(characteristics);
+      return await GattRingReader.readThreshold(characteristics);
     } catch (e, st) {
       _logger.warning(
         'readThreshold',
@@ -72,11 +60,6 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
       );
       return null;
     }
-  }
-
-  @override
-  Future<void> writeThreshold(RingThresholdConfig config) {
-    throw UnimplementedError('writeThreshold is not implemented yet');
   }
 
   void ensureIsMyoBandFamily() {
