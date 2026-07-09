@@ -1,5 +1,5 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:vulcan_mobile_playground/core/ble/config/keys/ring/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';

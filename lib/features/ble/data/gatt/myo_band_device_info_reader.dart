@@ -1,6 +1,6 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/config/keys/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_decoders.dart';
