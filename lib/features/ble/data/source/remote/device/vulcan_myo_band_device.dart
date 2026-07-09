@@ -7,12 +7,12 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../gatt/ring/reader/ring_reader.dart';
 import '../../../model/ble_device_info_model.dart';
-import 'flutter_blue_plus_private_device.dart';
+import '../device_impl.dart';
 
 /// [MyoBand Device]
 /// Implementation of [FlutterBluePlusPrivateDevice] for MyoBand family devices
 /// This class provides specific implementations for MyoBand devices, including reading device information, starting and stopping signal streams, and handling threshold configurations.
-class VulcanMyoBandDevice extends DefaultDeviceDataSource {
+class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
   bool _isStreamingSignal = false;

@@ -1,7 +1,7 @@
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
-import '../../model/ble_device_info_model.dart';
+import '../../../model/ble_device_info_model.dart';
 
 /// [Abstract Class]
 /// Interface for (each) BLE device remote data source

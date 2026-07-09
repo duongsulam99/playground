@@ -1,7 +1,7 @@
 import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/features/firmware/data/firmware_ble_transport.dart';
 
-import '../source/remote/flutter_blue_plus_data_source.dart';
+import '../source/remote/impl.dart';
 
 class BleFirmwareTransportAdapter implements FirmwareBleTransport {
   const BleFirmwareTransportAdapter({required this._dataSource});

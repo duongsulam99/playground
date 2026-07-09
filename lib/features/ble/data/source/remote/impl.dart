@@ -10,9 +10,9 @@ import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
 import '../isolate/stream_decode/ble_stream_decode_isolate.dart';
-import 'ble_device_data_source_factory.dart';
-import 'ble_device_remote_data_source.dart';
-import 'ble_remote_data_source.dart';
+import 'device_factory.dart';
+import 'abstract/ble_device_remote_data_source.dart';
+import 'abstract/ble_remote_data_source.dart';
 
 /// [Concrete Class]
 /// Implementation of [BleRemoteDataSource] using FlutterBluePlus library

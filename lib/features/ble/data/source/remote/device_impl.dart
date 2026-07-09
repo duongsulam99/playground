@@ -7,16 +7,16 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_pro
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../../model/ble_device_info_model.dart';
-import '../../helper/device_connection_handler.dart';
-import '../ble_device_remote_data_source.dart';
+import '../../model/ble_device_info_model.dart';
+import '../helper/device_connection_handler.dart';
+import 'abstract/ble_device_remote_data_source.dart';
 
 /// [Default]
 /// Implementation of [BleDeviceRemoteDataSource]
 /// This class is used to represent a BLE device that is connected
 /// If the device type is not recognized, this class will be used as a default implementation.
-class DefaultDeviceDataSource implements BleDeviceRemoteDataSource {
-  DefaultDeviceDataSource({
+class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
+  BleDeviceRemoteDataSourceImpl({
     required BluetoothDevice device,
     required this._deviceType,
   }) : _device = device,
@@ -30,7 +30,7 @@ class DefaultDeviceDataSource implements BleDeviceRemoteDataSource {
   final DeviceConnectionHandler _connectionHandler;
   final Map<String, BluetoothCharacteristic> _characteristics = {};
 
-  final _logger = const Logger(className: 'DefaultDeviceDataSource');
+  final _logger = const Logger(className: 'BleDeviceRemoteDataSourceImpl');
 
   @override
   String get deviceId => _device.remoteId.str;

@@ -11,7 +11,7 @@ import '../../domain/entities/ble_device_info.dart';
 import '../../domain/entities/ble_discovered_device.dart';
 import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
-import '../source/remote/ble_remote_data_source.dart';
+import '../source/remote/abstract/ble_remote_data_source.dart';
 
 class BleRepositoryImpl implements BleRepository {
   const BleRepositoryImpl({required this._remoteDataSource});
