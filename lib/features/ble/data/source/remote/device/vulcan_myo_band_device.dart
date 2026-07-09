@@ -9,13 +9,13 @@ import '../../../gatt/ring/reader/ring_reader.dart';
 import '../../../model/ble_device_info_model.dart';
 import '../device_impl.dart';
 
-/// [MyoBand Device]
-/// Implementation of [FlutterBluePlusPrivateDevice] for MyoBand family devices
-/// This class provides specific implementations for MyoBand devices, including reading device information, starting and stopping signal streams, and handling threshold configurations.
+/// MyoBand family: đọc metadata qua GATT, stream EMG qua characteristic signal.
 class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
   bool _isStreamingSignal = false;
+
+  /// Lệnh protocol Vulcan: bật / tắt stream tín hiệu trên thiết bị.
   static const String _startSignalCommand = '255';
   static const String _stopSignalCommand = '000';
 
@@ -36,7 +36,6 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
   @override
   Future<BleDeviceInfoModel> readDeviceInfo() async {
     ensureIsMyoBandFamily();
-
     ensureConnected();
 
     try {
@@ -50,6 +49,7 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
     }
   }
 
+  /// Đọc ngưỡng ring; lỗi trả `null` thay vì throw (optional data).
   Future<RingThresholdConfig?> readThreshold() async {
     ensureConnected();
 
@@ -78,13 +78,12 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
     ensureConnected();
 
     try {
-      /// SET START SIGNAL STREAM TO DEVICE
       await writeData(
         BleAdapterKey.signal,
         BleValueEncoders.encodeUtf8(_startSignalCommand),
       );
 
-      /// START LISTENING STREAM DATA FROM DEVICE
+      // MyoBand gửi frame cố định mỗi notify — không cần gộp chunk.
       await startListening(BleAdapterKey.signal, reassembleFrames: false);
 
       _isStreamingSignal = true;
@@ -96,7 +95,6 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
         'Failed to setup MyoBand notify stream: $e\n$st',
       );
 
-      /// THROW EXCEPTION
       if (e is BleException) rethrow;
       throw BleException(
         'Failed to start MyoBand signal stream: $e',

@@ -41,6 +41,7 @@ class GattRingReader {
     final effectiveType = resolvedType == VulcanDeviceType.none
         ? scannedType
         : resolvedType;
+    final threshold = await readThreshold(characteristics);
 
     return BleDeviceInfoModel(
       name: name,
@@ -48,6 +49,7 @@ class GattRingReader {
       hardwareId: hardwareId,
       resolvedType: effectiveType,
       batteryPercent: batteryPercent,
+      thresholdConfig: threshold,
     );
   }
 

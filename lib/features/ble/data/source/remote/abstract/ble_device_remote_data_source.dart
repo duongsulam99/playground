@@ -3,29 +3,33 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../../model/ble_device_info_model.dart';
 
-/// [Abstract Class]
-/// Interface for (each) BLE device remote data source
-/// (e.g. FlutterBluePlusPrivateDevice, VulcanMyoBandDevice)
+/// Contract cho **một** thiết bị BLE đã được tạo instance (thường sau connect).
+///
+/// Mỗi loại thiết bị có thể override hành vi stream/info; base class cung cấp
+/// GATT read/write và OTA dùng chung.
 abstract class BleDeviceRemoteDataSource {
   String get deviceId;
 
   VulcanDeviceType get deviceType;
 
-  // Device - Connection
+  // --- Connection ---
   Stream<BleConnectionStatus> watchConnectionStatus();
   Future<BleConnectionStatus> connect();
   Future<void> disconnect();
 
-  // Device - Data Info
+  // --- Device info ---
   Future<BleDeviceInfoModel> readDeviceInfo();
 
-  // Device - Stream (EMG / signal)
+  // --- Notify stream (EMG / signal) ---
+  /// Raw byte stream sau khi bật notify. `null` nếu thiết bị không stream.
   Stream<List<int>>? get notifyDataStream;
   Future<void> startDeviceStream();
   Future<void> stopDeviceStream();
+
+  /// Callback gọi trước disconnect để gửi lệnh dừng stream trên thiết bị.
   Future<void> Function()? get onNotifyStopListening;
 
-  // GATT — generic read/write by characteristic key
+  // --- GATT generic (key từ core/ble/gatt/keys) ---
   Future<List<int>> readCharacteristic(String characteristicKey);
   Future<void> writeCharacteristic(
     String characteristicKey,
@@ -33,10 +37,8 @@ abstract class BleDeviceRemoteDataSource {
     int timeout = 15,
   });
 
-  // Firmware update — OTA notify stream & MTU
+  // --- Firmware OTA ---
   Future<void> setUpdateFirmware(bool enabled);
   Stream<List<int>> watchUpdateNotifications();
-
-  // Lấy MTU hiện tại đã negotiate lúc connect
   int getNegotiatedMtu();
 }

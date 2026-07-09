@@ -5,27 +5,21 @@ import 'device_impl.dart';
 import 'device/vulcan_myo_band_device.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 
-/// Factory class to create [BleDeviceRemoteDataSource] instances based on the [VulcanDeviceType].
-/// This allows for different implementations of [BleDeviceRemoteDataSource] for different device types, enabling support for various BLE devices with specific behaviors and characteristics.
+/// Tạo [BleDeviceRemoteDataSource] phù hợp theo [VulcanDeviceType].
+///
+/// Thêm loại thiết bị mới: tạo subclass và map tại đây (xem TODO bên dưới).
 class BleDeviceDataSourceFactory {
-  /// Create a [BleDeviceRemoteDataSource] based on the [deviceType].
   BleDeviceRemoteDataSource create(
     BluetoothDevice device, {
     required VulcanDeviceType deviceType,
   }) {
     switch (deviceType) {
-      // (nếu có lệnh truyền/nhận riêng).
-      //TODO:[Add New Device] Step 4: Map kiểu thiết bị mới sang BleDeviceRemoteDataSource cụ thể
-
-      /// Mặc định dùng [FlutterBluePlusPrivateDevice]
+      // TODO:[Add New Device] Step 4: map deviceType mới sang implementation cụ thể
       default:
-
-        /// FOR ALL MYO BAND FAMILY
         if (deviceType.isMyoBandFamily) {
           return VulcanMyoBandDevice(device: device, deviceType: deviceType);
         }
 
-        /// FOR UNKNOW DEVICES
         return BleDeviceRemoteDataSourceImpl(
           device: device,
           deviceType: deviceType,

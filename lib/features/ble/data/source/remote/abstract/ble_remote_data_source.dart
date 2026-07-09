@@ -6,24 +6,30 @@ import '../../../model/ble_device_info_model.dart';
 import '../../../model/ble_device_stream_snapshot_model.dart';
 import '../../../model/ble_discovered_device_model.dart';
 
-/// [Abstract Class]
-/// Interface for BLE remote data source
+/// Contract cho toàn bộ thao tác BLE ở data layer.
+///
+/// Một implementation ([BleRemoteDataSourceImpl]) quản lý adapter, scan,
+/// và điều phối tới từng [BleDeviceRemoteDataSource] đã kết nối.
 abstract class BleRemoteDataSource {
-  // BLE ADAPTER
+  // --- Adapter & scan ---
   Stream<BleAdapterStatus> watchAdapterStatus();
+
+  /// Map keyed by `deviceId`; mỗi lần emit là snapshot đầy đủ thiết bị đã thấy.
   Stream<Map<String, BleDiscoveredDeviceModel>> watchScanResults();
   Future<void> startScan({List<VulcanDeviceType>? filterTypes});
   Future<void> stopScan();
 
-  // BLE DEVICE - CONNECTION
+  // --- Connection ---
   Future<BleConnectionStatus> connect(String deviceId);
+
+  /// `null` khi thiết bị chưa từng connect trong session hiện tại.
   Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId);
   Future<void> disconnect(String deviceId);
 
-  // BLE DEVICE - DATA
+  // --- Device info & stream ---
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
 
-  // BLE DEVICE - STREAM (EMG / signal)
+  /// `null` khi thiết bị không hỗ trợ notify stream (không phải lỗi).
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
   Future<void> startDeviceStream(String deviceId);
   Future<void> stopDeviceStream(String deviceId);

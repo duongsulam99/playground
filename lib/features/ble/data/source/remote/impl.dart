@@ -14,9 +14,9 @@ import 'device_factory.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'abstract/ble_remote_data_source.dart';
 
-/// [Concrete Class]
-/// Implementation of [BleRemoteDataSource] using FlutterBluePlus library
-/// (https://pub.dev/packages/flutter_blue_plus)
+/// Orchestrator BLE: scan, connect, và delegate xuống từng [BleDeviceRemoteDataSource].
+///
+/// Dùng [FlutterBluePlus](https://pub.dev/packages/flutter_blue_plus) làm stack native.
 class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   BleRemoteDataSourceImpl({
     required this._deviceFactory,
@@ -26,14 +26,17 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   final BleDeviceDataSourceFactory _deviceFactory;
   final BleStreamDecodeIsolate _decodeIsolate;
 
-  // SAVED DEVICES
+  /// Instance đã connect — key là `deviceId` (remoteId string).
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
+
+  /// Metadata từ scan gần nhất — dùng để lấy `deviceType` lúc connect.
   final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
+
+  /// Handle native [BluetoothDevice] — cần để gọi `connect()` sau scan.
   final Map<String, BluetoothDevice> _bluetoothDevices = {};
 
   final _logger = const Logger(className: 'BleRemoteDataSourceImpl');
 
-  // STREAMS
   @override
   Stream<BleAdapterStatus> watchAdapterStatus() {
     return FlutterBluePlus.adapterState.map(_mapAdapterState);
@@ -44,28 +47,17 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     return FlutterBluePlus.scanResults.map(_processScanResults);
   }
 
-  // ACTIONS
+  /// Gộp batch scan mới vào cache, bỏ thiết bị không connectable.
   Map<String, BleDiscoveredDeviceModel> _processScanResults(
     List<ScanResult> results,
   ) {
     if (results.isEmpty) return const {};
 
-    /// Process every scan result
     for (final result in results) {
-      /// Filter out non-connectable devices
-      final ableToConnect = result.advertisementData.connectable;
-      if (!ableToConnect) continue;
+      if (!result.advertisementData.connectable) continue;
 
-      /// Extract device info [id]
       final id = result.device.remoteId.str;
-
-      /// Convert scan result to BleDiscoveredDeviceModel
-      final model = BleDiscoveredDeviceModel.fromScanResult(result);
-
-      /// Cache discovered device
-      _discoveredDevices[id] = model;
-
-      /// Cache bluetooth device
+      _discoveredDevices[id] = BleDiscoveredDeviceModel.fromScanResult(result);
       _bluetoothDevices[id] = result.device;
     }
 
@@ -74,18 +66,13 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Future<void> startScan({List<VulcanDeviceType>? filterTypes}) async {
-    /// Check if adapter is ready
     await _checkAdapterState();
     if (FlutterBluePlus.isScanningNow) return;
 
-    /// Clear discovered devices before new scan
     _discoveredDevices.clear();
     _bluetoothDevices.clear();
 
-    /// Get scan GUIDs based on filter types
     final guids = _getScanGuids(filterTypes);
-
-    /// Configure and start scan
     await _configScan(guids);
   }
 
@@ -112,6 +99,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
       );
     }
 
+    // Scan và connect đồng thời dễ fail trên một số platform.
     if (FlutterBluePlus.isScanningNow) {
       await FlutterBluePlus.stopScan();
     }
@@ -139,10 +127,10 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
     final deviceSource = findDeviceConnected(deviceId);
 
-    /// RETURN NULL IF DEVICE DOESN'T SUPPORT STREAM
     final raw = deviceSource.notifyDataStream;
     if (raw == null) return null;
 
+    // Decode EMG chạy trên isolate để không block main thread.
     return _decodeIsolate.decodeStream(source: raw, deviceId: deviceId);
   }
 
@@ -151,6 +139,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     final deviceSource = findDeviceConnected(deviceId);
 
     return deviceSource.watchConnectionStatus().map((status) {
+      // Dọn cache khi mất kết nối (kể cả disconnect ngoài app).
       if (status == BleConnectionStatus.disconnected) {
         _connectedDevices.remove(deviceId);
       }
@@ -174,7 +163,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   Future<void> disconnect(String deviceId) async {
     final deviceSource = findDeviceConnected(deviceId);
 
-    /// REMOVE DEVICE FROM CONNECTED MAP
+    // Xóa trước để các lệnh khác không còn thấy device là connected.
     _connectedDevices.remove(deviceId);
 
     try {
@@ -215,11 +204,10 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     }
   }
 
+  /// Public để [BleFirmwareTransportAdapter] truy cập GATT/OTA trực tiếp.
   BleDeviceRemoteDataSource findDeviceConnected(String deviceId) {
-    /// FIND DEVICE IN LINKED MAP O(1) WITH ID
     final deviceSource = _connectedDevices[deviceId];
 
-    /// THROW EXCEPTION
     if (deviceSource == null) {
       throw BleNotConnectedException(
         'Device $deviceId is not connected',
@@ -227,10 +215,10 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
       );
     }
 
-    /// RETURN DEVICE
     return deviceSource;
   }
 
+  /// Ưu tiên handle từ scan cache; fallback `fromId` khi device đã từng connect.
   BluetoothDevice _resolveBluetoothDevice(String deviceId) {
     final cached = _bluetoothDevices[deviceId];
     if (cached != null) return cached;
@@ -245,6 +233,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     );
   }
 
+  /// Wrapper quanh [FlutterBluePlus.startScan] với default phù hợp Vulcan.
   Future<void> _configScan(
     List<Guid> guids, {
     Duration? timeout,
@@ -253,20 +242,10 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     int continuousDivisor = 10,
   }) {
     return FlutterBluePlus.startScan(
-      /// Stop scan after [timeout]
-      /// Default is null ( no timeout )
       timeout: timeout,
-
-      /// Remove devices after [removeIfGone]
       removeIfGone: removeIfGone,
-
-      /// Update 'lastSeen' & 'rssi'
       continuousUpdates: continuousUpdates,
-
-      /// Update 'lastSeen' every 10 scans
       continuousDivisor: continuousDivisor,
-
-      /// Optional filters
       withServices: guids,
     );
   }
@@ -279,10 +258,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   }
 
   List<Guid> _getScanGuids(List<VulcanDeviceType>? filterTypes) {
-    /// If no filter types are provided, return all scan GUIDs
     if (filterTypes == null) return BleVulcanProfiles.allVulcanScanGuids();
-
-    /// Map filter types to native scan service UUIDs
     return BleVulcanProfiles.scanGuidsForDeviceTypes(filterTypes);
   }
 

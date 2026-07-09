@@ -11,10 +11,10 @@ import '../../model/ble_device_info_model.dart';
 import '../helper/device_connection_handler.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 
-/// [Default]
-/// Implementation of [BleDeviceRemoteDataSource]
-/// This class is used to represent a BLE device that is connected
-/// If the device type is not recognized, this class will be used as a default implementation.
+/// Implementation mặc định cho mọi thiết bị Vulcan.
+///
+/// Cung cấp connect, discover GATT, read/write characteristic và OTA.
+/// Stream/info cụ thể do subclass override (vd. [VulcanMyoBandDevice]).
 class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   BleDeviceRemoteDataSourceImpl({
     required BluetoothDevice device,
@@ -28,6 +28,8 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   final BluetoothDevice _device;
   final VulcanDeviceType _deviceType;
   final DeviceConnectionHandler _connectionHandler;
+
+  /// Map key → characteristic, điền sau service discovery.
   final Map<String, BluetoothCharacteristic> _characteristics = {};
 
   final _logger = const Logger(className: 'BleDeviceRemoteDataSourceImpl');
@@ -50,6 +52,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
 
   DeviceConnectionHandler get connectionHandler => _connectionHandler;
 
+  /// Raw notify stream (chưa decode). Subclass expose qua [notifyDataStream].
   Stream<List<int>> watchDeviceData() => _connectionHandler.cleanDataStream;
 
   @override
@@ -99,6 +102,8 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
     );
   }
 
+  /// Bật notify trên characteristic. [reassembleFrames] = true khi payload
+  /// bị chia chunk có header 2-byte; false khi mỗi notify là một frame hoàn chỉnh.
   Future<void> startListening(
     String characteristicKey, {
     bool reassembleFrames = true,
@@ -196,6 +201,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
     return characteristic;
   }
 
+  /// Kiểm tra GATT đã discover — proxy cho trạng thái "sẵn sàng giao tiếp".
   void ensureConnected() {
     if (_characteristics.isEmpty) {
       throw BleException(
@@ -216,7 +222,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   @override
   Future<void> stopDeviceStream() async {}
 
-  // Firmware: OTA characteristic key
+  /// Key trong map characteristics sau [BleGattCollector.collect] (profile Hand/Elbow).
   static const String _otaKey = 'OTA_UUID';
 
   @override
