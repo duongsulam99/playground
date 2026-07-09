@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import 'ble_stream_decoder.dart';
 
+/// Decode batch raw bytes EMG thành danh sách điện áp (mV).
 class EmgStreamDecoder implements BleStreamDecoder {
   const EmgStreamDecoder();
 

@@ -8,6 +8,9 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package_accumulator.dart';
 import 'stream_monitor.dart';
 
+/// Quản lý GATT I/O cho một thiết bị đã connect: MTU, notify stream, write chunk.
+///
+/// Một instance gắn với một [BluetoothDevice]; lifecycle theo connect/dispose.
 class DeviceConnectionHandler {
   DeviceConnectionHandler({
     required this.deviceId,
@@ -18,7 +21,6 @@ class DeviceConnectionHandler {
   final BluetoothDevice _bleDevice;
   final BlePacketAccumulator _accumulator = BlePacketAccumulator();
 
-  // CONFIGURATION
   static const int DEFAULT_MTU = 23;
   static const int MAX_MTU = 515;
 
@@ -30,12 +32,14 @@ class DeviceConnectionHandler {
   final Logger _logger = const Logger(className: 'DeviceConnectionHandler');
   final _streamMonitor = EMGStreamMonitor();
 
+  /// Serialize GATT operations — tránh ghi/notify đồng thời gây race.
   Future<void> _queueLock = Future.value();
   int _currentMtu = DEFAULT_MTU;
   bool _isDisposed = false;
 
   int get currentMtu => _currentMtu;
 
+  /// Byte stream sau khi lắng nghe notify (có thể đã gộp frame).
   Stream<List<int>> get cleanDataStream {
     _ensureStreamController();
     return _cleanDataStreamController!.stream;
@@ -44,7 +48,6 @@ class DeviceConnectionHandler {
   Future<void> setupMtu() async {
     _ensureNotDisposed();
 
-    /// Request MTU MAX_MTU on Android
     if (Platform.isAndroid) {
       await _requestMtu(MAX_MTU);
     }
@@ -60,12 +63,10 @@ class DeviceConnectionHandler {
   void monitorConnection() {
     _ensureNotDisposed();
 
-    /// Cancel previous subscription
     _connectionSubscription?.cancel();
 
-    /// Monitor & handle 2 connection states
     _connectionSubscription = _bleDevice.connectionState.listen((state) {
-      /// Disconnect if device is disconnected
+      // Tự dọn resource khi mất kết nối ngoài ý muốn.
       if (state == BluetoothConnectionState.disconnected) dispose();
 
       //TODO: Handle connection state
@@ -74,9 +75,7 @@ class DeviceConnectionHandler {
 
   bool _cleanAndEnsureController(StreamController<List<int>>? controller) {
     if (controller == null) return false;
-
     if (controller.isClosed) return false;
-
     return true;
   }
 
@@ -84,49 +83,30 @@ class DeviceConnectionHandler {
     BluetoothCharacteristic characteristic, {
     bool reassembleFrames = true,
   }) async {
-    /// Ensure device is connected
     _ensureNotDisposed();
-
-    /// Ensure Stream Controller Is Available & Open
     _ensureStreamController();
 
-    /// Cancel previous subscription
     await _notificationSubscription?.cancel();
     _accumulator.clear();
 
-    /// Send Notify Value Request To Device
     await _enqueueOperation(() => characteristic.setNotifyValue(true));
 
-    // Start monitoring the EMG stream to measure the sampling rate
     _streamMonitor.start(cleanDataStream.map((_) => 0.0));
 
-    /// Listen to value received from characteristic
     _notificationSubscription = characteristic.onValueReceived.listen(
       (rawChunk) {
-        /// IMPORTANT STEP BEFORE ADDING DATA ( SAFETY GUARD)
-        /// Clean Stream Controller
-        /// and ensure controller is available
         if (!_cleanAndEnsureController(_cleanDataStreamController)) return;
 
-        /// If reassembleFrames is false
-        /// add the raw chunk to the stream controller directly
         if (!reassembleFrames) {
           _cleanDataStreamController!.add(List<int>.from(rawChunk));
           return;
         }
 
-        /// If reassembleFrames is true
-        /// append the chunk to the accumulator
-        /// and add the complete frame to the stream controller
         _accumulator.appendChunk(rawChunk, (List<int> frame) {
           _cleanDataStreamController!.add(List<int>.from(frame));
         });
       },
-
-      /// Handle Errors When Start Listening
       onError: _onErrorListeningData,
-
-      /// Handle Done Listening
       onDone: _onDoneListeningData,
     );
   }
@@ -141,6 +121,7 @@ class DeviceConnectionHandler {
     _logger.debug('startListeningData', 'Notify stream done.');
   }
 
+  /// Chia payload theo MTU hiện tại (payload = MTU - 3 byte ATT header).
   Future<void> writeData(
     BluetoothCharacteristic characteristic,
     List<int> fullData,

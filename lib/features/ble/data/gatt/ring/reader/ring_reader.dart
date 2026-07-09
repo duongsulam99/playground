@@ -9,8 +9,9 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 
 import '../../../model/ble_device_info_model.dart';
 
+/// Đọc metadata MyoBand/Ring qua GATT — logic đặc thù thiết bị, tách khỏi device source.
 class GattRingReader {
-  static const logger = Logger(className: 'MyoBandReader');
+  static const logger = Logger(className: 'GattRingReader');
 
   static Future<BleDeviceInfoModel> readInfo({
     required Map<String, BluetoothCharacteristic> characteristics,
@@ -38,9 +39,12 @@ class GattRingReader {
     final hardwareId = BleValueDecoders.decodeHardwareId(hardwareBytes);
     final batteryPercent = BleValueDecoders.decodeBatteryPercent(batteryBytes);
     final resolvedType = VulcanDeviceType.fromHardwareId(hardwareId);
+
+    // Hardware ID đáng tin hơn advertisement; fallback loại từ scan.
     final effectiveType = resolvedType == VulcanDeviceType.none
         ? scannedType
         : resolvedType;
+
     final threshold = await readThreshold(characteristics);
 
     return BleDeviceInfoModel(
@@ -53,6 +57,7 @@ class GattRingReader {
     );
   }
 
+  /// Trả `null` khi thiết bị không có characteristic threshold.
   static Future<RingThresholdConfig?> readThreshold(
     Map<String, BluetoothCharacteristic> characteristics,
   ) async {

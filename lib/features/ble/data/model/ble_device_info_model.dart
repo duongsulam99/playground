@@ -3,6 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 
 import '../../domain/entities/ble_device_info.dart';
 
+/// DTO metadata thiết bị đọc từ GATT (name, firmware, hardware, pin, …).
 class BleDeviceInfoModel {
   const BleDeviceInfoModel({
     required this.name,
@@ -16,7 +17,10 @@ class BleDeviceInfoModel {
   final String name;
   final String firmwareVersion;
   final String hardwareId;
+
+  /// Loại thiết bị sau khi resolve từ hardware ID (có thể khác loại lúc scan).
   final VulcanDeviceType resolvedType;
+
   final int batteryPercent;
   final RingThresholdConfig? thresholdConfig;
 

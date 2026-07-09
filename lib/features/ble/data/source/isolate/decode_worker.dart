@@ -11,7 +11,7 @@ import '../stream/emg_stream_decoder.dart';
 import 'action_message.dart';
 import 'isolate_action.dart';
 
-/// Minimal request payload sent across the isolate boundary.
+/// Payload RPC gửi sang worker isolate để decode EMG.
 final class BleStreamDecodeRequest {
   const BleStreamDecodeRequest({
     required this.requestId,
@@ -56,7 +56,10 @@ void streamDecodeWorkerMain(SendPort mainSendPort) {
   });
 }
 
-/// Long-lived isolate bridge: forwards raw BLE bytes to a worker for EMG decode.
+/// Cầu nối main isolate ↔ worker: raw bytes → [EmgStreamSnapshotModel].
+///
+/// Pipeline: [StreamTemporalBuffer] gom frame → decode trên worker với
+/// chiến lược drop-oldest (depth = 1) khi decode chậm hơn tốc độ nhận.
 class StreamDecodeWorker extends BleActionIsolate<List<double>> {
   StreamDecodeWorker({
     required super.isolate,
@@ -69,18 +72,11 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
 
   static const _logger = Logger(className: 'StreamDecodeWorker');
 
-  /// Spawns the worker isolate and waits for the SendPort handshake.
   static Future<StreamDecodeWorker> create() => BleActionIsolate.create(
     workerEntryPoint: streamDecodeWorkerMain,
     constructor: StreamDecodeWorker.new,
   );
 
-  /// Bridges a raw byte stream to decoded [BleDeviceStreamSnapshotModel] events.
-  ///
-  /// Fixed-size frames are accumulated in a [BleStreamTemporalBuffer] and flushed
-  /// on a time window. Each flushed batch is then decoded with drop-oldest
-  /// (depth = 1): while a decode is in-flight, only the latest pending batch
-  /// is kept.
   Stream<BleDeviceStreamSnapshotModel> decodeStream({
     required Stream<List<int>> source,
     required String deviceId,
@@ -89,7 +85,6 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
     StreamSubscription<List<int>>? sourceSubscription;
     StreamTemporalBuffer? temporalBuffer;
 
-    // Per-subscription backpressure + lifecycle flags.
     var inFlight = false;
     Uint8List? latestPending;
     var sourceDone = false;
@@ -170,11 +165,9 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
       } catch (error, stackTrace) {
         emitDecodeError(error, stackTrace);
       } finally {
-        /// [sendDecode] is called in a loop - [Dart] don't let local function forward reference
-        /// so [Drop-oldest chain] have to declare here
         cleanupRequest(requestId);
 
-        // Drop-oldest chain: process the single buffered batch, or release inFlight.
+        // Drop-oldest: xử lý batch pending mới nhất, hoặc giải phóng inFlight.
         if (latestPending == null) {
           inFlight = false;
           maybeCloseController();
@@ -194,7 +187,6 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
           _onBatchDropped(batch);
         }
 
-        // Always override the latest pending batch, dropping the previous one.
         latestPending = batch;
         return;
       }
@@ -242,6 +234,5 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
 
     droppedFramesCount++;
     _logger.debug('droppedFrames', 'Dropped batch count: $droppedFramesCount');
-    // _logger.debug('_onBatchDropped', batch);
   }
 }

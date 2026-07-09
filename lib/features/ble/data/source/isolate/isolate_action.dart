@@ -6,7 +6,9 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import 'action_message.dart';
 
-/// Base class for long-lived BLE worker isolates with RPC-style messaging.
+/// Base cho worker isolate sống lâu — giao tiếp RPC qua SendPort/ReceivePort.
+///
+/// Mỗi request có `requestId` map tới một [Completer] trên main isolate.
 abstract class BleActionIsolate<TResult> {
   @protected
   BleActionIsolate({
@@ -25,7 +27,6 @@ abstract class BleActionIsolate<TResult> {
   final Map<int, Completer<TResult>> _pending = {};
   int _nextRequestId = 0;
 
-  /// Spawns the worker isolate and waits for the [BleWorkerReady] handshake.
   static Future<T> create<T extends BleActionIsolate<TResult>, TResult>({
     required void Function(SendPort) workerEntryPoint,
     required T Function({
@@ -92,7 +93,6 @@ abstract class BleActionIsolate<TResult> {
   @protected
   bool get hasPendingRequests => _pending.isNotEmpty;
 
-  /// Resolves an RPC response from the worker into the matching completer.
   void handleWorkerMessage(Object? message) {
     switch (message) {
       case BleActionSuccess(:final requestId, :final result):

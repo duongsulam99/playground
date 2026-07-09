@@ -1,5 +1,6 @@
 import '../../domain/entities/ble_device_stream_snapshot.dart';
 
+/// Snapshot một điểm dữ liệu stream — sealed để mở rộng loại stream khác EMG.
 sealed class BleDeviceStreamSnapshotModel {
   String get deviceId;
   DateTime get timestamp;
@@ -7,6 +8,7 @@ sealed class BleDeviceStreamSnapshotModel {
   BleDeviceStreamSnapshot toEntity();
 }
 
+/// Batch EMG đã decode: điện áp (mV) + raw bytes gốc.
 final class EmgStreamSnapshotModel extends BleDeviceStreamSnapshotModel {
   EmgStreamSnapshotModel({
     required this.deviceId,

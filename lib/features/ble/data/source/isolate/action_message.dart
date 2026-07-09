@@ -1,13 +1,13 @@
 import 'dart:isolate';
 
-/// Worker isolate handshake message sent to the main isolate.
+/// Handshake: worker gửi SendPort của mình về main isolate sau khi spawn.
 final class BleWorkerReady {
   const BleWorkerReady(this.sendPort);
 
   final SendPort sendPort;
 }
 
-/// Successful RPC payload returned from a worker isolate.
+/// RPC response thành công từ worker isolate.
 final class BleActionSuccess {
   const BleActionSuccess({required this.requestId, required this.result});
 
@@ -15,7 +15,7 @@ final class BleActionSuccess {
   final Object? result;
 }
 
-/// Failed RPC payload returned from a worker isolate.
+/// RPC response lỗi từ worker isolate.
 final class BleActionFailure {
   const BleActionFailure({required this.requestId, required this.errorMessage});
 

@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/config/ble_stream_frame_config.dart';
 
-/// Accumulates fixed-size BLE frames and flushes them on a time window.
+/// Gom các frame EMG cố định kích thước, flush theo cửa sổ thời gian.
+///
+/// Dùng trước bước decode isolate để giảm số lần gọi worker.
 class StreamTemporalBuffer {
   StreamTemporalBuffer({
     this.frameSizeBytes = BleStreamFrameConfig.emgFrameSizeBytes,
@@ -37,6 +39,7 @@ class StreamTemporalBuffer {
     _frames.add(Uint8List.fromList(frame));
   }
 
+  /// Ghép toàn bộ frame đang chờ thành một batch liên tục rồi gọi callback.
   void flushNow() {
     if (_isDisposed || _frames.isEmpty) return;
 

@@ -3,6 +3,10 @@ import 'package:vulcan_mobile_playground/features/firmware/data/firmware_ble_tra
 
 import '../source/remote/impl.dart';
 
+/// Cầu nối feature firmware ↔ BLE data layer.
+///
+/// Feature firmware chỉ biết [FirmwareBleTransport]; adapter delegate
+/// xuống [BleRemoteDataSourceImpl] qua thiết bị đã connect.
 class BleFirmwareTransportAdapter implements FirmwareBleTransport {
   const BleFirmwareTransportAdapter({required this._dataSource});
 

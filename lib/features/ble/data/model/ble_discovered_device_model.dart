@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../domain/entities/ble_discovered_device.dart';
 
+/// DTO thiết bị phát hiện khi scan — trước khi connect.
 class BleDiscoveredDeviceModel {
   const BleDiscoveredDeviceModel({
     required this.id,

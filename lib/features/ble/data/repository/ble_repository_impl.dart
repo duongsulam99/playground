@@ -13,6 +13,9 @@ import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/abstract/ble_remote_data_source.dart';
 
+/// Biên giới domain ↔ data: map Model → Entity, Exception → [Failure].
+///
+/// Không chứa logic BLE — mọi thao tác delegate xuống [BleRemoteDataSource].
 class BleRepositoryImpl implements BleRepository {
   const BleRepositoryImpl({required this._remoteDataSource});
 
@@ -124,13 +127,11 @@ class BleRepositoryImpl implements BleRepository {
     }
   }
 
+  /// Bọc stream: data → `Right`, error → `Left` (không để exception trôi ra ngoài).
   Stream<Either<Failure, T>> _mapStreamToEither<T>(Stream<T> source) {
     return source.transform(
       StreamTransformer<T, Either<Failure, T>>.fromHandlers(
-        /// Handle success data
         handleData: (data, sink) => sink.add(Right(data)),
-
-        /// Handle errors
         handleError: (error, stackTrace, sink) {
           sink.add(Left(_mapException(error)));
         },

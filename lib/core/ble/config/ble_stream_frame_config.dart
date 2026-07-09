@@ -7,5 +7,9 @@ abstract final class BleStreamFrameConfig {
 
   /// Capacity of the temporal buffer in bytes; used to determine when to flush.
   /// Holds frames for [defaultBatchInterval] before flushing.
-  static const defaultBatchInterval = Duration(milliseconds: 50);
+  ///
+  /// Ở duration <30 milliseconds, 1 frame = 32 bytes thì tỷ lệ drop frame là 0 ~ 1
+  ///
+  /// Ở duration >20 milliseconds thì tỷ lệ drop frame là 1 ~ 10 ( khi start )
+  static const defaultBatchInterval = Duration(milliseconds: 30);
 }

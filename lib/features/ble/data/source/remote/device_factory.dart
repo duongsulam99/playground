@@ -7,7 +7,7 @@ import 'abstract/ble_device_remote_data_source.dart';
 
 /// Tạo [BleDeviceRemoteDataSource] phù hợp theo [VulcanDeviceType].
 ///
-/// Thêm loại thiết bị mới: tạo subclass và map tại đây (xem TODO bên dưới).
+/// Thêm loại thiết bị mới: tạo subclass và map tại đây (xem bên dưới).
 class BleDeviceDataSourceFactory {
   BleDeviceRemoteDataSource create(
     BluetoothDevice device, {
