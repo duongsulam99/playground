@@ -9,33 +9,36 @@ abstract class BleDeviceRemoteDataSource {
 
   VulcanDeviceType get deviceType;
 
+  // Device - Connection
+  Stream<BleConnectionStatus> watchConnectionStatus();
   Future<BleConnectionStatus> connect();
-
   Future<void> disconnect();
 
+  // Device - Data Info
   Future<BleDeviceInfoModel> readDeviceInfo();
 
+  // Device - Threshold Config
   Future<RingThresholdConfig?> readThreshold();
-
   Future<void> writeThreshold(RingThresholdConfig config);
 
-  Stream<BleConnectionStatus> watchConnectionStatus();
-
+  // Device - Stream (EMG / signal)
   Stream<List<int>>? get notifyDataStream;
-
   Future<void> startDeviceStream();
-
   Future<void> stopDeviceStream();
-
   Future<void> Function()? get onNotifyStopListening;
 
-  Future<List<int>> readOtaCharacteristic();
+  // GATT — generic read/write by characteristic key
+  Future<List<int>> readCharacteristic(String characteristicKey);
+  Future<void> writeCharacteristic(
+    String characteristicKey,
+    List<int> data, {
+    int timeout = 15,
+  });
 
-  Future<void> writeOtaCharacteristic(List<int> data, {int timeout});
+  // Firmware update — OTA notify stream & MTU
+  Future<void> setUpdateFirmware(bool enabled);
+  Stream<List<int>> watchUpdateNotifications();
 
-  Future<void> setOtaNotifyEnabled(bool enabled);
-
-  Stream<List<int>> watchOtaNotifications();
-
+  // Lấy MTU hiện tại đã negotiate lúc connect
   int getNegotiatedMtu();
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/config/keys/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';

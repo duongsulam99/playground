@@ -213,30 +213,36 @@ class FlutterBluePlusDataSource implements BleRemoteDataSource {
   }
 
   @override
-  Future<List<int>> readOtaCharacteristic(String deviceId) {
-    return _findDeviceConnected(deviceId).readOtaCharacteristic();
+  Future<List<int>> readCharacteristic(
+    String deviceId,
+    String characteristicKey,
+  ) {
+    return _findDeviceConnected(deviceId).readCharacteristic(characteristicKey);
   }
 
   @override
-  Future<void> writeOtaCharacteristic(
+  Future<void> writeCharacteristic(
     String deviceId,
+    String characteristicKey,
     List<int> data, {
     int timeout = 15,
   }) {
-    return _findDeviceConnected(deviceId).writeOtaCharacteristic(
+    return _findDeviceConnected(deviceId).writeCharacteristic(
+      characteristicKey,
       data,
       timeout: timeout,
     );
   }
 
+  // Firmware update — OTA notify stream & MTU
   @override
-  Future<void> setOtaNotifyEnabled(String deviceId, bool enabled) {
-    return _findDeviceConnected(deviceId).setOtaNotifyEnabled(enabled);
+  Future<void> setUpdateFirmware(String deviceId, bool enabled) {
+    return _findDeviceConnected(deviceId).setUpdateFirmware(enabled);
   }
 
   @override
-  Stream<List<int>> watchOtaNotifications(String deviceId) {
-    return _findDeviceConnected(deviceId).watchOtaNotifications();
+  Stream<List<int>> watchUpdateNotifications(String deviceId) {
+    return _findDeviceConnected(deviceId).watchUpdateNotifications();
   }
 
   @override

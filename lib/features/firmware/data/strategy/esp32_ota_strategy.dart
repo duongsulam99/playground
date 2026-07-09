@@ -37,8 +37,8 @@ class Esp32OtaStrategy implements DfuStrategy {
         message: 'Preparing OTA',
       );
 
-      await transport.setOtaNotifyEnabled(deviceId, true);
-      notifySubscription = transport.watchOtaNotifications(deviceId).listen(
+      await transport.setUpdateFirmware(deviceId, true);
+      notifySubscription = transport.watchUpdateNotifications(deviceId).listen(
         (value) {
           packetCounterReceived = _fromBytesToInt(value);
           if (packetCounter == packetCounterReceived) {
@@ -99,7 +99,7 @@ class Esp32OtaStrategy implements DfuStrategy {
       try {
         await transport.writeOta(deviceId, utf8.encode('END_OTA'));
       } catch (_) {}
-      await transport.setOtaNotifyEnabled(deviceId, false);
+      await transport.setUpdateFirmware(deviceId, false);
     }
   }
 

@@ -221,31 +221,36 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   @override
   Future<void> stopDeviceStream() async {}
 
+  // Firmware: OTA characteristic key
   static const String _otaKey = 'OTA_UUID';
 
   @override
-  Future<List<int>> readOtaCharacteristic() async {
+  Future<List<int>> readCharacteristic(String characteristicKey) async {
     ensureConnected();
-    final characteristic = requireCharacteristic(_otaKey);
+    final characteristic = requireCharacteristic(characteristicKey);
     return characteristic.read();
   }
 
   @override
-  Future<void> writeOtaCharacteristic(List<int> data, {int timeout = 15}) async {
+  Future<void> writeCharacteristic(
+    String characteristicKey,
+    List<int> data, {
+    int timeout = 15,
+  }) async {
     ensureConnected();
-    final characteristic = requireCharacteristic(_otaKey);
+    final characteristic = requireCharacteristic(characteristicKey);
     await characteristic.write(data, timeout: timeout);
   }
 
   @override
-  Future<void> setOtaNotifyEnabled(bool enabled) async {
+  Future<void> setUpdateFirmware(bool enabled) async {
     ensureConnected();
     final characteristic = requireCharacteristic(_otaKey);
     await characteristic.setNotifyValue(enabled);
   }
 
   @override
-  Stream<List<int>> watchOtaNotifications() {
+  Stream<List<int>> watchUpdateNotifications() {
     ensureConnected();
     final characteristic = requireCharacteristic(_otaKey);
     return characteristic.onValueReceived;
