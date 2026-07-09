@@ -15,8 +15,8 @@ import '../ble_device_remote_data_source.dart';
 /// Implementation of [BleDeviceRemoteDataSource]
 /// This class is used to represent a BLE device that is connected
 /// If the device type is not recognized, this class will be used as a default implementation.
-class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
-  FlutterBluePlusPrivateDevice({
+class DefaultDeviceDataSource implements BleDeviceRemoteDataSource {
+  DefaultDeviceDataSource({
     required BluetoothDevice device,
     required this._deviceType,
   }) : _device = device,
@@ -30,7 +30,7 @@ class FlutterBluePlusPrivateDevice implements BleDeviceRemoteDataSource {
   final DeviceConnectionHandler _connectionHandler;
   final Map<String, BluetoothCharacteristic> _characteristics = {};
 
-  final _logger = const Logger(className: 'FlutterBluePlusPrivateDevice');
+  final _logger = const Logger(className: 'DefaultDeviceDataSource');
 
   @override
   String get deviceId => _device.remoteId.str;

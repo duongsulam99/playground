@@ -26,7 +26,7 @@ class BleDeviceDataSourceFactory {
         }
 
         /// FOR UNKNOW DEVICES
-        return FlutterBluePlusPrivateDevice(
+        return DefaultDeviceDataSource(
           device: device,
           deviceType: deviceType,
         );

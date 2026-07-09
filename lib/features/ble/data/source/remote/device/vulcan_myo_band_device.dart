@@ -12,10 +12,12 @@ import 'flutter_blue_plus_private_device.dart';
 /// [MyoBand Device]
 /// Implementation of [FlutterBluePlusPrivateDevice] for MyoBand family devices
 /// This class provides specific implementations for MyoBand devices, including reading device information, starting and stopping signal streams, and handling threshold configurations.
-class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
+class VulcanMyoBandDevice extends DefaultDeviceDataSource {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
   bool _isStreamingSignal = false;
+  static const String _startSignalCommand = '255';
+  static const String _stopSignalCommand = '000';
 
   final _logger = const Logger(className: 'VulcanMyoBandDevice');
 
@@ -71,7 +73,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> startSignalStream({String startSignalCommand = '255'}) async {
+  Future<void> startSignalStream() async {
     _isStreamingSignal = false;
     ensureConnected();
 
@@ -79,7 +81,7 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
       /// SET START SIGNAL STREAM TO DEVICE
       await writeData(
         BleAdapterKey.signal,
-        BleValueEncoders.encodeUtf8(startSignalCommand),
+        BleValueEncoders.encodeUtf8(_startSignalCommand),
       );
 
       /// START LISTENING STREAM DATA FROM DEVICE
@@ -103,13 +105,13 @@ class VulcanMyoBandDevice extends FlutterBluePlusPrivateDevice {
     }
   }
 
-  Future<void> stopSignalStream({String stopSignalCommand = '000'}) async {
+  Future<void> stopSignalStream() async {
     if (!_isStreamingSignal || characteristics.isEmpty) return;
 
     try {
       await writeData(
         BleAdapterKey.signal,
-        BleValueEncoders.encodeUtf8(stopSignalCommand),
+        BleValueEncoders.encodeUtf8(_stopSignalCommand),
       );
     } catch (e) {
       _logger.warning(
