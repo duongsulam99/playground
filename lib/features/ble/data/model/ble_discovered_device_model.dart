@@ -1,5 +1,5 @@
-import 'package:vulcan_mobile_playground/core/ble/helper/ble_advertisement_parser.dart';
-import 'package:vulcan_mobile_playground/core/ble/helper/ble_device_image_resolver.dart';
+import 'package:vulcan_mobile_playground/core/ble/helper/advertisement_parser.dart';
+import 'package:vulcan_mobile_playground/core/ble/helper/device_image_resolver.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../domain/entities/ble_discovered_device.dart';
@@ -26,7 +26,7 @@ class BleDiscoveredDeviceModel {
   factory BleDiscoveredDeviceModel.fromAdvertisementDto(
     ScanAdvertisementDto dto,
   ) {
-    final deviceType = BleAdvertisementParser.parseFromDto(dto);
+    final deviceType = AdvertisementParser.parseFromDto(dto);
 
     return BleDiscoveredDeviceModel(
       id: dto.deviceId,
@@ -34,7 +34,7 @@ class BleDiscoveredDeviceModel {
       rssi: dto.rssi,
       isConnectable: dto.connectable,
       deviceType: deviceType,
-      imageAssetPath: BleDeviceImageResolver.assetPathFor(deviceType),
+      imageAssetPath: DeviceImageResolver.assetPathFor(deviceType),
     );
   }
 

@@ -5,11 +5,9 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import '../../../features/ble/data/source/isolate/scan/scan_advertisement_dto.dart';
 
 /// Parses Vulcan device type from BLE advertisement data (isolate-safe).
-class BleAdvertisementParser {
-  const BleAdvertisementParser._();
-
+class AdvertisementParser {
   static const String deviceTypeUuid = '0100';
-  static const _logger = Logger(className: 'BleAdvertisementParser');
+  static const _logger = Logger(className: 'AdvertisementParser');
 
   static VulcanDeviceType parseFromDto(ScanAdvertisementDto dto) {
     for (final uuidStr in dto.serviceUuids) {

@@ -1,12 +1,9 @@
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 /// Resolves local asset paths for Vulcan devices (ported from va_client `getImageDevice`).
-class BleDeviceImageResolver {
-  const BleDeviceImageResolver._();
-
+class DeviceImageResolver {
   static const _hand = 'assets/images/devices/hand99.png';
-  static const _coaxialDefault =
-      'assets/images/devices/otherHand/zeusHand.png';
+  static const _coaxialDefault = 'assets/images/devices/otherHand/zeusHand.png';
   static const _wrist = 'assets/images/devices/wrist.png';
   static const _elbow = 'assets/images/devices/elbowadapter.png';
   static const _emgElectrode = 'assets/images/devices/emgElectrode.png';
