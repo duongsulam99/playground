@@ -47,7 +47,7 @@ class BleDeviceList extends StatelessWidget {
         final canConnect = canConnectDevice(device.id);
 
         return ListTile(
-          leading: const Icon(Icons.bluetooth),
+          leading: _buildLeading(device),
           title: Text(device.displayName),
           subtitle: Text(
             '${device.id}\nRSSI: ${device.rssi} dBm\n'
@@ -59,6 +59,21 @@ class BleDeviceList extends StatelessWidget {
           onTap: () => _handleTap(device, connectionStatus, canConnect),
         );
       },
+    );
+  }
+
+  Widget _buildLeading(BleDiscoveredDevice device) {
+    final assetPath = device.imageAssetPath;
+    if (assetPath == null) {
+      return const Icon(Icons.bluetooth);
+    }
+
+    return Image.asset(
+      assetPath,
+      width: 40,
+      height: 40,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const Icon(Icons.bluetooth),
     );
   }
 

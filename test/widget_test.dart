@@ -21,7 +21,9 @@ void main() {
   setUp(() async {
     await serviceLocator.reset();
     final repository = _InMemoryLocaleRepository();
-    serviceLocator.registerLazySingleton<AbstractLocaleRepository>(() => repository);
+    serviceLocator.registerLazySingleton<AbstractLocaleRepository>(
+      () => repository,
+    );
     serviceLocator.registerLazySingleton<AbstractLocaleController>(
       () => LocaleController(repository: repository),
     );

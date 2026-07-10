@@ -9,7 +9,9 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import '../../model/ble_device_info_model.dart';
 import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
-import '../isolate/decode_worker.dart';
+import '../isolate/decode/decode_worker.dart';
+import '../isolate/scan/scan_advertisement_mapper.dart';
+import '../isolate/scan/scan_parse_worker.dart';
 import 'device_factory.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'abstract/ble_remote_data_source.dart';
@@ -21,16 +23,18 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   BleRemoteDataSourceImpl({
     required this._deviceFactory,
     required this._decodeIsolate,
+    required this._scanParseWorker,
   });
 
   final BleDeviceDataSourceFactory _deviceFactory;
   final StreamDecodeWorker _decodeIsolate;
+  final ScanParseWorker _scanParseWorker;
 
   /// Instance đã connect — key là `deviceId` (remoteId string).
   final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
 
-  /// Metadata từ scan gần nhất — dùng để lấy `deviceType` lúc connect.
-  final Map<String, BleDiscoveredDeviceModel> _discoveredDevices = {};
+  /// Snapshot metadata scan mới nhất từ worker — dùng lúc connect.
+  Map<String, BleDiscoveredDeviceModel> _latestDiscoveredDevices = {};
 
   /// Handle native [BluetoothDevice] — cần để gọi `connect()` sau scan.
   final Map<String, BluetoothDevice> _bluetoothDevices = {};
@@ -44,24 +48,25 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Stream<Map<String, BleDiscoveredDeviceModel>> watchScanResults() {
-    return FlutterBluePlus.scanResults.map(_processScanResults);
+    return FlutterBluePlus.scanResults.asyncMap(_handleScanResults);
   }
 
-  /// Gộp batch scan mới vào cache, bỏ thiết bị không connectable.
-  Map<String, BleDiscoveredDeviceModel> _processScanResults(
+  Future<Map<String, BleDiscoveredDeviceModel>> _handleScanResults(
     List<ScanResult> results,
-  ) {
-    if (results.isEmpty) return const {};
+  ) async {
+    if (results.isEmpty) return _latestDiscoveredDevices;
 
     for (final result in results) {
-      if (!result.advertisementData.connectable) continue;
-
       final id = result.device.remoteId.str;
-      _discoveredDevices[id] = BleDiscoveredDeviceModel.fromScanResult(result);
       _bluetoothDevices[id] = result.device;
     }
 
-    return Map<String, BleDiscoveredDeviceModel>.from(_discoveredDevices);
+    final dtos = results
+        .map(ScanAdvertisementMapper.fromScanResult)
+        .toList(growable: false);
+
+    _latestDiscoveredDevices = await _scanParseWorker.processBatch(dtos);
+    return _latestDiscoveredDevices;
   }
 
   @override
@@ -69,8 +74,9 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     await _checkAdapterState();
     if (FlutterBluePlus.isScanningNow) return;
 
-    _discoveredDevices.clear();
+    _latestDiscoveredDevices = {};
     _bluetoothDevices.clear();
+    await _scanParseWorker.clearCache();
 
     final guids = _getScanGuids(filterTypes);
     await _configScan(guids);
@@ -88,7 +94,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     final existing = _connectedDevices[deviceId];
     if (existing != null) return BleConnectionStatus.connected;
 
-    final discovered = _discoveredDevices[deviceId];
+    final discovered = _latestDiscoveredDevices[deviceId];
     final bluetoothDevice = _resolveBluetoothDevice(deviceId);
     final deviceType = discovered?.deviceType ?? VulcanDeviceType.none;
 

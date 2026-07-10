@@ -1,7 +1,8 @@
 import 'package:get_it/get_it.dart';
 
 import '../data/firmware/ble_firmware_transport_adapter.dart';
-import '../data/source/isolate/decode_worker.dart';
+import '../data/source/isolate/decode/decode_worker.dart';
+import '../data/source/isolate/scan/scan_parse_worker.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/device_factory.dart';
 import '../data/source/remote/abstract/ble_remote_data_source.dart';
@@ -30,11 +31,13 @@ Future<void> initBleInjection(GetIt sl) async {
 
   sl.registerFactory(BleDeviceDataSourceFactory.new);
   sl.registerSingletonAsync<StreamDecodeWorker>(StreamDecodeWorker.create);
+  sl.registerSingletonAsync<ScanParseWorker>(ScanParseWorker.create);
 
   sl.registerLazySingleton<BleRemoteDataSourceImpl>(
     () => BleRemoteDataSourceImpl(
       deviceFactory: sl(),
       decodeIsolate: sl<StreamDecodeWorker>(),
+      scanParseWorker: sl<ScanParseWorker>(),
     ),
   );
 

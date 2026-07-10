@@ -8,6 +8,7 @@ class BleDiscoveredDevice extends Equatable {
     required this.rssi,
     required this.isConnectable,
     required this.deviceType,
+    this.imageAssetPath,
   });
 
   final String id;
@@ -15,9 +16,17 @@ class BleDiscoveredDevice extends Equatable {
   final int rssi;
   final bool isConnectable;
   final VulcanDeviceType deviceType;
+  final String? imageAssetPath;
 
   String get displayName => name.isEmpty ? 'Unknown device' : name;
 
   @override
-  List<Object?> get props => [id, name, rssi, isConnectable, deviceType];
+  List<Object?> get props => [
+    id,
+    name,
+    rssi,
+    isConnectable,
+    deviceType,
+    imageAssetPath,
+  ];
 }

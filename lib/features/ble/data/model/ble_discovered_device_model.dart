@@ -1,8 +1,9 @@
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:vulcan_mobile_playground/core/ble/ble_advertisement_parser.dart';
+import 'package:vulcan_mobile_playground/core/ble/helper/ble_advertisement_parser.dart';
+import 'package:vulcan_mobile_playground/core/ble/helper/ble_device_image_resolver.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../domain/entities/ble_discovered_device.dart';
+import '../source/isolate/scan/scan_advertisement_dto.dart';
 
 /// DTO thiết bị phát hiện khi scan — trước khi connect.
 class BleDiscoveredDeviceModel {
@@ -12,6 +13,7 @@ class BleDiscoveredDeviceModel {
     required this.rssi,
     required this.isConnectable,
     required this.deviceType,
+    this.imageAssetPath,
   });
 
   final String id;
@@ -19,16 +21,20 @@ class BleDiscoveredDeviceModel {
   final int rssi;
   final bool isConnectable;
   final VulcanDeviceType deviceType;
+  final String? imageAssetPath;
 
-  factory BleDiscoveredDeviceModel.fromScanResult(ScanResult result) {
-    final advertisementData = result.advertisementData;
+  factory BleDiscoveredDeviceModel.fromAdvertisementDto(
+    ScanAdvertisementDto dto,
+  ) {
+    final deviceType = BleAdvertisementParser.parseFromDto(dto);
 
     return BleDiscoveredDeviceModel(
-      id: result.device.remoteId.str,
-      name: advertisementData.advName,
-      rssi: result.rssi,
-      isConnectable: advertisementData.connectable,
-      deviceType: BleAdvertisementParser.parse(advertisementData),
+      id: dto.deviceId,
+      name: dto.advName,
+      rssi: dto.rssi,
+      isConnectable: dto.connectable,
+      deviceType: deviceType,
+      imageAssetPath: BleDeviceImageResolver.assetPathFor(deviceType),
     );
   }
 
@@ -38,5 +44,6 @@ class BleDiscoveredDeviceModel {
     rssi: rssi,
     isConnectable: isConnectable,
     deviceType: deviceType,
+    imageAssetPath: imageAssetPath,
   );
 }
