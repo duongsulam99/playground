@@ -1,55 +1,46 @@
+import 'package:vulcan_mobile_playground/common/gen/index.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 /// Resolves local asset paths for Vulcan devices (ported from va_client `getImageDevice`).
 class DeviceImageResolver {
-  static const _hand = 'assets/images/devices/hand99.png';
-  static const _coaxialDefault = 'assets/images/devices/otherHand/zeusHand.png';
-  static const _wrist = 'assets/images/devices/wrist.png';
-  static const _elbow = 'assets/images/devices/elbowadapter.png';
-  static const _emgElectrode = 'assets/images/devices/emgElectrode.png';
-  static const _sensorBox = 'assets/images/devices/sensorbox.png';
-  static const _myoband = 'assets/images/devices/myoband.png';
-  static const _myobandMedical = 'assets/images/devices/myoband_medical.png';
-  static const _myolink = 'assets/images/devices/myolink.png';
-
   static String? assetPathFor(VulcanDeviceType deviceType) {
     switch (deviceType) {
       case VulcanDeviceType.hand:
       case VulcanDeviceType.handOld:
-        return _hand;
+        return Assets.images.devices.hand99.path;
 
       case VulcanDeviceType.coaxial:
-        return _coaxialDefault;
+        return Assets.images.devices.otherHand.zeusHand.path;
 
       case VulcanDeviceType.wrist:
-        return _wrist;
+        return Assets.images.devices.wrist.path;
 
       case VulcanDeviceType.elbow:
       case VulcanDeviceType.elbowAdapter:
-        return _elbow;
+        return Assets.images.devices.elbowadapter.path;
 
       case VulcanDeviceType.bleAdapter:
       case VulcanDeviceType.electrode:
-        return _emgElectrode;
+        return Assets.images.devices.emgElectrode.path;
 
       case VulcanDeviceType.sensorBox:
-        return _sensorBox;
+        return Assets.images.devices.sensorbox.path;
 
       case VulcanDeviceType.ring:
       case VulcanDeviceType.ringNrf:
       case VulcanDeviceType.ringDev3ch:
       case VulcanDeviceType.ringDev6ch:
       case VulcanDeviceType.ringWrist:
-        return _myoband;
+        return Assets.images.devices.myoband.path;
 
       case VulcanDeviceType.ringMedical:
-        return _myobandMedical;
+        return Assets.images.devices.myobandMedical.path;
 
       case VulcanDeviceType.myoLink:
-        return _myolink;
+        return Assets.images.devices.myolink.path;
 
       case VulcanDeviceType.otherHand:
-        return _coaxialDefault;
+        return Assets.images.devices.otherHand.zeusHand.path;
 
       case VulcanDeviceType.none:
         return null;

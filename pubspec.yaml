@@ -34,6 +34,8 @@ dependencies:
   firebase_core: 3.12.1
   cloud_firestore: 5.6.5
   firebase_storage: 12.4.4
+  flutter_gen: 5.14.1
+  flutter_svg: ^2.2.4
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +43,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.4.15
   freezed: ^3.0.0
+  flutter_gen_runner: 5.14.1
 
 flutter:
   uses-material-design: true

@@ -1,0 +1,9 @@
+global_options:
+  # -- flutter_gen_runner configuration
+  # 
+  # See https://pub.dev/packages/flutter_gen
+  flutter_gen_runner:flutter_gen_runner:
+    options:
+      output: lib/common/gen/
+      integrations:
+        flutter_svg: true

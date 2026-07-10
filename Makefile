@@ -6,13 +6,14 @@ else
 	FLUTTER = fvm flutter
 endif
 
-.PHONY: help init get clean
+.PHONY: help init get clean build repair fix
 
 help:
 	@echo "Available commands:"
-	@echo "  make init   - Generate l10n from app_*.arb and get dependencies"
-	@echo "  make get    - Get dependencies"
-	@echo "  make clean  - Flutter clean"
+	@echo "  make init       - Generate l10n from app_*.arb and get dependencies"
+	@echo "  make get        - Get dependencies"
+	@echo "  make run_build  - Run build_runner (Freezed + FlutterGen)"
+	@echo "  make clean      - Flutter clean"
 
 init:
 	@./scripts/gen_l10n.sh
@@ -31,9 +32,10 @@ repair:
 # Build the app (with code generation)
 # ============================================================
 
-run_build:
+build:
 	@echo "Building..."
-	@$(FLUTTER) pub run build_runner build --delete-conflicting-outputs
+	@dart run build_runner clean
+	@dart run build_runner build --delete-conflicting-outputs
 	@echo "Build completed."
 
 # ============================================================
