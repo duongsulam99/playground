@@ -10,7 +10,7 @@ class CheckFirmwareParams {
   const CheckFirmwareParams({
     required this.deviceType,
     required this.currentVersion,
-    this.channel = FirmwareChannel.release,
+    this.channel = FirmwareChannel.dev,
   });
 
   final VulcanDeviceType deviceType;
@@ -22,7 +22,7 @@ class ExecuteFirmwareUpdateParams {
   const ExecuteFirmwareUpdateParams({
     required this.deviceId,
     required this.deviceType,
-    this.channel = FirmwareChannel.release,
+    this.channel = FirmwareChannel.dev,
     this.firmwareInfo,
   });
 

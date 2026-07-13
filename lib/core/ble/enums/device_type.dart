@@ -73,6 +73,12 @@ enum VulcanDeviceType {
     profile: BleVulcanProfiles.ring,
     dfuType: DfuType.esp32Custom,
   ),
+  ringVibration(
+    name: 'Myoband Vibration',
+    hardwareId: 'E03-C0',
+    profile: BleVulcanProfiles.ring,
+    dfuType: DfuType.nordicDfu,
+  ),
   ringNrf(
     name: 'Myoband',
     hardwareId: 'E03',
@@ -176,6 +182,7 @@ extension VulcanDeviceTypeX on VulcanDeviceType {
     return switch (this) {
       VulcanDeviceType.ring ||
       VulcanDeviceType.ringNrf ||
+      VulcanDeviceType.ringVibration ||
       VulcanDeviceType.ringDev3ch ||
       VulcanDeviceType.ringDev6ch ||
       VulcanDeviceType.ringWrist ||

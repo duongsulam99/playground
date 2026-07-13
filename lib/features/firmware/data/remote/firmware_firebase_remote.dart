@@ -28,10 +28,15 @@ class FirmwareFirebaseRemote {
     required FirmwareChannel channel,
   }) async {
     try {
+      // GET device hardware id
       final hardwareId = resolveFirmwareHardwareId(deviceType);
-      final hardwareUid = await _resolveHardwareUid(hardwareId);
+
+      // GET document id from firestore by hardware id
+      final docID = await _resolveHardwareUid(hardwareId);
+
+      // GET firmware data from document id
       final snapshot = await _queryFirmwareCollection(
-        hardwareUid: hardwareUid,
+        hardwareUid: docID,
         channel: channel,
       );
 

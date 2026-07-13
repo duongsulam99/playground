@@ -3,6 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 /// Resolves local asset paths for Vulcan devices (ported from va_client `getImageDevice`).
 class DeviceImageResolver {
+  //TODO: [Add New Device] Step 2c: Thêm case image return path tại dây.
   static String? assetPathFor(VulcanDeviceType deviceType) {
     switch (deviceType) {
       case VulcanDeviceType.hand:
@@ -27,6 +28,7 @@ class DeviceImageResolver {
         return Assets.images.devices.sensorbox.path;
 
       case VulcanDeviceType.ring:
+      case VulcanDeviceType.ringVibration:
       case VulcanDeviceType.ringNrf:
       case VulcanDeviceType.ringDev3ch:
       case VulcanDeviceType.ringDev6ch:
@@ -42,7 +44,7 @@ class DeviceImageResolver {
       case VulcanDeviceType.otherHand:
         return Assets.images.devices.otherHand.zeusHand.path;
 
-      case VulcanDeviceType.none:
+      default:
         return null;
     }
   }

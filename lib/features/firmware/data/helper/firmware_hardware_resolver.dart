@@ -1,10 +1,11 @@
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
+//TODO: [Optional] Return Hardware Id To Update Firmware
 String resolveFirmwareHardwareId(VulcanDeviceType deviceType) {
-  if (deviceType == VulcanDeviceType.ring) {
-    return 'EMGA0001';
+  switch (deviceType) {
+    default:
+      return deviceType.hardwareId;
   }
-  return deviceType.hardwareId;
 }
 
 bool isFirebaseStorageUrl(String url) {
