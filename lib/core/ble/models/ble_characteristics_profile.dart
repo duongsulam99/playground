@@ -227,6 +227,7 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
     required this.nameCharUuid,
     required this.hardwareCharUuid,
     required this.modeCharUuid,
+    required this.vibrationCharUuid,
     required this.actionButtonUuid,
     required this.signalUuid,
     required this.medicalUuid,
@@ -244,6 +245,7 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
   final String nameCharUuid;
   final String hardwareCharUuid;
   final String modeCharUuid;
+  final String vibrationCharUuid;
   final String actionButtonUuid;
   final String signalUuid;
   final String medicalUuid;
@@ -262,6 +264,7 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
     nameCharUuid,
     hardwareCharUuid,
     modeCharUuid,
+    vibrationCharUuid,
     actionButtonUuid,
     signalUuid,
     medicalUuid,
@@ -281,6 +284,7 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
     MapEntry(BleRingKey.nameChar, nameCharUuid),
     MapEntry(BleRingKey.hardwareChar, hardwareCharUuid),
     MapEntry(BleRingKey.modeChar, modeCharUuid),
+    MapEntry(BleRingKey.vibrationChar, vibrationCharUuid),
     MapEntry(BleRingKey.actionButton, actionButtonUuid),
     MapEntry(BleRingKey.signal, signalUuid),
     MapEntry(BleRingKey.medical, medicalUuid),

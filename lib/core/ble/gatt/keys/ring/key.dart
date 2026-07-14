@@ -5,6 +5,7 @@ final class BleRingKey {
   static const String nameChar = 'NAME_CHAR_UUID';
   static const String hardwareChar = 'HARDWARE_CHAR_UUID';
   static const String modeChar = 'MODE_CHAR_UUID';
+  static const String vibrationChar = 'VIBRATION_CHAR_UUID';
   static const String actionButton = 'ACTION_BUTTON_UUID';
   static const String signal = 'SIGNAL_UUID';
   static const String medical = 'MEDICAL_UUID';

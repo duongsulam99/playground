@@ -5,13 +5,11 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_pro
 import 'package:vulcan_mobile_playground/core/ble/models/ble_device_profile.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 
-/// Source-of-truth UUID Vulcan — ported từ va_client BLE.
-///
-/// Mô tả hành vi lấy từ `*Process.dart` (app cũ); chi tiết protocol threshold xem
-/// `Vulcan/App/lib/BLE/helper/ringThreshold.dart`.
-///
-/// Format comment inline: `[KEY] — Read/Write/Notify | format | mục đích`
-///
+
+/// Base class định nghĩa các Profile GATT cho các thiết bị BLE Vulcan
+/// 
+/// Đây là các UUID được sử dụng trong family vulcan devices ( ring, hand, ... )
+/// 
 /// Chỉ ghi chú — không thay đổi giá trị UUID.
 class BleVulcanProfiles {
   // ---------------------------------------------------------------------------
@@ -190,6 +188,8 @@ class BleVulcanProfiles {
     hardwareCharUuid: '4e1dd354-3a27-466f-bd2f-4a4b870a132a',
     // MODE_CHAR_UUID — Read/Write | byte[0] hoặc UTF-8 number | chế độ hoạt động
     modeCharUuid: 'b0b77c90-e567-42f4-b41f-37767d8c8465',
+    // VIBRATION_CHAR_UUID — Read/Write | 2 byte binary RingVibrationConfig | cường độ rung + trigger flags
+    vibrationCharUuid: 'eca2c4c8-7766-43c6-b34c-a68abe448292',
     // ACTION_BUTTON_UUID — Read/Write/Notify | 2 bytes / UTF-8 "label0|label1" | map nút vật lý (none/logic/speed/force/controlGrip)
     actionButtonUuid: 'ded4b268-ef3c-4e08-ad24-169e3fbb4187',
     // SIGNAL_UUID — Write "255"/"000" + Notify ≥32B | 8× float32 LE (EMG ch0–2 + IMU) | stream realtime cho hiệu chuẩn
