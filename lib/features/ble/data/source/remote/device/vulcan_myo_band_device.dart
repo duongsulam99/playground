@@ -7,10 +7,12 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../gatt/ring/reader/ring_reader.dart';
 import '../../../model/ble_device_info_model.dart';
+import '../abstract/ble_device_capabilities.dart';
 import '../device_impl.dart';
 
 /// MyoBand family: đọc metadata qua GATT, stream EMG qua characteristic signal.
-class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
+class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl
+    implements BleDeviceStreaming, BleDeviceInfoSource {
   VulcanMyoBandDevice({required super.device, required super.deviceType});
 
   bool _isStreamingSignal = false;
@@ -22,7 +24,13 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl {
   final _logger = const Logger(className: 'VulcanMyoBandDevice');
 
   @override
-  Stream<List<int>>? get notifyDataStream => watchDeviceData();
+  BleDeviceStreaming? get streaming => this;
+
+  @override
+  BleDeviceInfoSource? get info => this;
+
+  @override
+  Stream<List<int>> get notifyDataStream => watchDeviceData();
 
   @override
   Future<void> Function()? get onNotifyStopListening => stopSignalStream;

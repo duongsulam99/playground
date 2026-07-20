@@ -133,7 +133,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
     final deviceSource = findDeviceConnected(deviceId);
 
-    final raw = deviceSource.notifyDataStream;
+    final raw = deviceSource.streaming?.notifyDataStream;
     if (raw == null) return null;
 
     // Decode EMG chạy trên isolate để không block main thread.
@@ -156,9 +156,16 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   @override
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
     final deviceSource = findDeviceConnected(deviceId);
+    final info = deviceSource.info;
+    if (info == null) {
+      throw BleException(
+        'Device info is not supported for ${deviceSource.deviceType.name}',
+        deviceId: deviceId,
+      );
+    }
 
     try {
-      return await deviceSource.readDeviceInfo();
+      return await info.readDeviceInfo();
     } catch (e) {
       if (e is BleException) rethrow;
       throw BleException('Failed to read device info: $e', deviceId: deviceId);
@@ -183,9 +190,16 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   @override
   Future<void> startDeviceStream(String deviceId) async {
     final deviceSource = findDeviceConnected(deviceId);
+    final streaming = deviceSource.streaming;
+    if (streaming == null) {
+      throw BleException(
+        'Device stream is not supported for ${deviceSource.deviceType.name}',
+        deviceId: deviceId,
+      );
+    }
 
     try {
-      await deviceSource.startDeviceStream();
+      await streaming.startDeviceStream();
     } catch (e) {
       if (e is BleException) rethrow;
       throw BleException(
@@ -198,9 +212,11 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   @override
   Future<void> stopDeviceStream(String deviceId) async {
     final deviceSource = findDeviceConnected(deviceId);
+    final streaming = deviceSource.streaming;
+    if (streaming == null) return;
 
     try {
-      await deviceSource.stopDeviceStream();
+      await streaming.stopDeviceStream();
     } catch (e) {
       if (e is BleException) rethrow;
       throw BleException(

@@ -7,14 +7,13 @@ import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_pro
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../model/ble_device_info_model.dart';
 import '../helper/device_connection_handler.dart';
-import 'abstract/ble_device_remote_data_source.dart';
+import 'abstract/ble_device_capabilities.dart';
 
 /// Implementation mặc định cho mọi thiết bị Vulcan.
 ///
 /// Cung cấp connect, discover GATT, read/write characteristic và OTA.
-/// Stream/info cụ thể do subclass override (vd. [VulcanMyoBandDevice]).
+/// Stream/info cụ thể do subclass implement (vd. [VulcanMyoBandDevice]).
 class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   BleDeviceRemoteDataSourceImpl({
     required BluetoothDevice device,
@@ -41,10 +40,10 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   VulcanDeviceType get deviceType => _deviceType;
 
   @override
-  Stream<List<int>>? get notifyDataStream => null;
+  BleDeviceStreaming? get streaming => null;
 
   @override
-  Future<void> Function()? get onNotifyStopListening => null;
+  BleDeviceInfoSource? get info => null;
 
   int get negotiatedMtu => _connectionHandler.currentMtu;
 
@@ -52,7 +51,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
 
   DeviceConnectionHandler get connectionHandler => _connectionHandler;
 
-  /// Raw notify stream (chưa decode). Subclass expose qua [notifyDataStream].
+  /// Raw notify stream (chưa decode). Subclass expose qua [BleDeviceStreaming].
   Stream<List<int>> watchDeviceData() => _connectionHandler.cleanDataStream;
 
   @override
@@ -92,14 +91,6 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
       if (e is BleException) rethrow;
       throw BleException('Failed to connect: $e', deviceId: deviceId);
     }
-  }
-
-  @override
-  Future<BleDeviceInfoModel> readDeviceInfo() {
-    throw BleException(
-      'readDeviceInfo is not supported for ${deviceType.name}',
-      deviceId: deviceId,
-    );
   }
 
   /// Bật notify trên characteristic. [reassembleFrames] = true khi payload
@@ -211,17 +202,6 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
     }
   }
 
-  @override
-  Future<void> startDeviceStream() {
-    throw BleException(
-      'Device stream is not supported for ${deviceType.name}',
-      deviceId: deviceId,
-    );
-  }
-
-  @override
-  Future<void> stopDeviceStream() async {}
-
   /// Key trong map characteristics sau [BleGattCollector.collect] (profile Hand/Elbow).
   static const String _otaKey = 'OTA_UUID';
 
@@ -263,7 +243,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   @override
   Future<void> disconnect() async {
     try {
-      await onNotifyStopListening?.call();
+      await streaming?.onNotifyStopListening?.call();
       _connectionHandler.dispose();
       _characteristics.clear();
       await _device.disconnect();
