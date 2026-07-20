@@ -1,27 +1,29 @@
-import 'package:flutter_supper_app_core/core.dart';
-import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
-import 'package:vulcan_mobile_playground/core/ble/gatt/keys/adapter/key.dart';
+import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../gatt/ring/reader/ring_reader.dart';
 import '../../../model/ble_device_info_model.dart';
 import '../abstract/ble_device_capabilities.dart';
-import '../device_impl.dart';
+import '../ble_device_runtime.dart';
+import 'myo_band_signal_stream.dart';
 
 /// MyoBand family: đọc metadata qua GATT, stream EMG qua characteristic signal.
-class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl
-    implements BleDeviceStreaming, BleDeviceInfoSource {
-  VulcanMyoBandDevice({required super.device, required super.deviceType});
+class VulcanMyoBandDevice implements BleDeviceRemoteDataSource, BleDeviceStreaming, BleDeviceInfoSource {
+   VulcanMyoBandDevice({
+    required BleDeviceRuntime runtime,
+    MyoBandSignalStream? signalStream,
+  }) : _runtime = runtime,
+       _signalStream = signalStream ?? MyoBandSignalStream(runtime);
 
-  bool _isStreamingSignal = false;
+  final BleDeviceRuntime _runtime;
+  final MyoBandSignalStream _signalStream;
 
-  /// Lệnh protocol Vulcan: bật / tắt stream tín hiệu trên thiết bị.
-  static const String _startSignalCommand = '255';
-  static const String _stopSignalCommand = '000';
+  @override
+  String get deviceId => _runtime.deviceId;
 
-  final _logger = const Logger(className: 'VulcanMyoBandDevice');
+  @override
+  VulcanDeviceType get deviceType => _runtime.deviceType;
 
   @override
   BleDeviceStreaming? get streaming => this;
@@ -30,25 +32,22 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl
   BleDeviceInfoSource? get info => this;
 
   @override
-  Stream<List<int>> get notifyDataStream => watchDeviceData();
+  Stream<List<int>> get notifyDataStream => _signalStream.rawStream;
 
   @override
-  Future<void> Function()? get onNotifyStopListening => stopSignalStream;
+  Future<void> startDeviceStream() => _signalStream.start();
 
   @override
-  Future<void> startDeviceStream() => startSignalStream();
-
-  @override
-  Future<void> stopDeviceStream() => stopSignalStream();
+  Future<void> stopDeviceStream() => _signalStream.stop();
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo() async {
-    ensureIsMyoBandFamily();
-    ensureConnected();
+    _ensureIsMyoBandFamily();
+    _runtime.ensureGattReady();
 
     try {
       return await GattRingReader.readInfo(
-        characteristics: characteristics,
+        gatt: _runtime,
         scannedType: deviceType,
       );
     } catch (e) {
@@ -57,80 +56,52 @@ class VulcanMyoBandDevice extends BleDeviceRemoteDataSourceImpl
     }
   }
 
-  /// Đọc ngưỡng ring; lỗi trả `null` thay vì throw (optional data).
-  Future<RingThresholdConfig?> readThreshold() async {
-    ensureConnected();
+  @override
+  Stream<BleConnectionStatus> watchConnectionStatus() =>
+      _runtime.watchConnectionStatus();
 
-    try {
-      return await GattRingReader.readThreshold(characteristics);
-    } catch (e, st) {
-      _logger.warning(
-        'readThreshold',
-        'Failed to read threshold for $deviceId: $e\n$st',
-      );
-      return null;
-    }
+  @override
+  Future<BleConnectionStatus> connect() => _runtime.connect();
+
+  @override
+  Future<void> disconnect() async {
+    await stopDeviceStream();
+    await _runtime.disconnect();
   }
 
-  void ensureIsMyoBandFamily() {
+  @override
+  Future<List<int>> readCharacteristic(String characteristicKey) =>
+      _runtime.readCharacteristic(characteristicKey);
+
+  @override
+  Future<void> writeCharacteristic(
+    String characteristicKey,
+    List<int> data, {
+    int timeout = 15,
+  }) =>
+      _runtime.writeCharacteristic(
+        characteristicKey,
+        data,
+        timeout: timeout,
+      );
+
+  @override
+  Future<void> setUpdateFirmware(bool enabled) =>
+      _runtime.setUpdateFirmware(enabled);
+
+  @override
+  Stream<List<int>> watchUpdateNotifications() =>
+      _runtime.watchUpdateNotifications();
+
+  @override
+  int getNegotiatedMtu() => _runtime.getNegotiatedMtu();
+
+  void _ensureIsMyoBandFamily() {
     if (!deviceType.isMyoBandFamily) {
       throw BleException(
         'Device type ${deviceType.name} is not a MyoBand family device',
         deviceId: deviceId,
       );
-    }
-  }
-
-  Future<void> startSignalStream() async {
-    _isStreamingSignal = false;
-    ensureConnected();
-
-    try {
-      await writeData(
-        BleAdapterKey.signal,
-        BleValueEncoders.encodeUtf8(_startSignalCommand),
-      );
-
-      // MyoBand gửi frame cố định mỗi notify — không cần gộp chunk.
-      await startListening(BleAdapterKey.signal, reassembleFrames: false);
-
-      _isStreamingSignal = true;
-      _logger.debug('startSignalStream', 'Notify stream ready for $deviceId');
-    } catch (e, st) {
-      _isStreamingSignal = false;
-      _logger.error(
-        'startSignalStream',
-        'Failed to setup MyoBand notify stream: $e\n$st',
-      );
-
-      if (e is BleException) rethrow;
-      throw BleException(
-        'Failed to start MyoBand signal stream: $e',
-        deviceId: deviceId,
-      );
-    }
-  }
-
-  Future<void> stopSignalStream() async {
-    if (!_isStreamingSignal || characteristics.isEmpty) return;
-
-    try {
-      await writeData(
-        BleAdapterKey.signal,
-        BleValueEncoders.encodeUtf8(_stopSignalCommand),
-      );
-    } catch (e) {
-      _logger.warning(
-        'stopSignalStream',
-        'Failed to stop MyoBand signal for $deviceId: $e',
-      );
-      if (e is BleException) rethrow;
-      throw BleException(
-        'Failed to stop MyoBand signal stream: $e',
-        deviceId: deviceId,
-      );
-    } finally {
-      _isStreamingSignal = false;
     }
   }
 }
