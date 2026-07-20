@@ -8,6 +8,8 @@ import 'device/vulcan_myo_band_device.dart';
 
 /// Tạo [BleDeviceRemoteDataSource] phù hợp theo [VulcanDeviceType].
 class BleDeviceDataSourceFactory {
+  const BleDeviceDataSourceFactory();
+
   BleDeviceRemoteDataSource create(
     BluetoothDevice device, {
     required VulcanDeviceType deviceType,

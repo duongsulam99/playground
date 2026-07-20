@@ -29,7 +29,7 @@ import '../../firmware/data/firmware_ble_transport.dart';
 Future<void> initBleInjection(GetIt sl) async {
   if (sl.isRegistered<BleBloc>()) return;
 
-  sl.registerFactory(BleDeviceDataSourceFactory.new);
+  sl.registerFactory(() => const BleDeviceDataSourceFactory());
   sl.registerSingletonAsync<StreamDecodeWorker>(StreamDecodeWorker.create);
   sl.registerSingletonAsync<ScanParseWorker>(ScanParseWorker.create);
 
