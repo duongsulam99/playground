@@ -3,6 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_scan_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_device_info_route.dart';
 
 class HomeMyoBandInfoSection extends StatelessWidget {
@@ -12,7 +13,7 @@ class HomeMyoBandInfoSection extends StatelessWidget {
     super.key,
   });
 
-  final Map<String, BleDiscoveredDevice> savedDevices;
+  final BleScanSnapshot savedDevices;
   final Map<String, BleActiveConnection> activeConnections;
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_scan_snapshot.dart';
 
 class BleDeviceList extends StatelessWidget {
   const BleDeviceList({
@@ -13,7 +14,7 @@ class BleDeviceList extends StatelessWidget {
     super.key,
   });
 
-  final Map<String, BleDiscoveredDevice> savedDevices;
+  final BleScanSnapshot savedDevices;
   final Map<String, BleActiveConnection> activeConnections;
   final bool Function(String deviceId) canConnectDevice;
   final ValueChanged<String> onDeviceSelected;
@@ -32,7 +33,7 @@ class BleDeviceList extends StatelessWidget {
       );
     }
 
-    final devices = savedDevices.values.toList();
+    final devices = savedDevices.devices.toList();
 
     return ListView.separated(
       shrinkWrap: true,

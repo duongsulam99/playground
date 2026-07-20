@@ -14,6 +14,7 @@ import '../../../domain/entities/ble_discovered_device.dart';
 import '../../../domain/entities/ble_active_connection.dart';
 import '../../../domain/entities/ble_device_info.dart';
 import '../../../domain/entities/ble_device_stream_snapshot.dart';
+import '../../../domain/entities/ble_scan_snapshot.dart';
 import '../../../domain/usecase/connect_device.dart';
 import '../../../domain/usecase/disconnect_device.dart';
 import '../../../domain/usecase/read_device_info.dart';
@@ -432,7 +433,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     if (!state.isDeviceStreaming(deviceId)) return;
 
     final stream = _resolveDeviceDataStream(deviceId);
-    if (stream == null) return;
 
     await emit.forEach<Either<Failure, BleDeviceStreamSnapshot>>(
       stream,
@@ -520,7 +520,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   // Device stream: stream resolution
   // ---------------------------------------------------------------------------
 
-  Stream<Either<Failure, BleDeviceStreamSnapshot>>? _resolveDeviceDataStream(
+  Stream<Either<Failure, BleDeviceStreamSnapshot>> _resolveDeviceDataStream(
     String deviceId,
   ) {
     return _watchDeviceData(WatchDeviceDataParams(deviceId: deviceId));
@@ -577,7 +577,6 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     final stream = _watchDeviceConnection(
       WatchDeviceConnectionParams(deviceId: deviceId),
     );
-    if (stream == null) return;
 
     _deviceConnectionSubscriptions[deviceId] = stream.listen((result) {
       if (isClosed) return;

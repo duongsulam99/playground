@@ -7,7 +7,7 @@ abstract class BleState with _$BleState {
   const factory BleState({
     @Default(BleAdapterStatus.unknown) BleAdapterStatus adapterStatus,
     @Default(false) bool isScanning,
-    @Default({}) Map<String, BleDiscoveredDevice> savedDevices,
+    @Default(BleScanSnapshot.empty) BleScanSnapshot savedDevices,
     @Default({}) Map<String, BleActiveConnection> activeConnections,
     @Default({}) Map<String, BleDeviceStreamSnapshot> deviceStreamSnapshots,
     @Default({}) Set<String> streamingDeviceIds,
