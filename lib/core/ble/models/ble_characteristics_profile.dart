@@ -7,6 +7,9 @@ import '../gatt/keys/ring/key.dart';
 sealed class BleCharacteristicsProfile {
   const BleCharacteristicsProfile();
 
+  /// Key OTA characteristic của device này. `null` nếu profile không có OTA.
+  String? get otaCharacteristicKey;
+
   List<String> get uuids;
 
   bool contains(String uuid) =>
@@ -49,6 +52,9 @@ final class HandBleCharacteristics extends BleCharacteristicsProfile {
   final String angleUuid;
   final String controlUuid;
   final String batteryUuid;
+
+  @override
+  String? get otaCharacteristicKey => otaUuid;
 
   @override
   List<String> get uuids => [
@@ -103,6 +109,9 @@ final class ElbowBleCharacteristics extends BleCharacteristicsProfile {
   final String connectUuid;
 
   @override
+  String? get otaCharacteristicKey => otaUuid;
+
+  @override
   List<String> get uuids => [
     otaUuid,
     nameUuid,
@@ -149,6 +158,9 @@ final class CoaxialBleCharacteristics extends BleCharacteristicsProfile {
   final String batteryUuid;
 
   @override
+  String? get otaCharacteristicKey => otaUuid;
+
+  @override
   List<String> get uuids => [
     otaUuid,
     nameCharUuid,
@@ -193,6 +205,9 @@ final class WristBleCharacteristics extends BleCharacteristicsProfile {
   final String batteryUuid;
   final String stateWristUuid;
   final String connectUuid;
+
+  @override
+  String? get otaCharacteristicKey => otaUuid;
 
   @override
   List<String> get uuids => [
@@ -259,6 +274,9 @@ final class RingBleCharacteristics extends BleCharacteristicsProfile {
   final String settingUuid;
 
   @override
+  String? get otaCharacteristicKey => otaUuid;
+
+  @override
   List<String> get uuids => [
     otaUuid,
     nameCharUuid,
@@ -311,6 +329,9 @@ final class SensorBoxBleCharacteristics extends BleCharacteristicsProfile {
   final String batteryUuid;
 
   @override
+  String? get otaCharacteristicKey => null;
+
+  @override
   List<String> get uuids => [nameCharUuid, stateControlUuid, batteryUuid];
 
   @override
@@ -339,6 +360,9 @@ final class BleAdapterBleCharacteristics extends BleCharacteristicsProfile {
   final String stateControlUuid;
   final String logicUuid;
   final String batteryUuid;
+
+  @override
+  String? get otaCharacteristicKey => otaUuid;
 
   @override
   List<String> get uuids => [

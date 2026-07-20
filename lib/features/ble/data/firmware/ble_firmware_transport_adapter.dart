@@ -1,4 +1,3 @@
-import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/features/firmware/data/firmware_ble_transport.dart';
 
 import '../source/remote/abstract/ble_remote_data_source.dart';
@@ -16,7 +15,7 @@ class BleFirmwareTransportAdapter implements FirmwareBleTransport {
   Future<void> writeOta(String deviceId, List<int> data, {int timeout = 15}) {
     return _dataSource
         .findConnectedDevice(deviceId)
-        .writeCharacteristic(BleRingKey.ota, data, timeout: timeout);
+        .writeOta(data, timeout: timeout);
   }
 
   @override

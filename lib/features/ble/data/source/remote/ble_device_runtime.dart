@@ -3,7 +3,6 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
-import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../helper/device_connection_handler.dart';
@@ -101,16 +100,20 @@ class BleDeviceRuntime
   }
 
   @override
+  Future<void> writeOta(List<int> data, {int timeout = 15}) =>
+      writeCharacteristic(_requireOtaCharacteristicKey(), data, timeout: timeout);
+
+  @override
   Future<void> setUpdateFirmware(bool enabled) async {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(BleRingKey.ota);
+    final characteristic = _requireCharacteristic(_requireOtaCharacteristicKey());
     await characteristic.setNotifyValue(enabled);
   }
 
   @override
   Stream<List<int>> watchUpdateNotifications() {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(BleRingKey.ota);
+    final characteristic = _requireCharacteristic(_requireOtaCharacteristicKey());
     return characteristic.onValueReceived;
   }
 
@@ -202,6 +205,17 @@ class BleDeviceRuntime
       );
     }
     return characteristic;
+  }
+
+  String _requireOtaCharacteristicKey() {
+    final key = _deviceType.characteristics?.otaCharacteristicKey;
+    if (key == null) {
+      throw BleException(
+        'Device type ${_deviceType.name} does not support OTA',
+        deviceId: deviceId,
+      );
+    }
+    return key;
   }
 
   BleConnectionStatus _mapConnectionState(BluetoothConnectionState state) {

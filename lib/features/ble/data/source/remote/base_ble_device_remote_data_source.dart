@@ -56,6 +56,10 @@ abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteData
       runtime.writeCharacteristic(characteristicKey, data, timeout: timeout);
 
   @override
+  Future<void> writeOta(List<int> data, {int timeout = 15}) =>
+      runtime.writeOta(data, timeout: timeout);
+
+  @override
   Future<void> setUpdateFirmware(bool enabled) =>
       runtime.setUpdateFirmware(enabled);
 
