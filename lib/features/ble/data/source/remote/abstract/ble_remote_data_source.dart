@@ -23,8 +23,8 @@ abstract class BleRemoteDataSource {
   // --- Connection ---
   Future<BleConnectionStatus> connect(String deviceId);
 
-  /// `null` khi thiết bị chưa từng connect trong session hiện tại.
-  Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId);
+  /// Throw [BleNotConnectedException] nếu thiết bị chưa connect.
+  Stream<BleConnectionStatus> watchConnectionStatus(String deviceId);
   Future<void> disconnect(String deviceId);
 
   /// Trả về device source đã connect; throw nếu chưa connect.
@@ -33,8 +33,8 @@ abstract class BleRemoteDataSource {
   // --- Device info & stream ---
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
 
-  /// `null` khi thiết bị không hỗ trợ notify stream (không phải lỗi).
-  Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId);
+  /// Throw nếu thiết bị không hỗ trợ notify stream.
+  Stream<BleDeviceStreamSnapshotModel> watchDeviceData(String deviceId);
   Future<void> startDeviceStream(String deviceId);
   Future<void> stopDeviceStream(String deviceId);
 }

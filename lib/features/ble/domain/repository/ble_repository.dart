@@ -5,19 +5,19 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.d
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../entities/ble_device_info.dart';
-import '../entities/ble_discovered_device.dart';
 import '../entities/ble_device_stream_snapshot.dart';
+import '../entities/ble_scan_snapshot.dart';
 
 abstract class BleRepository {
   Stream<Either<Failure, BleAdapterStatus>> watchAdapterStatus();
 
-  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults();
+  Stream<Either<Failure, BleScanSnapshot>> watchScanResults();
 
-  Stream<Either<Failure, BleDeviceStreamSnapshot>>? watchDeviceData(
+  Stream<Either<Failure, BleDeviceStreamSnapshot>> watchDeviceData(
     String deviceId,
   );
 
-  Stream<Either<Failure, BleConnectionStatus>>? watchConnectionStatus(
+  Stream<Either<Failure, BleConnectionStatus>> watchConnectionStatus(
     String deviceId,
   );
 

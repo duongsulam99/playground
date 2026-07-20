@@ -130,18 +130,23 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   }
 
   @override
-  Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
+  Stream<BleDeviceStreamSnapshotModel> watchDeviceData(String deviceId) {
     final deviceSource = findConnectedDevice(deviceId);
 
     final raw = deviceSource.streaming?.notifyDataStream;
-    if (raw == null) return null;
+    if (raw == null) {
+      throw BleException(
+        'Device stream is not supported for ${deviceSource.deviceType.name}',
+        deviceId: deviceId,
+      );
+    }
 
     // Decode EMG chạy trên isolate để không block main thread.
     return _decodeIsolate.decodeStream(source: raw, deviceId: deviceId);
   }
 
   @override
-  Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId) {
+  Stream<BleConnectionStatus> watchConnectionStatus(String deviceId) {
     final deviceSource = findConnectedDevice(deviceId);
 
     return deviceSource.watchConnectionStatus().map((status) {

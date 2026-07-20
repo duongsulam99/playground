@@ -8,8 +8,8 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.d
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../../domain/entities/ble_device_info.dart';
-import '../../domain/entities/ble_discovered_device.dart';
 import '../../domain/entities/ble_device_stream_snapshot.dart';
+import '../../domain/entities/ble_scan_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/abstract/ble_remote_data_source.dart';
 
@@ -27,32 +27,38 @@ class BleRepositoryImpl implements BleRepository {
   }
 
   @override
-  Stream<Either<Failure, Map<String, BleDiscoveredDevice>>> watchScanResults() {
+  Stream<Either<Failure, BleScanSnapshot>> watchScanResults() {
     return _mapStreamToEither(
       _remoteDataSource.watchScanResults().map(
-        (devices) => devices.map((key, model) => MapEntry(key, model.toEntity())),
+        (devices) => BleScanSnapshot(
+          devices.map((key, model) => MapEntry(key, model.toEntity())),
+        ),
       ),
     );
   }
 
   @override
-  Stream<Either<Failure, BleDeviceStreamSnapshot>>? watchDeviceData(
+  Stream<Either<Failure, BleDeviceStreamSnapshot>> watchDeviceData(
     String deviceId,
   ) {
-    final stream = _remoteDataSource.watchDeviceData(deviceId);
-    if (stream == null) return null;
-
-    return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
+    try {
+      final stream = _remoteDataSource.watchDeviceData(deviceId);
+      return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
   }
 
   @override
-  Stream<Either<Failure, BleConnectionStatus>>? watchConnectionStatus(
+  Stream<Either<Failure, BleConnectionStatus>> watchConnectionStatus(
     String deviceId,
   ) {
-    final stream = _remoteDataSource.watchConnectionStatus(deviceId);
-    if (stream == null) return null;
-
-    return _mapStreamToEither(stream);
+    try {
+      final stream = _remoteDataSource.watchConnectionStatus(deviceId);
+      return _mapStreamToEither(stream);
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
   }
 
   @override
