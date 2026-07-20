@@ -131,7 +131,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Stream<BleDeviceStreamSnapshotModel>? watchDeviceData(String deviceId) {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
 
     final raw = deviceSource.streaming?.notifyDataStream;
     if (raw == null) return null;
@@ -142,7 +142,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId) {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
 
     return deviceSource.watchConnectionStatus().map((status) {
       // Dọn cache khi mất kết nối (kể cả disconnect ngoài app).
@@ -155,7 +155,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
     final info = deviceSource.info;
     if (info == null) {
       throw BleException(
@@ -174,7 +174,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Future<void> disconnect(String deviceId) async {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
 
     // Xóa trước để các lệnh khác không còn thấy device là connected.
     _connectedDevices.remove(deviceId);
@@ -189,7 +189,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Future<void> startDeviceStream(String deviceId) async {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
     final streaming = deviceSource.streaming;
     if (streaming == null) {
       throw BleException(
@@ -211,7 +211,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
 
   @override
   Future<void> stopDeviceStream(String deviceId) async {
-    final deviceSource = findDeviceConnected(deviceId);
+    final deviceSource = findConnectedDevice(deviceId);
     final streaming = deviceSource.streaming;
     if (streaming == null) return;
 
@@ -226,8 +226,8 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     }
   }
 
-  /// Public để [BleFirmwareTransportAdapter] truy cập GATT/OTA trực tiếp.
-  BleDeviceRemoteDataSource findDeviceConnected(String deviceId) {
+  @override
+  BleDeviceRemoteDataSource findConnectedDevice(String deviceId) {
     final deviceSource = _connectedDevices[deviceId];
 
     if (deviceSource == null) {

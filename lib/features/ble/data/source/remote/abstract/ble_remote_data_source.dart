@@ -5,6 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import '../../../model/ble_device_info_model.dart';
 import '../../../model/ble_device_stream_snapshot_model.dart';
 import '../../../model/ble_discovered_device_model.dart';
+import 'ble_device_remote_data_source.dart';
 
 /// Contract cho toàn bộ thao tác BLE ở data layer.
 ///
@@ -25,6 +26,9 @@ abstract class BleRemoteDataSource {
   /// `null` khi thiết bị chưa từng connect trong session hiện tại.
   Stream<BleConnectionStatus>? watchConnectionStatus(String deviceId);
   Future<void> disconnect(String deviceId);
+
+  /// Trả về device source đã connect; throw nếu chưa connect.
+  BleDeviceRemoteDataSource findConnectedDevice(String deviceId);
 
   // --- Device info & stream ---
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);

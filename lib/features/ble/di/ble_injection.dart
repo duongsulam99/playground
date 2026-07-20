@@ -46,8 +46,7 @@ Future<void> initBleInjection(GetIt sl) async {
   );
 
   sl.registerLazySingleton<FirmwareBleTransport>(
-    () =>
-        BleFirmwareTransportAdapter(dataSource: sl<BleRemoteDataSourceImpl>()),
+    () => BleFirmwareTransportAdapter(dataSource: sl<BleRemoteDataSource>()),
   );
 
   sl.registerLazySingleton<BleRepository>(
