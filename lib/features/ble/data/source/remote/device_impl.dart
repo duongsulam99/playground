@@ -3,6 +3,7 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_services_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
@@ -203,7 +204,7 @@ class BleDeviceRemoteDataSourceImpl implements BleDeviceRemoteDataSource {
   }
 
   /// Key trong map characteristics sau [BleGattCollector.collect] (profile Hand/Elbow).
-  static const String _otaKey = 'OTA_UUID';
+  static const String _otaKey = BleRingKey.ota;
 
   @override
   Future<List<int>> readCharacteristic(String characteristicKey) async {
