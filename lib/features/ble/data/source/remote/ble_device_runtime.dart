@@ -21,10 +21,7 @@ class BleDeviceRuntime
         BleDeviceFirmwareTransport {
   BleDeviceRuntime({required BluetoothDevice device, required this._deviceType})
     : _device = device,
-      _connectionHandler = DeviceConnectionHandler(
-        deviceId: device.remoteId.str,
-        device: device,
-      );
+      _connectionHandler = DeviceConnectionHandler(device: device);
 
   final BluetoothDevice _device;
   final VulcanDeviceType _deviceType;
@@ -101,19 +98,27 @@ class BleDeviceRuntime
 
   @override
   Future<void> writeOta(List<int> data, {int timeout = 15}) =>
-      writeCharacteristic(_requireOtaCharacteristicKey(), data, timeout: timeout);
+      writeCharacteristic(
+        _requireOtaCharacteristicKey(),
+        data,
+        timeout: timeout,
+      );
 
   @override
   Future<void> setUpdateFirmware(bool enabled) async {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(_requireOtaCharacteristicKey());
+    final characteristic = _requireCharacteristic(
+      _requireOtaCharacteristicKey(),
+    );
     await characteristic.setNotifyValue(enabled);
   }
 
   @override
   Stream<List<int>> watchUpdateNotifications() {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(_requireOtaCharacteristicKey());
+    final characteristic = _requireCharacteristic(
+      _requireOtaCharacteristicKey(),
+    );
     return characteristic.onValueReceived;
   }
 

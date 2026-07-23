@@ -8,7 +8,8 @@ import 'ble_device_runtime.dart';
 /// Base cho mọi [BleDeviceRemoteDataSource]: delegate mandatory capabilities
 /// xuống [BleDeviceRuntime]. Subclass chỉ override optional capabilities
 /// (streaming, info) và hook lifecycle.
-abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteDataSource {
+abstract base class BaseBleDeviceRemoteDataSource
+    implements BleDeviceRemoteDataSource {
   BaseBleDeviceRemoteDataSource(this.runtime);
 
   @protected
@@ -52,8 +53,7 @@ abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteData
     String characteristicKey,
     List<int> data, {
     int timeout = 15,
-  }) =>
-      runtime.writeCharacteristic(characteristicKey, data, timeout: timeout);
+  }) => runtime.writeCharacteristic(characteristicKey, data, timeout: timeout);
 
   @override
   Future<void> writeOta(List<int> data, {int timeout = 15}) =>

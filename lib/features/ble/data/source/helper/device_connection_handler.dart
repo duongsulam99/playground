@@ -12,12 +12,9 @@ import 'stream_monitor.dart';
 ///
 /// Một instance gắn với một [BluetoothDevice]; lifecycle theo connect/dispose.
 class DeviceConnectionHandler {
-  DeviceConnectionHandler({
-    required this.deviceId,
-    required BluetoothDevice device,
-  }) : _bleDevice = device;
+  DeviceConnectionHandler({required BluetoothDevice device})
+    : _bleDevice = device;
 
-  final String deviceId;
   final BluetoothDevice _bleDevice;
   final BlePacketAccumulator _accumulator = BlePacketAccumulator();
 
@@ -53,7 +50,10 @@ class DeviceConnectionHandler {
     }
 
     _currentMtu = await _bleDevice.mtu.first;
-    _logger.debug('setupMtu', 'Device $deviceId negotiated MTU: $_currentMtu');
+    _logger.debug(
+      'setupMtu',
+      'Device ${_bleDevice.remoteId.str} negotiated MTU: $_currentMtu',
+    );
   }
 
   Future<void> _requestMtu(int mtu) async {
@@ -130,7 +130,7 @@ class DeviceConnectionHandler {
 
     final maxPayloadSize = _currentMtu - 3;
     if (maxPayloadSize <= 0) {
-      throw StateError('Invalid MTU $_currentMtu for device $deviceId');
+      throw StateError('Invalid MTU $_currentMtu for device');
     }
 
     for (var i = 0; i < fullData.length; i += maxPayloadSize) {
@@ -156,7 +156,7 @@ class DeviceConnectionHandler {
     _cleanDataStreamController?.close();
     _cleanDataStreamController = null;
 
-    _logger.debug('dispose', 'Resources cleaned up for device $deviceId');
+    _logger.debug('dispose', 'Resources cleaned up for device');
   }
 
   void _ensureStreamController() {
@@ -168,7 +168,7 @@ class DeviceConnectionHandler {
 
   void _ensureNotDisposed() {
     if (_isDisposed) {
-      throw StateError('DeviceConnectionHandler for $deviceId is disposed');
+      throw StateError('DeviceConnectionHandler is disposed');
     }
   }
 
