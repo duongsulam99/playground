@@ -14,8 +14,8 @@ import 'abstract/capabilities/gatt_access.dart';
 /// Runtime nội bộ: connect, GATT discovery, notify/write, OTA cho một thiết bị.
 ///
 /// Không expose ra public contract — device implementations compose qua class này.
-class BleDeviceRuntime implements Connection, GattAccess, FirmwareTransport {
-  BleDeviceRuntime({required BluetoothDevice device, required this._deviceType})
+class DeviceRuntime implements Connection, GattAccess, FirmwareTransport {
+  DeviceRuntime({required BluetoothDevice device, required this._deviceType})
     : _device = device,
       _connectionHandler = DeviceConnectionHandler(device: device);
 
@@ -23,7 +23,7 @@ class BleDeviceRuntime implements Connection, GattAccess, FirmwareTransport {
   final VulcanDeviceType _deviceType;
   final DeviceConnectionHandler _connectionHandler;
   final Map<String, BluetoothCharacteristic> _characteristics = {};
-  final _logger = const Logger(className: 'BleDeviceRuntime');
+  final _logger = const Logger(className: 'DeviceRuntime');
 
   @override
   String get deviceId => _device.remoteId.str;

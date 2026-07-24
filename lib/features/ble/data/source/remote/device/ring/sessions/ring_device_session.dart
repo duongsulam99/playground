@@ -5,7 +5,7 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import '../../../../../gatt/ring/reader/ring_reader.dart';
 import '../../../../../model/ble_device_info_model.dart';
 import '../../../abstract/capabilities/info_source.dart';
-import '../../../ble_device_runtime.dart';
+import '../../../device_runtime.dart';
 import 'ring_battery_monitor.dart';
 
 export 'ring_battery_monitor.dart' show BatterySnapshot;
@@ -27,7 +27,7 @@ abstract interface class BleRingDeviceSession implements InfoSource {
 final class RingDeviceSession implements BleRingDeviceSession {
   RingDeviceSession(this._runtime) : _battery = RingBatteryMonitor(_runtime);
 
-  final BleDeviceRuntime _runtime;
+  final DeviceRuntime _runtime;
   final BleRingBatteryMonitor _battery;
   final _logger = const Logger(className: 'RingDeviceSession');
 

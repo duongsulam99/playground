@@ -4,7 +4,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import 'abstract/capabilities/index.dart';
 import 'abstract/device_remote_datasrc.dart';
-import 'ble_device_runtime.dart';
+import 'device_runtime.dart';
 import 'device/ring/index.dart';
 
 /// Base cho mọi [BleDeviceRemoteDataSource]: delegate mandatory capabilities
@@ -14,7 +14,7 @@ abstract base class BaseDeviceRemoteDS implements DeviceRemoteDS {
   BaseDeviceRemoteDS(this.runtime);
 
   @protected
-  final BleDeviceRuntime runtime;
+  final DeviceRuntime runtime;
 
   @override
   DataStreaming? get streaming => null;

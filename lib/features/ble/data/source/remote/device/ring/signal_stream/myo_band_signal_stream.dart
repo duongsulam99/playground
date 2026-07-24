@@ -7,7 +7,7 @@ import '../../../../../model/ble_device_stream_snapshot_model.dart';
 import '../../../../isolate/decode/decode_worker.dart';
 import '../../../abstract/capabilities/decoded_streaming.dart';
 import '../../../abstract/capabilities/data_streaming.dart';
-import '../../../ble_device_runtime.dart';
+import '../../../device_runtime.dart';
 
 /// Active EMG stream trên MyoBand family (SIGNAL_UUID).
 ///
@@ -16,7 +16,7 @@ import '../../../ble_device_runtime.dart';
 final class MyoBandSignalStream implements DataStreaming, DecodedStreaming {
   MyoBandSignalStream(this._runtime, {required this._decodeWorker});
 
-  final BleDeviceRuntime _runtime;
+  final DeviceRuntime _runtime;
   final StreamDecodeWorker _decodeWorker;
 
   static const String _startSignalCommand = '255';

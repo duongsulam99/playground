@@ -4,7 +4,7 @@ import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 
-import '../../../ble_device_runtime.dart';
+import '../../../device_runtime.dart';
 
 /// Snapshot pin từ BATTERY_UUID: byte[0]=%, byte[1]=0x2B nếu đang sạc.
 final class BatterySnapshot extends Equatable {
@@ -51,7 +51,7 @@ abstract interface class BleRingBatteryMonitor {
 final class RingBatteryMonitor implements BleRingBatteryMonitor {
   RingBatteryMonitor(this._runtime);
 
-  final BleDeviceRuntime _runtime;
+  final DeviceRuntime _runtime;
   final _logger = const Logger(className: 'RingBatteryMonitor');
 
   final _controller = StreamController<BatterySnapshot>.broadcast();
