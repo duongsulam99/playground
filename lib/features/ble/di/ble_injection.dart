@@ -6,7 +6,7 @@ import '../data/source/isolate/scan/scan_parse_worker.dart';
 import '../data/repository/ble_repository_impl.dart';
 import '../data/source/remote/device_factory.dart';
 import '../data/source/remote/abstract/ble_remote_data_source.dart';
-import '../data/source/remote/impl.dart';
+import '../data/source/remote/ble_remote_data_source_impl.dart';
 import '../domain/repository/ble_repository.dart';
 import '../domain/usecase/connect_device.dart';
 import '../domain/usecase/disconnect_device.dart';
