@@ -3,6 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import 'abstract/ble_device_capabilities.dart';
+import 'abstract/ble_device_remote_data_source.dart';
 import 'ble_device_runtime.dart';
 import 'device/ring/index.dart';
 

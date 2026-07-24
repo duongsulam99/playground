@@ -13,10 +13,17 @@ import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/entities/ble_scan_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/abstract/ble_remote_data_source.dart';
+import '../source/remote/abstract/capabilities/ble_device_decoded_streaming.dart';
+import '../source/remote/abstract/capabilities/ble_device_info_source.dart';
+import '../source/remote/abstract/capabilities/ble_device_streaming.dart';
+import '../source/remote/abstract/ble_device_remote_data_source.dart';
+import '../source/remote/device/ring/ring_device_session.dart';
 
 /// Biên giới domain ↔ data: map Model → Entity, Exception → [Failure].
 ///
-/// Không chứa logic BLE — mọi thao tác delegate xuống [BleRemoteDataSource].
+/// Global BLE (adapter / scan / connect) delegate xuống [BleRemoteDataSource].
+/// Per-device ops resolve qua [BleRemoteDataSource.findConnectedDevice] rồi
+/// gọi capabilities trên [BleDeviceRemoteDataSource].
 class BleRepositoryImpl implements BleRepository {
   const BleRepositoryImpl({required this._remoteDataSource});
 
@@ -43,8 +50,10 @@ class BleRepositoryImpl implements BleRepository {
     String deviceId,
   ) {
     try {
-      final stream = _remoteDataSource.watchDeviceData(deviceId);
-      return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
+      final decoded = _requireDecodedStreaming(_connectedDevice(deviceId));
+      return _mapStreamToEither(
+        decoded.watchDecodedDeviceData().map((snapshot) => snapshot.toEntity()),
+      );
     } catch (error) {
       return Stream.value(Left(_mapException(error)));
     }
@@ -53,8 +62,10 @@ class BleRepositoryImpl implements BleRepository {
   @override
   Stream<Either<Failure, BleBatterySnapshot>> watchBattery(String deviceId) {
     try {
-      final stream = _remoteDataSource.watchBattery(deviceId);
-      return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      return _mapStreamToEither(
+        session.batteryStream.map((snapshot) => snapshot.toEntity()),
+      );
     } catch (error) {
       return Stream.value(Left(_mapException(error)));
     }
@@ -117,8 +128,14 @@ class BleRepositoryImpl implements BleRepository {
   @override
   Future<Either<Failure, BleDeviceInfo>> readDeviceInfo(String deviceId) async {
     try {
-      final info = await _remoteDataSource.readDeviceInfo(deviceId);
-      return Right(info.toEntity());
+      final info = _requireInfo(_connectedDevice(deviceId));
+      try {
+        final model = await info.readDeviceInfo();
+        return Right(model.toEntity());
+      } catch (e) {
+        if (e is BleException) rethrow;
+        throw BleException('Failed to read device info: $e', deviceId: deviceId);
+      }
     } catch (error) {
       return Left(_mapException(error));
     }
@@ -127,7 +144,16 @@ class BleRepositoryImpl implements BleRepository {
   @override
   Future<Either<Failure, Unit>> startDeviceStream(String deviceId) async {
     try {
-      await _remoteDataSource.startDeviceStream(deviceId);
+      final streaming = _requireStreaming(_connectedDevice(deviceId));
+      try {
+        await streaming.startDeviceStream();
+      } catch (e) {
+        if (e is BleException) rethrow;
+        throw BleException(
+          'Failed to start device stream: $e',
+          deviceId: deviceId,
+        );
+      }
       return const Right(unit);
     } catch (error) {
       return Left(_mapException(error));
@@ -137,11 +163,73 @@ class BleRepositoryImpl implements BleRepository {
   @override
   Future<Either<Failure, Unit>> stopDeviceStream(String deviceId) async {
     try {
-      await _remoteDataSource.stopDeviceStream(deviceId);
+      final device = _connectedDevice(deviceId);
+      final streaming = device.streaming;
+      if (streaming == null) return const Right(unit);
+
+      try {
+        await streaming.stopDeviceStream();
+      } catch (e) {
+        if (e is BleException) rethrow;
+        throw BleException(
+          'Failed to stop device stream: $e',
+          deviceId: deviceId,
+        );
+      }
       return const Right(unit);
     } catch (error) {
       return Left(_mapException(error));
     }
+  }
+
+  BleDeviceRemoteDataSource _connectedDevice(String deviceId) {
+    return _remoteDataSource.findConnectedDevice(deviceId);
+  }
+
+  BleDeviceInfoSource _requireInfo(BleDeviceRemoteDataSource device) {
+    final info = device.info;
+    if (info == null) {
+      throw BleException(
+        'Device info is not supported for ${device.deviceType.name}',
+        deviceId: device.deviceId,
+      );
+    }
+    return info;
+  }
+
+  BleRingDeviceSession _requireRingSession(BleDeviceRemoteDataSource device) {
+    final session = device.ringSession;
+    if (session == null) {
+      throw BleException(
+        'Battery stream is not supported for ${device.deviceType.name}',
+        deviceId: device.deviceId,
+      );
+    }
+    return session;
+  }
+
+  BleDeviceStreaming _requireStreaming(BleDeviceRemoteDataSource device) {
+    final streaming = device.streaming;
+    if (streaming == null) {
+      throw BleException(
+        'Device stream is not supported for ${device.deviceType.name}',
+        deviceId: device.deviceId,
+      );
+    }
+    return streaming;
+  }
+
+  BleDeviceDecodedStreaming _requireDecodedStreaming(
+    BleDeviceRemoteDataSource device,
+  ) {
+    final streaming = device.streaming;
+    if (streaming is BleDeviceDecodedStreaming) {
+      return streaming as BleDeviceDecodedStreaming;
+    }
+    throw BleException(
+      'Device stream is not supported for ${device.deviceType.name}',
+      deviceId: device.deviceId,
+    );
   }
 
   /// Bọc stream: data → `Right`, error → `Left` (không để exception trôi ra ngoài).

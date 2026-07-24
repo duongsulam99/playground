@@ -87,7 +87,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   // static const _logger = Logger(className: 'BleBloc');
 
   void _subscribeAdapterStream() {
-    if (_adapterSubscription == null) return;
+    if (_adapterSubscription != null) return;
 
     _adapterSubscription = _watchAdapterStatus(const NoParams()).listen((
       result,

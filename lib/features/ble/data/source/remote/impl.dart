@@ -6,29 +6,24 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
-import '../../model/ble_device_info_model.dart';
-import '../../model/ble_device_stream_snapshot_model.dart';
 import '../../model/ble_discovered_device_model.dart';
-import '../isolate/decode/decode_worker.dart';
 import '../isolate/scan/scan_advertisement_mapper.dart';
 import '../isolate/scan/scan_parse_worker.dart';
 import 'device_factory.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'abstract/ble_remote_data_source.dart';
-import 'device/ring/ring_battery_monitor.dart';
 
-/// Orchestrator BLE: scan, connect, và delegate xuống từng [BleDeviceRemoteDataSource].
+/// Orchestrator BLE: scan, connect, và registry từng [BleDeviceRemoteDataSource].
 ///
 /// Dùng [FlutterBluePlus](https://pub.dev/packages/flutter_blue_plus) làm stack native.
+/// Per-device ops (info / battery / stream) đi qua [findConnectedDevice].
 class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   BleRemoteDataSourceImpl({
     required this._deviceFactory,
-    required this._decodeIsolate,
     required this._scanParseWorker,
   });
 
   final BleDeviceDataSourceFactory _deviceFactory;
-  final StreamDecodeWorker _decodeIsolate;
   final ScanParseWorker _scanParseWorker;
 
   /// Instance đã connect — key là `deviceId` (remoteId string).
@@ -131,22 +126,6 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   }
 
   @override
-  Stream<BleDeviceStreamSnapshotModel> watchDeviceData(String deviceId) {
-    final deviceSource = findConnectedDevice(deviceId);
-
-    final raw = deviceSource.streaming?.notifyDataStream;
-    if (raw == null) {
-      throw BleException(
-        'Device stream is not supported for ${deviceSource.deviceType.name}',
-        deviceId: deviceId,
-      );
-    }
-
-    // Decode EMG chạy trên isolate để không block main thread.
-    return _decodeIsolate.decodeStream(source: raw, deviceId: deviceId);
-  }
-
-  @override
   Stream<BleConnectionStatus> watchConnectionStatus(String deviceId) {
     final deviceSource = findConnectedDevice(deviceId);
 
@@ -157,38 +136,6 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
       }
       return status;
     });
-  }
-
-  @override
-  Future<BleDeviceInfoModel> readDeviceInfo(String deviceId) async {
-    final deviceSource = findConnectedDevice(deviceId);
-    final info = deviceSource.info;
-    if (info == null) {
-      throw BleException(
-        'Device info is not supported for ${deviceSource.deviceType.name}',
-        deviceId: deviceId,
-      );
-    }
-
-    try {
-      return await info.readDeviceInfo();
-    } catch (e) {
-      if (e is BleException) rethrow;
-      throw BleException('Failed to read device info: $e', deviceId: deviceId);
-    }
-  }
-
-  @override
-  Stream<BatterySnapshot> watchBattery(String deviceId) {
-    final deviceSource = findConnectedDevice(deviceId);
-    final session = deviceSource.ringSession;
-    if (session == null) {
-      throw BleException(
-        'Battery stream is not supported for ${deviceSource.deviceType.name}',
-        deviceId: deviceId,
-      );
-    }
-    return session.batteryStream;
   }
 
   @override
@@ -203,45 +150,6 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
     } catch (e) {
       if (e is BleException) rethrow;
       throw BleException('Failed to disconnect: $e', deviceId: deviceId);
-    }
-  }
-
-  @override
-  Future<void> startDeviceStream(String deviceId) async {
-    final deviceSource = findConnectedDevice(deviceId);
-    final streaming = deviceSource.streaming;
-    if (streaming == null) {
-      throw BleException(
-        'Device stream is not supported for ${deviceSource.deviceType.name}',
-        deviceId: deviceId,
-      );
-    }
-
-    try {
-      await streaming.startDeviceStream();
-    } catch (e) {
-      if (e is BleException) rethrow;
-      throw BleException(
-        'Failed to start device stream: $e',
-        deviceId: deviceId,
-      );
-    }
-  }
-
-  @override
-  Future<void> stopDeviceStream(String deviceId) async {
-    final deviceSource = findConnectedDevice(deviceId);
-    final streaming = deviceSource.streaming;
-    if (streaming == null) return;
-
-    try {
-      await streaming.stopDeviceStream();
-    } catch (e) {
-      if (e is BleException) rethrow;
-      throw BleException(
-        'Failed to stop device stream: $e',
-        deviceId: deviceId,
-      );
     }
   }
 

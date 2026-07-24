@@ -8,10 +8,7 @@ import '../../ble_device_runtime.dart';
 
 /// Snapshot pin từ BATTERY_UUID: byte[0]=%, byte[1]=0x2B nếu đang sạc.
 final class BatterySnapshot extends Equatable {
-  const BatterySnapshot({
-    required this.percent,
-    required this.isCharging,
-  });
+  const BatterySnapshot({required this.percent, required this.isCharging});
 
   final int percent;
   final bool isCharging;
@@ -29,10 +26,8 @@ final class BatterySnapshot extends Equatable {
     );
   }
 
-  BleBatterySnapshot toEntity() => BleBatterySnapshot(
-    percent: percent,
-    isCharging: isCharging,
-  );
+  BleBatterySnapshot toEntity() =>
+      BleBatterySnapshot(percent: percent, isCharging: isCharging);
 
   @override
   List<Object?> get props => [percent, isCharging];
@@ -99,7 +94,7 @@ final class RingBatteryMonitor implements BleRingBatteryMonitor {
       _logger.warning(
         'start',
         'Battery monitoring unavailable '
-        '(requires BLUETOOTH_PRIVILEGED on some devices): $e',
+            '(requires BLUETOOTH_PRIVILEGED on some devices): $e',
       );
       await _subscription?.cancel();
       _subscription = null;

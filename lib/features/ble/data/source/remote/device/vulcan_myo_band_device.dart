@@ -1,3 +1,4 @@
+import '../../isolate/decode/decode_worker.dart';
 import '../base_ble_device_remote_data_source.dart';
 import '../ble_device_runtime.dart';
 import 'ring/myo_band_signal_stream.dart';
@@ -5,10 +6,12 @@ import 'ring/ring_device_session.dart';
 
 /// MyoBand family facade: compose [RingDeviceSession] + [MyoBandSignalStream].
 final class VulcanMyoBandDevice extends BaseBleDeviceRemoteDataSource {
-  VulcanMyoBandDevice({required BleDeviceRuntime runtime})
-    : _session = RingDeviceSession(runtime),
-      _signal = MyoBandSignalStream(runtime),
-      super(runtime);
+  VulcanMyoBandDevice({
+    required BleDeviceRuntime runtime,
+    required StreamDecodeWorker decodeWorker,
+  }) : _session = RingDeviceSession(runtime),
+       _signal = MyoBandSignalStream(runtime, decodeWorker: decodeWorker),
+       super(runtime);
 
   final RingDeviceSession _session;
   final MyoBandSignalStream _signal;
