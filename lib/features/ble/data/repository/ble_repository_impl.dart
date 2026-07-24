@@ -17,7 +17,7 @@ import '../source/remote/abstract/capabilities/ble_device_decoded_streaming.dart
 import '../source/remote/abstract/capabilities/ble_device_info_source.dart';
 import '../source/remote/abstract/capabilities/ble_device_streaming.dart';
 import '../source/remote/abstract/ble_device_remote_data_source.dart';
-import '../source/remote/device/ring/ring_device_session.dart';
+import '../source/remote/device/ring/sessions/ring_device_session.dart';
 
 /// Biên giới domain ↔ data: map Model → Entity, Exception → [Failure].
 ///

@@ -2,10 +2,10 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../../../../gatt/ring/reader/ring_reader.dart';
-import '../../../../model/ble_device_info_model.dart';
-import '../../abstract/capabilities/ble_device_info_source.dart';
-import '../../ble_device_runtime.dart';
+import '../../../../../gatt/ring/reader/ring_reader.dart';
+import '../../../../../model/ble_device_info_model.dart';
+import '../../../abstract/capabilities/ble_device_info_source.dart';
+import '../../../ble_device_runtime.dart';
 import 'ring_battery_monitor.dart';
 
 export 'ring_battery_monitor.dart' show BatterySnapshot;

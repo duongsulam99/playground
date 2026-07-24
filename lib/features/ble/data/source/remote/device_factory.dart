@@ -5,7 +5,7 @@ import '../isolate/decode/decode_worker.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'ble_device_runtime.dart';
 import 'device_impl.dart';
-import 'device/vulcan_myo_band_device.dart';
+import 'device/ring_device.dart';
 
 /// Tạo [BleDeviceRemoteDataSource] phù hợp theo [VulcanDeviceType].
 class BleDeviceDataSourceFactory {
@@ -23,7 +23,7 @@ class BleDeviceDataSourceFactory {
       // TODO:[Add New Device] Step 4: map deviceType mới sang implementation cụ thể
       default:
         if (deviceType.isMyoBandFamily) {
-          return VulcanMyoBandDevice(
+          return RingDevice(
             runtime: runtime,
             decodeWorker: _decodeWorker,
           );
