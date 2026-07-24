@@ -12,6 +12,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 
 import '../../../domain/entities/ble_discovered_device.dart';
 import '../../../domain/entities/ble_active_connection.dart';
+import '../../../domain/entities/ble_battery_snapshot.dart';
 import '../../../domain/entities/ble_device_info.dart';
 import '../../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../../domain/entities/ble_scan_snapshot.dart';
@@ -23,6 +24,7 @@ import '../../../domain/usecase/start_scan.dart';
 import '../../../domain/usecase/stop_device_stream.dart';
 import '../../../domain/usecase/stop_scan.dart';
 import '../../../domain/usecase/watch_adapter_status.dart';
+import '../../../domain/usecase/watch_battery.dart';
 import '../../../domain/usecase/watch_device_connection.dart';
 import '../../../domain/usecase/watch_device_data.dart';
 import '../../../domain/usecase/watch_scan_results.dart';
@@ -37,6 +39,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required this._watchScanResults,
     required this._watchDeviceData,
     required this._watchDeviceConnection,
+    required this._watchBattery,
     required this._startScan,
     required this._stopScan,
     required this._connectDevice,
@@ -57,6 +60,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     on<BleStartDeviceStream>(_onStartDeviceStream);
     on<BleStopDeviceStream>(_onStopDeviceStream);
     on<BleListenDeviceData>(_onListenDeviceData, transformer: restartable());
+    on<BleBatteryUpdated>(_onBatteryUpdated);
 
     _subscribeAdapterStream();
   }
@@ -65,6 +69,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   final WatchScanResults _watchScanResults;
   final WatchDeviceData _watchDeviceData;
   final WatchDeviceConnection _watchDeviceConnection;
+  final WatchBattery _watchBattery;
   final StartScan _startScan;
   final StopScan _stopScan;
   final ConnectDevice _connectDevice;
@@ -77,11 +82,12 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   StreamSubscription<dynamic>? _scanResultsSubscription;
   final Map<String, StreamSubscription<dynamic>>
   _deviceConnectionSubscriptions = {};
+  final Map<String, StreamSubscription<dynamic>> _batterySubscriptions = {};
 
   // static const _logger = Logger(className: 'BleBloc');
 
   void _subscribeAdapterStream() {
-    if (_adapterSubscription != null) return;
+    if (_adapterSubscription == null) return;
 
     _adapterSubscription = _watchAdapterStatus(const NoParams()).listen((
       result,
@@ -291,6 +297,8 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     _subscribeDeviceConnectionStream(deviceId);
 
     if (!_isMyoBandDevice(deviceId)) return;
+
+    _subscribeBatteryStream(deviceId);
 
     emit(
       state.copyWith(
@@ -591,8 +599,48 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     });
   }
 
+  void _subscribeBatteryStream(String deviceId) {
+    if (_batterySubscriptions.containsKey(deviceId)) return;
+
+    final stream = _watchBattery(WatchBatteryParams(deviceId: deviceId));
+
+    _batterySubscriptions[deviceId] = stream.listen((result) {
+      if (isClosed) return;
+      result.fold(
+        (failure) => add(BleEvent.streamFailed(message: failure.message)),
+        (battery) =>
+            add(BleEvent.batteryUpdated(deviceId: deviceId, battery: battery)),
+      );
+    });
+  }
+
+  Future<void> _onBatteryUpdated(
+    BleBatteryUpdated event,
+    Emitter<BleState> emit,
+  ) async {
+    final existing = state.activeConnectionFor(event.deviceId);
+    if (existing == null || !existing.status.isConnected) return;
+
+    emit(
+      state.copyWith(
+        activeConnections: _upsertConnection(
+          state.activeConnections,
+          deviceId: event.deviceId,
+          status: existing.status,
+          errorMessage: existing.errorMessage,
+          isReadingInfo: existing.isReadingInfo,
+          battery: event.battery,
+        ),
+      ),
+    );
+  }
+
   Future<void> _unsubscribeDeviceConnectionStream(String deviceId) async {
     await _deviceConnectionSubscriptions.remove(deviceId)?.cancel();
+  }
+
+  Future<void> _unsubscribeBatteryStream(String deviceId) async {
+    await _batterySubscriptions.remove(deviceId)?.cancel();
   }
 
   Future<void> _unsubscribeAllDeviceConnectionStreams() async {
@@ -603,8 +651,17 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     }
   }
 
+  Future<void> _unsubscribeAllBatteryStreams() async {
+    final subscriptions = _batterySubscriptions.values.toList();
+    _batterySubscriptions.clear();
+    for (final subscription in subscriptions) {
+      await subscription.cancel();
+    }
+  }
+
   Future<void> _clearDeviceSubscriptions(String deviceId) async {
     await _unsubscribeDeviceConnectionStream(deviceId);
+    await _unsubscribeBatteryStream(deviceId);
   }
 
   void _emitDeviceDisconnected(Emitter<BleState> emit, String deviceId) {
@@ -629,8 +686,10 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     required BleConnectionStatus status,
     String? errorMessage,
     BleDeviceInfo? deviceInfo,
+    BleBatterySnapshot? battery,
     bool isReadingInfo = false,
     bool clearDeviceInfo = false,
+    bool clearBattery = false,
   }) {
     final existing = current[deviceId];
 
@@ -646,6 +705,9 @@ class BleBloc extends Bloc<BleEvent, BleState> {
           existingInfo: existing?.deviceInfo,
           newInfo: deviceInfo,
         ),
+        battery: clearBattery || clearDeviceInfo
+            ? null
+            : (battery ?? existing?.battery),
       ),
     };
   }
@@ -687,6 +749,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
     await _adapterSubscription?.cancel();
     await _unsubscribeScanResultsStream();
     await _unsubscribeAllDeviceConnectionStreams();
+    await _unsubscribeAllBatteryStreams();
     if (state.isScanning) {
       await _stopScan(const NoParams());
     }

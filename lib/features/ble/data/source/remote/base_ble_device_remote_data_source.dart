@@ -4,12 +4,12 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import 'abstract/ble_device_capabilities.dart';
 import 'ble_device_runtime.dart';
+import 'device/ring/index.dart';
 
 /// Base cho mọi [BleDeviceRemoteDataSource]: delegate mandatory capabilities
 /// xuống [BleDeviceRuntime]. Subclass chỉ override optional capabilities
-/// (streaming, info) và hook lifecycle.
-abstract base class BaseBleDeviceRemoteDataSource
-    implements BleDeviceRemoteDataSource {
+/// (streaming, info, ringSession) và hook lifecycle.
+abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteDataSource {
   BaseBleDeviceRemoteDataSource(this.runtime);
 
   @protected
@@ -22,6 +22,9 @@ abstract base class BaseBleDeviceRemoteDataSource
   BleDeviceInfoSource? get info => null;
 
   @override
+  BleRingDeviceSession? get ringSession => null;
+
+  @override
   String get deviceId => runtime.deviceId;
 
   @override
@@ -32,13 +35,21 @@ abstract base class BaseBleDeviceRemoteDataSource
       runtime.watchConnectionStatus();
 
   @override
-  Future<BleConnectionStatus> connect() => runtime.connect();
+  Future<BleConnectionStatus> connect() async {
+    final status = await runtime.connect();
+    await onAfterConnect();
+    return status;
+  }
 
   @override
   Future<void> disconnect() async {
     await onBeforeDisconnect();
     await runtime.disconnect();
   }
+
+  /// Hook sau GATT ready — subclass bật passive monitors (battery, …).
+  @protected
+  Future<void> onAfterConnect() async {}
 
   /// Hook cho subclass dọn tài nguyên trước khi ngắt kết nối.
   @protected

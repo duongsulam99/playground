@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
+import '../entities/ble_battery_snapshot.dart';
 import '../entities/ble_device_info.dart';
 import '../entities/ble_device_stream_snapshot.dart';
 import '../entities/ble_scan_snapshot.dart';
@@ -16,6 +17,8 @@ abstract class BleRepository {
   Stream<Either<Failure, BleDeviceStreamSnapshot>> watchDeviceData(
     String deviceId,
   );
+
+  Stream<Either<Failure, BleBatterySnapshot>> watchBattery(String deviceId);
 
   Stream<Either<Failure, BleConnectionStatus>> watchConnectionStatus(
     String deviceId,

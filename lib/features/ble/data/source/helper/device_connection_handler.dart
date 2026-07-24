@@ -8,23 +8,60 @@ import 'package:flutter_supper_app_core/core.dart';
 import 'package_accumulator.dart';
 import 'stream_monitor.dart';
 
-/// Quản lý GATT I/O cho một thiết bị đã connect: MTU, notify stream, write chunk.
+/// Một notify channel gắn với một characteristic (broadcast stream + subscription).
+class _NotifyChannel {
+  _NotifyChannel({
+    required this.channelId,
+    required this.reassembleFrames,
+  }) : controller = StreamController<List<int>>.broadcast(),
+       accumulator = reassembleFrames ? BlePacketAccumulator() : null;
+
+  final String channelId;
+  final bool reassembleFrames;
+  final StreamController<List<int>> controller;
+  final BlePacketAccumulator? accumulator;
+  StreamSubscription<List<int>>? subscription;
+
+  bool get isOpen => !controller.isClosed;
+
+  void addChunk(List<int> rawChunk) {
+    if (!isOpen) return;
+
+    if (!reassembleFrames) {
+      controller.add(List<int>.from(rawChunk));
+      return;
+    }
+
+    accumulator!.appendChunk(rawChunk, (List<int> frame) {
+      if (isOpen) controller.add(List<int>.from(frame));
+    });
+  }
+
+  Future<void> dispose() async {
+    await subscription?.cancel();
+    subscription = null;
+    accumulator?.clear();
+    if (!controller.isClosed) {
+      await controller.close();
+    }
+  }
+}
+
+/// Quản lý GATT I/O cho một thiết bị đã connect: MTU, multi-notify, write chunk.
 ///
 /// Một instance gắn với một [BluetoothDevice]; lifecycle theo connect/dispose.
+/// Mỗi [channelId] (thường là characteristic key) có stream notify riêng.
 class DeviceConnectionHandler {
   DeviceConnectionHandler({required BluetoothDevice device})
     : _bleDevice = device;
 
   final BluetoothDevice _bleDevice;
-  final BlePacketAccumulator _accumulator = BlePacketAccumulator();
+  final Map<String, _NotifyChannel> _channels = {};
 
   static const int DEFAULT_MTU = 23;
   static const int MAX_MTU = 515;
 
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
-  StreamSubscription<List<int>>? _notificationSubscription;
-
-  StreamController<List<int>>? _cleanDataStreamController;
 
   final Logger _logger = const Logger(className: 'DeviceConnectionHandler');
   final _streamMonitor = EMGStreamMonitor();
@@ -35,12 +72,6 @@ class DeviceConnectionHandler {
   bool _isDisposed = false;
 
   int get currentMtu => _currentMtu;
-
-  /// Byte stream sau khi lắng nghe notify (có thể đã gộp frame).
-  Stream<List<int>> get cleanDataStream {
-    _ensureStreamController();
-    return _cleanDataStreamController!.stream;
-  }
 
   Future<void> setupMtu() async {
     _ensureNotDisposed();
@@ -68,57 +99,78 @@ class DeviceConnectionHandler {
     _connectionSubscription = _bleDevice.connectionState.listen((state) {
       // Tự dọn resource khi mất kết nối ngoài ý muốn.
       if (state == BluetoothConnectionState.disconnected) dispose();
-
-      //TODO: Handle connection state
     });
   }
 
-  bool _cleanAndEnsureController(StreamController<List<int>>? controller) {
-    if (controller == null) return false;
-    if (controller.isClosed) return false;
-    return true;
+  /// Trả broadcast stream cho [channelId]. Gọi [subscribeNotify] trước để bật notify.
+  Stream<List<int>> watchNotify(String channelId) {
+    _ensureNotDisposed();
+    final channel = _channels[channelId];
+    if (channel == null || !channel.isOpen) {
+      throw StateError(
+        'Notify channel "$channelId" is not enabled. Call subscribeNotify first.',
+      );
+    }
+    return channel.controller.stream;
   }
 
-  Future<void> startListeningData(
+  /// Bật notify trên [characteristic] và map vào [channelId].
+  ///
+  /// Nếu channel đã tồn tại thì hủy subscription cũ rồi subscribe lại.
+  Future<Stream<List<int>>> subscribeNotify(
     BluetoothCharacteristic characteristic, {
-    bool reassembleFrames = true,
+    required String channelId,
+    bool reassembleFrames = false,
   }) async {
     _ensureNotDisposed();
-    _ensureStreamController();
 
-    await _notificationSubscription?.cancel();
-    _accumulator.clear();
+    await unsubscribeNotify(channelId);
+
+    final channel = _NotifyChannel(
+      channelId: channelId,
+      reassembleFrames: reassembleFrames,
+    );
+    _channels[channelId] = channel;
 
     await _enqueueOperation(() => characteristic.setNotifyValue(true));
 
-    _streamMonitor.start(cleanDataStream.map((_) => 0.0));
+    // Stream monitor chỉ theo dõi signal-like channels (reassembleFrames).
+    if (reassembleFrames) {
+      _streamMonitor.start(channel.controller.stream.map((_) => 0.0));
+    }
 
-    _notificationSubscription = characteristic.onValueReceived.listen(
-      (rawChunk) {
-        if (!_cleanAndEnsureController(_cleanDataStreamController)) return;
-
-        if (!reassembleFrames) {
-          _cleanDataStreamController!.add(List<int>.from(rawChunk));
-          return;
-        }
-
-        _accumulator.appendChunk(rawChunk, (List<int> frame) {
-          _cleanDataStreamController!.add(List<int>.from(frame));
-        });
+    channel.subscription = characteristic.onValueReceived.listen(
+      channel.addChunk,
+      onError: (Object error, StackTrace stackTrace) {
+        _logger.error(
+          'subscribeNotify',
+          'Notify error on $channelId: $error',
+        );
+        if (reassembleFrames) _streamMonitor.stop();
       },
-      onError: _onErrorListeningData,
-      onDone: _onDoneListeningData,
+      onDone: () {
+        _logger.debug('subscribeNotify', 'Notify done on $channelId');
+        if (reassembleFrames) _streamMonitor.stop();
+      },
     );
+
+    _logger.debug(
+      'subscribeNotify',
+      'Listening on $channelId for ${_bleDevice.remoteId.str}',
+    );
+
+    return channel.controller.stream;
   }
 
-  void _onErrorListeningData(Object error, StackTrace stackTrace) {
-    _streamMonitor.stop();
-    _logger.error('startListeningData', 'Notify stream error: $error');
-  }
+  /// Tắt notify và đóng channel [channelId].
+  Future<void> unsubscribeNotify(String channelId) async {
+    final channel = _channels.remove(channelId);
+    if (channel == null) return;
 
-  void _onDoneListeningData() {
-    _streamMonitor.stop();
-    _logger.debug('startListeningData', 'Notify stream done.');
+    if (channel.reassembleFrames) {
+      _streamMonitor.stop();
+    }
+    await channel.dispose();
   }
 
   /// Chia payload theo MTU hiện tại (payload = MTU - 3 byte ATT header).
@@ -149,21 +201,14 @@ class DeviceConnectionHandler {
 
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
-    _notificationSubscription?.cancel();
-    _notificationSubscription = null;
-    _accumulator.clear();
     _streamMonitor.stop();
-    _cleanDataStreamController?.close();
-    _cleanDataStreamController = null;
+
+    for (final channel in _channels.values) {
+      unawaited(channel.dispose());
+    }
+    _channels.clear();
 
     _logger.debug('dispose', 'Resources cleaned up for device');
-  }
-
-  void _ensureStreamController() {
-    if (_cleanDataStreamController == null ||
-        _cleanDataStreamController!.isClosed) {
-      _cleanDataStreamController = StreamController<List<int>>.broadcast();
-    }
   }
 
   void _ensureNotDisposed() {

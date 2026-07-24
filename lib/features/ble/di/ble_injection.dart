@@ -16,6 +16,7 @@ import '../domain/usecase/start_scan.dart';
 import '../domain/usecase/stop_device_stream.dart';
 import '../domain/usecase/stop_scan.dart';
 import '../domain/usecase/watch_adapter_status.dart';
+import '../domain/usecase/watch_battery.dart';
 import '../domain/usecase/watch_device_connection.dart';
 import '../domain/usecase/watch_device_data.dart';
 import '../domain/usecase/watch_scan_results.dart';
@@ -57,6 +58,7 @@ Future<void> initBleInjection(GetIt sl) async {
   sl.registerFactory(() => WatchScanResults(repository: sl()));
   sl.registerFactory(() => WatchDeviceData(repository: sl()));
   sl.registerFactory(() => WatchDeviceConnection(repository: sl()));
+  sl.registerFactory(() => WatchBattery(repository: sl()));
   sl.registerFactory(() => StartScan(repository: sl()));
   sl.registerFactory(() => StopScan(repository: sl()));
   sl.registerFactory(() => ConnectDevice(repository: sl()));
@@ -71,6 +73,7 @@ Future<void> initBleInjection(GetIt sl) async {
       watchScanResults: sl(),
       watchDeviceData: sl(),
       watchDeviceConnection: sl(),
+      watchBattery: sl(),
       startScan: sl(),
       stopScan: sl(),
       connectDevice: sl(),

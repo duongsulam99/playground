@@ -8,7 +8,6 @@ class BleDeviceInfo extends Equatable {
     required this.firmwareVersion,
     required this.hardwareId,
     required this.resolvedType,
-    required this.batteryPercent,
     this.thresholdConfig,
   });
 
@@ -16,7 +15,6 @@ class BleDeviceInfo extends Equatable {
   final String firmwareVersion;
   final String hardwareId;
   final VulcanDeviceType resolvedType;
-  final int batteryPercent;
   final RingThresholdConfig? thresholdConfig;
 
   @override
@@ -25,7 +23,6 @@ class BleDeviceInfo extends Equatable {
     firmwareVersion,
     hardwareId,
     resolvedType,
-    batteryPercent,
     thresholdConfig,
   ];
 }

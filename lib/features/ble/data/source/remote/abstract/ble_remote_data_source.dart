@@ -5,6 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import '../../../model/ble_device_info_model.dart';
 import '../../../model/ble_device_stream_snapshot_model.dart';
 import '../../../model/ble_discovered_device_model.dart';
+import '../device/ring/ring_battery_monitor.dart';
 import 'ble_device_remote_data_source.dart';
 
 /// Contract cho toàn bộ thao tác BLE ở data layer.
@@ -32,6 +33,9 @@ abstract class BleRemoteDataSource {
 
   // --- Device info & stream ---
   Future<BleDeviceInfoModel> readDeviceInfo(String deviceId);
+
+  /// Throw nếu thiết bị không hỗ trợ battery session.
+  Stream<BatterySnapshot> watchBattery(String deviceId);
 
   /// Throw nếu thiết bị không hỗ trợ notify stream.
   Stream<BleDeviceStreamSnapshotModel> watchDeviceData(String deviceId);

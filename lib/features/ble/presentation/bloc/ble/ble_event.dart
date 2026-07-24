@@ -33,6 +33,11 @@ sealed class BleEvent with _$BleEvent {
   const factory BleEvent.listenDeviceData({required String deviceId}) =
       BleListenDeviceData;
 
+  const factory BleEvent.batteryUpdated({
+    required String deviceId,
+    required BleBatterySnapshot battery,
+  }) = BleBatteryUpdated;
+
   const factory BleEvent.connectionLost({required String deviceId}) =
       BleConnectionLost;
 

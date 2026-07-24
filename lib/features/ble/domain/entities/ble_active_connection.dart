@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
+import 'ble_battery_snapshot.dart';
 import 'ble_device_info.dart';
 
 class BleActiveConnection extends Equatable {
@@ -9,6 +10,7 @@ class BleActiveConnection extends Equatable {
     required this.status,
     this.errorMessage,
     this.deviceInfo,
+    this.battery,
     this.isReadingInfo = false,
   });
 
@@ -16,6 +18,7 @@ class BleActiveConnection extends Equatable {
   final BleConnectionStatus status;
   final String? errorMessage;
   final BleDeviceInfo? deviceInfo;
+  final BleBatterySnapshot? battery;
   final bool isReadingInfo;
 
   bool get isActive =>
@@ -31,6 +34,7 @@ class BleActiveConnection extends Equatable {
     status,
     errorMessage,
     deviceInfo,
+    battery,
     isReadingInfo,
   ];
 }

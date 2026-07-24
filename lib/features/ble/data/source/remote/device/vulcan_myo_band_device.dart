@@ -1,64 +1,37 @@
-import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
-
-import '../../../gatt/ring/reader/ring_reader.dart';
-import '../../../model/ble_device_info_model.dart';
-import '../abstract/ble_device_capabilities.dart';
 import '../base_ble_device_remote_data_source.dart';
 import '../ble_device_runtime.dart';
-import 'myo_band_signal_stream.dart';
+import 'ring/myo_band_signal_stream.dart';
+import 'ring/ring_device_session.dart';
 
-/// MyoBand family: đọc metadata qua GATT, stream EMG qua characteristic signal.
-final class VulcanMyoBandDevice extends BaseBleDeviceRemoteDataSource
-    implements BleDeviceStreaming, BleDeviceInfoSource {
-  VulcanMyoBandDevice({
-    required BleDeviceRuntime runtime,
-    MyoBandSignalStream? signalStream,
-  }) : _signalStream = signalStream ?? MyoBandSignalStream(runtime),
-       super(runtime);
+/// MyoBand family facade: compose [RingDeviceSession] + [MyoBandSignalStream].
+final class VulcanMyoBandDevice extends BaseBleDeviceRemoteDataSource {
+  VulcanMyoBandDevice({required BleDeviceRuntime runtime})
+    : _session = RingDeviceSession(runtime),
+      _signal = MyoBandSignalStream(runtime),
+      super(runtime);
 
-  final MyoBandSignalStream _signalStream;
-
-  @override
-  BleDeviceStreaming? get streaming => this;
+  final RingDeviceSession _session;
+  final MyoBandSignalStream _signal;
 
   @override
-  BleDeviceInfoSource? get info => this;
+  MyoBandSignalStream? get streaming => _signal;
 
   @override
-  Stream<List<int>> get notifyDataStream => _signalStream.rawStream;
+  BleRingDeviceSession? get ringSession => _session;
 
   @override
-  Future<void> startDeviceStream() => _signalStream.start();
+  BleRingDeviceSession? get info => _session;
 
   @override
-  Future<void> stopDeviceStream() => _signalStream.stop();
+  Future<void> onAfterConnect() => _session.startMonitoring();
 
   @override
-  Future<BleDeviceInfoModel> readDeviceInfo() async {
-    _ensureIsMyoBandFamily();
-    runtime.ensureGattReady();
-
+  Future<void> onBeforeDisconnect() async {
     try {
-      return await GattRingReader.readInfo(
-        gatt: runtime,
-        scannedType: deviceType,
-      );
-    } catch (e) {
-      if (e is BleException) rethrow;
-      throw BleException('Failed to read device info: $e', deviceId: deviceId);
+      await _signal.stop();
+    } catch (_) {
+      // Best-effort: device may already be disconnected.
     }
-  }
-
-  @override
-  Future<void> onBeforeDisconnect() => stopDeviceStream();
-
-  void _ensureIsMyoBandFamily() {
-    if (!deviceType.isMyoBandFamily) {
-      throw BleException(
-        'Device type ${deviceType.name} is not a MyoBand family device',
-        deviceId: deviceId,
-      );
-    }
+    await _session.dispose();
   }
 }

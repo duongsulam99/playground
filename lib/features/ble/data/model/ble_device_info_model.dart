@@ -3,14 +3,14 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 
 import '../../domain/entities/ble_device_info.dart';
 
-/// DTO metadata thiết bị đọc từ GATT (name, firmware, hardware, pin, …).
+/// DTO metadata thiết bị đọc từ GATT (name, firmware, hardware, …).
+/// Battery lấy qua battery stream realtime, không nằm trong info one-shot.
 class BleDeviceInfoModel {
   const BleDeviceInfoModel({
     required this.name,
     required this.firmwareVersion,
     required this.hardwareId,
     required this.resolvedType,
-    required this.batteryPercent,
     this.thresholdConfig,
   });
 
@@ -21,7 +21,6 @@ class BleDeviceInfoModel {
   /// Loại thiết bị sau khi resolve từ hardware ID (có thể khác loại lúc scan).
   final VulcanDeviceType resolvedType;
 
-  final int batteryPercent;
   final RingThresholdConfig? thresholdConfig;
 
   BleDeviceInfo toEntity() => BleDeviceInfo(
@@ -29,7 +28,6 @@ class BleDeviceInfoModel {
     firmwareVersion: firmwareVersion,
     hardwareId: hardwareId,
     resolvedType: resolvedType,
-    batteryPercent: batteryPercent,
     thresholdConfig: thresholdConfig,
   );
 }

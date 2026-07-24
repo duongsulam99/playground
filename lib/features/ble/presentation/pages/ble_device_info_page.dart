@@ -5,6 +5,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_section.dart';
 import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_args.dart';
@@ -275,6 +276,7 @@ class _DeviceMetadataCard extends StatelessWidget {
 
     return _MetadataBody(
       info: info,
+      battery: connection!.battery,
       fallbackName: displayName,
       deviceId: connection!.deviceId,
       isConnected: connection!.status.isConnected,
@@ -285,15 +287,23 @@ class _DeviceMetadataCard extends StatelessWidget {
 class _MetadataBody extends StatelessWidget {
   const _MetadataBody({
     required this.info,
+    required this.battery,
     required this.fallbackName,
     required this.deviceId,
     required this.isConnected,
   });
 
   final BleDeviceInfo info;
+  final BleBatterySnapshot? battery;
   final String fallbackName;
   final String deviceId;
   final bool isConnected;
+
+  String get _batteryLabel {
+    if (battery == null) return 'Battery: —';
+    final charging = battery!.isCharging ? ' ⚡' : '';
+    return 'Battery: ${battery!.percent}%$charging';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -310,16 +320,16 @@ class _MetadataBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ListTile(
+          isThreeLine: true,
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.sensors, color: Colors.deepPurple),
           title: Text(info.name.isEmpty ? fallbackName : info.name),
           subtitle: Text(
             'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
-            ' · Battery: ${info.batteryPercent}%\n'
+            ' · $_batteryLabel\n'
             'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
             ' · Type: $typeLabel',
           ),
-          isThreeLine: true,
         ),
         if (info.thresholdConfig != null) ...[
           const SizedBox(height: 8),

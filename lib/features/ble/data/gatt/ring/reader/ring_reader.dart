@@ -9,6 +9,8 @@ import '../../../model/ble_device_info_model.dart';
 import '../../../source/remote/abstract/capabilities/ble_device_gatt_access.dart';
 
 /// Đọc metadata MyoBand/Ring qua GATT — logic đặc thù thiết bị, tách khỏi device source.
+///
+/// Battery không đọc ở đây — dùng [RingBatteryMonitor] / battery stream realtime.
 class GattRingReader {
   static const logger = Logger(className: 'GattRingReader');
 
@@ -19,12 +21,10 @@ class GattRingReader {
     final nameBytes = await gatt.readCharacteristic(BleRingKey.nameChar);
     final versionBytes = await gatt.readCharacteristic(BleRingKey.ota);
     final hardwareBytes = await gatt.readCharacteristic(BleRingKey.hardwareChar);
-    final batteryBytes = await gatt.readCharacteristic(BleRingKey.battery);
 
     final name = BleValueDecoders.decodeUtf8(nameBytes);
     final firmwareVersion = BleValueDecoders.decodeUtf8(versionBytes);
     final hardwareId = BleValueDecoders.decodeHardwareId(hardwareBytes);
-    final batteryPercent = BleValueDecoders.decodeBatteryPercent(batteryBytes);
     final resolvedType = VulcanDeviceType.fromHardwareId(hardwareId);
 
     final effectiveType = resolvedType == VulcanDeviceType.none
@@ -38,7 +38,6 @@ class GattRingReader {
       firmwareVersion: firmwareVersion,
       hardwareId: hardwareId,
       resolvedType: effectiveType,
-      batteryPercent: batteryPercent,
       thresholdConfig: threshold,
     );
   }

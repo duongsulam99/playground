@@ -3,10 +3,13 @@ import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
-import '../ble_device_runtime.dart';
+import '../../abstract/capabilities/ble_device_streaming.dart';
+import '../../ble_device_runtime.dart';
 
-/// Điều khiển stream tín hiệu EMG trên MyoBand family.
-class MyoBandSignalStream {
+/// Active EMG stream trên MyoBand family (SIGNAL_UUID).
+///
+/// Implements [BleDeviceStreaming] trực tiếp — facade chỉ expose getter.
+final class MyoBandSignalStream implements BleDeviceStreaming {
   MyoBandSignalStream(this._runtime);
 
   final BleDeviceRuntime _runtime;
@@ -16,13 +19,31 @@ class MyoBandSignalStream {
 
   final _logger = const Logger(className: 'MyoBandSignalStream');
   bool _isStreaming = false;
+  Stream<List<int>>? _notifyStream;
 
   bool get isStreaming => _isStreaming;
 
-  Stream<List<int>> get rawStream => _runtime.watchNotifyData();
+  @override
+  Stream<List<int>> get notifyDataStream {
+    final stream = _notifyStream;
+    if (stream == null) {
+      throw BleException(
+        'Signal notify is not enabled. Call startDeviceStream first.',
+        deviceId: _runtime.deviceId,
+      );
+    }
+    return stream;
+  }
+
+  @override
+  Future<void> startDeviceStream() => start();
+
+  @override
+  Future<void> stopDeviceStream() => stop();
 
   Future<void> start() async {
     _isStreaming = false;
+    _notifyStream = null;
     _runtime.ensureGattReady();
 
     try {
@@ -31,15 +52,13 @@ class MyoBandSignalStream {
         BleValueEncoders.encodeUtf8(_startSignalCommand),
       );
 
-      await _runtime.startListening(
-        BleRingKey.signal,
-        reassembleFrames: false,
-      );
+      _notifyStream = await _runtime.enableNotify(BleRingKey.signal);
 
       _isStreaming = true;
       _logger.debug('start', 'Notify stream ready for ${_runtime.deviceId}');
     } catch (e, st) {
       _isStreaming = false;
+      _notifyStream = null;
       _logger.error('start', 'Failed to setup MyoBand notify stream: $e\n$st');
 
       if (e is BleException) rethrow;
@@ -69,7 +88,16 @@ class MyoBandSignalStream {
         deviceId: _runtime.deviceId,
       );
     } finally {
+      try {
+        await _runtime.disableNotify(BleRingKey.signal);
+      } catch (e) {
+        _logger.warning(
+          'stop',
+          'Failed to disable signal notify for ${_runtime.deviceId}: $e',
+        );
+      }
       _isStreaming = false;
+      _notifyStream = null;
     }
   }
 }

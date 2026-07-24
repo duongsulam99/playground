@@ -15,6 +15,7 @@ import '../isolate/scan/scan_parse_worker.dart';
 import 'device_factory.dart';
 import 'abstract/ble_device_remote_data_source.dart';
 import 'abstract/ble_remote_data_source.dart';
+import 'device/ring/ring_battery_monitor.dart';
 
 /// Orchestrator BLE: scan, connect, và delegate xuống từng [BleDeviceRemoteDataSource].
 ///
@@ -175,6 +176,19 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
       if (e is BleException) rethrow;
       throw BleException('Failed to read device info: $e', deviceId: deviceId);
     }
+  }
+
+  @override
+  Stream<BatterySnapshot> watchBattery(String deviceId) {
+    final deviceSource = findConnectedDevice(deviceId);
+    final session = deviceSource.ringSession;
+    if (session == null) {
+      throw BleException(
+        'Battery stream is not supported for ${deviceSource.deviceType.name}',
+        deviceId: deviceId,
+      );
+    }
+    return session.batteryStream;
   }
 
   @override

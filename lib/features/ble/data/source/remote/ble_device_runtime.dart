@@ -125,23 +125,43 @@ class BleDeviceRuntime
   @override
   int getNegotiatedMtu() => _connectionHandler.currentMtu;
 
-  /// Raw notify stream (chưa decode).
-  Stream<List<int>> watchNotifyData() => _connectionHandler.cleanDataStream;
+  /// Broadcast stream cho [characteristicKey] sau khi [enableNotify] đã gọi.
+  ///
+  /// Pattern: gọi [enableNotify] trước, rồi listen [watchNotify] (hoặc dùng
+  /// stream trả về từ [enableNotify]).
+  Stream<List<int>> watchNotify(String characteristicKey) {
+    ensureGattReady();
+    return _connectionHandler.watchNotify(characteristicKey);
+  }
 
-  /// Bật notify. [reassembleFrames] = false khi mỗi notify là một frame hoàn chỉnh.
-  Future<void> startListening(
+  /// Bật notify trên [characteristicKey]. Trả về broadcast stream của channel.
+  ///
+  /// [reassembleFrames] = false khi mỗi notify là một frame hoàn chỉnh
+  /// (battery, action button, signal MyoBand).
+  Future<Stream<List<int>>> enableNotify(
     String characteristicKey, {
-    bool reassembleFrames = true,
+    bool reassembleFrames = false,
   }) async {
     ensureGattReady();
     final characteristic = _requireCharacteristic(characteristicKey);
-    await _connectionHandler.startListeningData(
+    final stream = await _connectionHandler.subscribeNotify(
       characteristic,
+      channelId: characteristicKey,
       reassembleFrames: reassembleFrames,
     );
     _logger.debug(
-      'startListening',
+      'enableNotify',
       'Listening on $characteristicKey for $deviceId',
+    );
+    return stream;
+  }
+
+  /// Tắt notify và đóng channel [characteristicKey].
+  Future<void> disableNotify(String characteristicKey) async {
+    await _connectionHandler.unsubscribeNotify(characteristicKey);
+    _logger.debug(
+      'disableNotify',
+      'Stopped listening on $characteristicKey for $deviceId',
     );
   }
 

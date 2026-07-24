@@ -119,6 +119,10 @@ class _MyoBandInfoCard extends StatelessWidget {
     }
 
     final typeLabel = info.resolvedType.genName ?? info.resolvedType.name;
+    final battery = connection.battery;
+    final batteryLabel = battery == null
+        ? 'Battery: —'
+        : 'Battery: ${battery.percent}%${battery.isCharging ? ' ⚡' : ''}';
 
     return Card(
       child: ListTile(
@@ -126,7 +130,7 @@ class _MyoBandInfoCard extends StatelessWidget {
         title: Text(info.name.isEmpty ? fallbackName : info.name),
         subtitle: Text(
           'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
-          ' · Battery: ${info.batteryPercent}%\n'
+          ' · $batteryLabel\n'
           'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
           ' · Type: $typeLabel',
         ),

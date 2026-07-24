@@ -7,6 +7,7 @@ import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
+import '../../domain/entities/ble_battery_snapshot.dart';
 import '../../domain/entities/ble_device_info.dart';
 import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/entities/ble_scan_snapshot.dart';
@@ -43,6 +44,16 @@ class BleRepositoryImpl implements BleRepository {
   ) {
     try {
       final stream = _remoteDataSource.watchDeviceData(deviceId);
+      return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, BleBatterySnapshot>> watchBattery(String deviceId) {
+    try {
+      final stream = _remoteDataSource.watchBattery(deviceId);
       return _mapStreamToEither(stream.map((snapshot) => snapshot.toEntity()));
     } catch (error) {
       return Stream.value(Left(_mapException(error)));
