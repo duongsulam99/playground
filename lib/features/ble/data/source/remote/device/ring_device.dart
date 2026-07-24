@@ -1,11 +1,11 @@
 import '../../isolate/decode/decode_worker.dart';
-import '../base_ble_device_remote_data_source.dart';
+import '../base_device_remote_datasrc.dart';
 import '../ble_device_runtime.dart';
 import 'ring/signal_stream/myo_band_signal_stream.dart';
 import 'ring/sessions/ring_device_session.dart';
 
 /// MyoBand family facade: compose [RingDeviceSession] + [MyoBandSignalStream].
-final class RingDevice extends BaseBleDeviceRemoteDataSource {
+final class RingDevice extends BaseDeviceRemoteDS {
   RingDevice({
     required BleDeviceRuntime runtime,
     required StreamDecodeWorker decodeWorker,
