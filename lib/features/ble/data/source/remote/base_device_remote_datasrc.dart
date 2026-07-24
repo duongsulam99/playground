@@ -10,7 +10,7 @@ import 'device/ring/index.dart';
 /// Base cho mọi [BleDeviceRemoteDataSource]: delegate mandatory capabilities
 /// xuống [BleDeviceRuntime]. Subclass chỉ override optional capabilities
 /// (streaming, info, ringSession) và hook lifecycle.
-abstract base class BaseDeviceRemoteDS implements DeviceRemoteDS {
+base class BaseDeviceRemoteDS implements DeviceRemoteDS {
   BaseDeviceRemoteDS(this.runtime);
 
   @protected

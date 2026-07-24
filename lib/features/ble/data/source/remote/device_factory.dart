@@ -3,8 +3,8 @@ import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../isolate/decode/decode_worker.dart';
 import 'abstract/device_remote_datasrc.dart';
+import 'base_device_remote_datasrc.dart';
 import 'device_runtime.dart';
-import 'base_device_remote_datasrc_impl.dart';
 import 'device/ring_device.dart';
 
 /// Tạo [BleDeviceRemoteDataSource] phù hợp theo [VulcanDeviceType].
@@ -26,7 +26,7 @@ class BleDeviceDataSourceFactory {
           return RingDevice(runtime: runtime, decodeWorker: _decodeWorker);
         }
 
-        return BaseDeviceRemoteDSImpl(runtime: runtime);
+        return BaseDeviceRemoteDS(runtime);
     }
   }
 }
