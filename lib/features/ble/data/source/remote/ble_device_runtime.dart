@@ -7,18 +7,14 @@ import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../helper/device_connection_handler.dart';
-import 'abstract/capabilities/ble_device_connection.dart';
-import 'abstract/capabilities/ble_device_firmware_transport.dart';
-import 'abstract/capabilities/ble_device_gatt_access.dart';
+import 'abstract/capabilities/connection.dart';
+import 'abstract/capabilities/firmware_transport.dart';
+import 'abstract/capabilities/gatt_access.dart';
 
 /// Runtime nội bộ: connect, GATT discovery, notify/write, OTA cho một thiết bị.
 ///
 /// Không expose ra public contract — device implementations compose qua class này.
-class BleDeviceRuntime
-    implements
-        BleDeviceConnection,
-        BleDeviceGattAccess,
-        BleDeviceFirmwareTransport {
+class BleDeviceRuntime implements Connection, GattAccess, FirmwareTransport {
   BleDeviceRuntime({required BluetoothDevice device, required this._deviceType})
     : _device = device,
       _connectionHandler = DeviceConnectionHandler(device: device);

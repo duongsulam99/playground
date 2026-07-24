@@ -13,9 +13,9 @@ import '../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../domain/entities/ble_scan_snapshot.dart';
 import '../../domain/repository/ble_repository.dart';
 import '../source/remote/abstract/ble_remote_data_source.dart';
-import '../source/remote/abstract/capabilities/ble_device_decoded_streaming.dart';
-import '../source/remote/abstract/capabilities/ble_device_info_source.dart';
-import '../source/remote/abstract/capabilities/ble_device_streaming.dart';
+import '../source/remote/abstract/capabilities/decoded_streaming.dart';
+import '../source/remote/abstract/capabilities/info_source.dart';
+import '../source/remote/abstract/capabilities/data_streaming.dart';
 import '../source/remote/abstract/ble_device_remote_data_source.dart';
 import '../source/remote/device/ring/sessions/ring_device_session.dart';
 
@@ -134,7 +134,10 @@ class BleRepositoryImpl implements BleRepository {
         return Right(model.toEntity());
       } catch (e) {
         if (e is BleException) rethrow;
-        throw BleException('Failed to read device info: $e', deviceId: deviceId);
+        throw BleException(
+          'Failed to read device info: $e',
+          deviceId: deviceId,
+        );
       }
     } catch (error) {
       return Left(_mapException(error));
@@ -186,7 +189,7 @@ class BleRepositoryImpl implements BleRepository {
     return _remoteDataSource.findConnectedDevice(deviceId);
   }
 
-  BleDeviceInfoSource _requireInfo(BleDeviceRemoteDataSource device) {
+  InfoSource _requireInfo(BleDeviceRemoteDataSource device) {
     final info = device.info;
     if (info == null) {
       throw BleException(
@@ -208,7 +211,7 @@ class BleRepositoryImpl implements BleRepository {
     return session;
   }
 
-  BleDeviceStreaming _requireStreaming(BleDeviceRemoteDataSource device) {
+  DataStreaming _requireStreaming(BleDeviceRemoteDataSource device) {
     final streaming = device.streaming;
     if (streaming == null) {
       throw BleException(
@@ -219,12 +222,10 @@ class BleRepositoryImpl implements BleRepository {
     return streaming;
   }
 
-  BleDeviceDecodedStreaming _requireDecodedStreaming(
-    BleDeviceRemoteDataSource device,
-  ) {
+  DecodedStreaming _requireDecodedStreaming(BleDeviceRemoteDataSource device) {
     final streaming = device.streaming;
-    if (streaming is BleDeviceDecodedStreaming) {
-      return streaming as BleDeviceDecodedStreaming;
+    if (streaming is DecodedStreaming) {
+      return streaming as DecodedStreaming;
     }
     throw BleException(
       'Device stream is not supported for ${device.deviceType.name}',

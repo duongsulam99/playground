@@ -84,7 +84,7 @@ class BleBloc extends Bloc<BleEvent, BleState> {
   _deviceConnectionSubscriptions = {};
   final Map<String, StreamSubscription<dynamic>> _batterySubscriptions = {};
 
-  // static const _logger = Logger(className: 'BleBloc');
+  // static const _logger = Logger`(className: 'BleBloc');
 
   void _subscribeAdapterStream() {
     if (_adapterSubscription != null) return;

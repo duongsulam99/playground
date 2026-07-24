@@ -2,7 +2,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 /// Connection lifecycle for a single BLE device instance.
-abstract interface class BleDeviceConnection {
+abstract interface class Connection {
   String get deviceId;
 
   VulcanDeviceType get deviceType;

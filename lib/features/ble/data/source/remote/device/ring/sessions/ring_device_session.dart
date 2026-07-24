@@ -4,7 +4,7 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../../../gatt/ring/reader/ring_reader.dart';
 import '../../../../../model/ble_device_info_model.dart';
-import '../../../abstract/capabilities/ble_device_info_source.dart';
+import '../../../abstract/capabilities/info_source.dart';
 import '../../../ble_device_runtime.dart';
 import 'ring_battery_monitor.dart';
 
@@ -12,8 +12,8 @@ export 'ring_battery_monitor.dart' show BatterySnapshot;
 
 /// Passive session sau connect: battery notify (+ action button / control sau này).
 ///
-/// Cũng là [BleDeviceInfoSource] — đọc metadata GATT qua [GattRingReader].
-abstract interface class BleRingDeviceSession implements BleDeviceInfoSource {
+/// Cũng là [InfoSource] — đọc metadata GATT qua [GattRingReader].
+abstract interface class BleRingDeviceSession implements InfoSource {
   Stream<BatterySnapshot> get batteryStream;
 
   /// Bật các passive notify (battery, …). Gọi sau connect.

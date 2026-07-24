@@ -6,7 +6,7 @@ import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.d
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../model/ble_device_info_model.dart';
-import '../../../source/remote/abstract/capabilities/ble_device_gatt_access.dart';
+import '../../../source/remote/abstract/capabilities/gatt_access.dart';
 
 /// Đọc metadata MyoBand/Ring qua GATT — logic đặc thù thiết bị, tách khỏi device source.
 ///
@@ -15,7 +15,7 @@ class GattRingReader {
   static const logger = Logger(className: 'GattRingReader');
 
   static Future<BleDeviceInfoModel> readInfo({
-    required BleDeviceGattAccess gatt,
+    required GattAccess gatt,
     required VulcanDeviceType scannedType,
   }) async {
     final nameBytes = await gatt.readCharacteristic(BleRingKey.nameChar);
@@ -44,7 +44,7 @@ class GattRingReader {
 
   /// Trả `null` khi thiết bị không có characteristic threshold.
   static Future<RingThresholdConfig?> readThreshold(
-    BleDeviceGattAccess gatt,
+    GattAccess gatt,
   ) async {
     try {
       final bytes = await gatt.readCharacteristic(BleRingKey.threshold);

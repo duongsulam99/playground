@@ -1,5 +1,5 @@
 /// Generic GATT read/write (keys from `core/ble/gatt/keys`).
-abstract interface class BleDeviceGattAccess {
+abstract interface class GattAccess {
   Future<List<int>> readCharacteristic(String characteristicKey);
 
   Future<void> writeCharacteristic(

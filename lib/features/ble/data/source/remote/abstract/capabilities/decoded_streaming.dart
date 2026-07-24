@@ -4,6 +4,6 @@ import '../../../../model/ble_device_stream_snapshot_model.dart';
 ///
 /// Optional per device type — implement when the device emits a structured
 /// [BleDeviceStreamSnapshotModel] rather than raw bytes alone.
-abstract interface class BleDeviceDecodedStreaming {
+abstract interface class DecodedStreaming {
   Stream<BleDeviceStreamSnapshotModel> watchDecodedDeviceData();
 }

@@ -1,9 +1,9 @@
 import '../device/ring/index.dart';
-import 'capabilities/ble_device_connection.dart';
-import 'capabilities/ble_device_firmware_transport.dart';
-import 'capabilities/ble_device_gatt_access.dart';
-import 'capabilities/ble_device_info_source.dart';
-import 'capabilities/ble_device_streaming.dart';
+import 'capabilities/connection.dart';
+import 'capabilities/firmware_transport.dart';
+import 'capabilities/gatt_access.dart';
+import 'capabilities/info_source.dart';
+import 'capabilities/data_streaming.dart';
 
 /// Contract for a single BLE device instance (typically after connect).
 ///
@@ -11,15 +11,12 @@ import 'capabilities/ble_device_streaming.dart';
 /// Optional capabilities ([streaming], [info], [ringSession]) are exposed as
 /// nullable getters — `null` means the device type does not support that feature.
 abstract interface class BleDeviceRemoteDataSource
-    implements
-        BleDeviceConnection,
-        BleDeviceGattAccess,
-        BleDeviceFirmwareTransport {
+    implements Connection, GattAccess, FirmwareTransport {
   /// `null` when the device does not support notify stream.
-  BleDeviceStreaming? get streaming;
+  DataStreaming? get streaming;
 
   /// `null` when the device does not support structured device info.
-  BleDeviceInfoSource? get info;
+  InfoSource? get info;
 
   /// `null` when the device is not a MyoBand/Ring session device.
   BleRingDeviceSession? get ringSession;

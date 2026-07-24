@@ -17,10 +17,10 @@ abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteData
   final BleDeviceRuntime runtime;
 
   @override
-  BleDeviceStreaming? get streaming => null;
+  DataStreaming? get streaming => null;
 
   @override
-  BleDeviceInfoSource? get info => null;
+  InfoSource? get info => null;
 
   @override
   BleRingDeviceSession? get ringSession => null;

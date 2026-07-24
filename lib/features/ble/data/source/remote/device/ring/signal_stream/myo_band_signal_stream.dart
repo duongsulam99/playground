@@ -5,15 +5,15 @@ import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../../../../../model/ble_device_stream_snapshot_model.dart';
 import '../../../../isolate/decode/decode_worker.dart';
-import '../../../abstract/capabilities/ble_device_decoded_streaming.dart';
-import '../../../abstract/capabilities/ble_device_streaming.dart';
+import '../../../abstract/capabilities/decoded_streaming.dart';
+import '../../../abstract/capabilities/data_streaming.dart';
 import '../../../ble_device_runtime.dart';
 
 /// Active EMG stream trên MyoBand family (SIGNAL_UUID).
 ///
-/// Implements [BleDeviceStreaming] + [BleDeviceDecodedStreaming] —
+/// Implements [Streaming] + [DecodedStreaming] —
 /// facade chỉ expose getter; decode EMG chạy trên [StreamDecodeWorker].
-final class MyoBandSignalStream implements BleDeviceStreaming, BleDeviceDecodedStreaming {
+final class MyoBandSignalStream implements DataStreaming, DecodedStreaming {
   MyoBandSignalStream(this._runtime, {required this._decodeWorker});
 
   final BleDeviceRuntime _runtime;
