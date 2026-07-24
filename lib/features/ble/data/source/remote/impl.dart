@@ -10,7 +10,7 @@ import '../../model/ble_discovered_device_model.dart';
 import '../isolate/scan/scan_advertisement_mapper.dart';
 import '../isolate/scan/scan_parse_worker.dart';
 import 'device_factory.dart';
-import 'abstract/ble_device_remote_data_source.dart';
+import 'abstract/device_remote_datasrc.dart';
 import 'abstract/ble_remote_data_source.dart';
 
 /// Orchestrator BLE: scan, connect, và registry từng [BleDeviceRemoteDataSource].
@@ -27,7 +27,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   final ScanParseWorker _scanParseWorker;
 
   /// Instance đã connect — key là `deviceId` (remoteId string).
-  final Map<String, BleDeviceRemoteDataSource> _connectedDevices = {};
+  final Map<String, DeviceRemoteDS> _connectedDevices = {};
 
   /// Snapshot metadata scan mới nhất từ worker — dùng lúc connect.
   Map<String, BleDiscoveredDeviceModel> _latestDiscoveredDevices = {};
@@ -154,7 +154,7 @@ class BleRemoteDataSourceImpl implements BleRemoteDataSource {
   }
 
   @override
-  BleDeviceRemoteDataSource findConnectedDevice(String deviceId) {
+  DeviceRemoteDS findConnectedDevice(String deviceId) {
     final deviceSource = _connectedDevices[deviceId];
 
     if (deviceSource == null) {

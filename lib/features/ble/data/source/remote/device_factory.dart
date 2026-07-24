@@ -2,7 +2,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../isolate/decode/decode_worker.dart';
-import 'abstract/ble_device_remote_data_source.dart';
+import 'abstract/device_remote_datasrc.dart';
 import 'ble_device_runtime.dart';
 import 'device_impl.dart';
 import 'device/ring_device.dart';
@@ -13,7 +13,7 @@ class BleDeviceDataSourceFactory {
 
   final StreamDecodeWorker _decodeWorker;
 
-  BleDeviceRemoteDataSource create(
+  DeviceRemoteDS create(
     BluetoothDevice device, {
     required VulcanDeviceType deviceType,
   }) {

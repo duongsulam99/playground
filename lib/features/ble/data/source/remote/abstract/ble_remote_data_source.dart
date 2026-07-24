@@ -3,7 +3,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.d
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
 import '../../../model/ble_discovered_device_model.dart';
-import 'ble_device_remote_data_source.dart';
+import 'device_remote_datasrc.dart';
 
 /// Contract cho thao tác BLE global ở data layer.
 ///
@@ -29,5 +29,5 @@ abstract class BleRemoteDataSource {
   Future<void> disconnect(String deviceId);
 
   /// Trả về device source đã connect; throw nếu chưa connect.
-  BleDeviceRemoteDataSource findConnectedDevice(String deviceId);
+  DeviceRemoteDS findConnectedDevice(String deviceId);
 }

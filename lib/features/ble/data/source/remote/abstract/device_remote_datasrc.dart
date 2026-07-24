@@ -10,7 +10,7 @@ import 'capabilities/data_streaming.dart';
 /// Mandatory capabilities: connection, GATT, firmware OTA.
 /// Optional capabilities ([streaming], [info], [ringSession]) are exposed as
 /// nullable getters — `null` means the device type does not support that feature.
-abstract interface class BleDeviceRemoteDataSource
+abstract interface class DeviceRemoteDS
     implements Connection, GattAccess, FirmwareTransport {
   /// `null` when the device does not support notify stream.
   DataStreaming? get streaming;

@@ -16,7 +16,7 @@ import '../source/remote/abstract/ble_remote_data_source.dart';
 import '../source/remote/abstract/capabilities/decoded_streaming.dart';
 import '../source/remote/abstract/capabilities/info_source.dart';
 import '../source/remote/abstract/capabilities/data_streaming.dart';
-import '../source/remote/abstract/ble_device_remote_data_source.dart';
+import '../source/remote/abstract/device_remote_datasrc.dart';
 import '../source/remote/device/ring/sessions/ring_device_session.dart';
 
 /// Biên giới domain ↔ data: map Model → Entity, Exception → [Failure].
@@ -185,11 +185,11 @@ class BleRepositoryImpl implements BleRepository {
     }
   }
 
-  BleDeviceRemoteDataSource _connectedDevice(String deviceId) {
+  DeviceRemoteDS _connectedDevice(String deviceId) {
     return _remoteDataSource.findConnectedDevice(deviceId);
   }
 
-  InfoSource _requireInfo(BleDeviceRemoteDataSource device) {
+  InfoSource _requireInfo(DeviceRemoteDS device) {
     final info = device.info;
     if (info == null) {
       throw BleException(
@@ -200,7 +200,7 @@ class BleRepositoryImpl implements BleRepository {
     return info;
   }
 
-  BleRingDeviceSession _requireRingSession(BleDeviceRemoteDataSource device) {
+  BleRingDeviceSession _requireRingSession(DeviceRemoteDS device) {
     final session = device.ringSession;
     if (session == null) {
       throw BleException(
@@ -211,7 +211,7 @@ class BleRepositoryImpl implements BleRepository {
     return session;
   }
 
-  DataStreaming _requireStreaming(BleDeviceRemoteDataSource device) {
+  DataStreaming _requireStreaming(DeviceRemoteDS device) {
     final streaming = device.streaming;
     if (streaming == null) {
       throw BleException(
@@ -222,7 +222,7 @@ class BleRepositoryImpl implements BleRepository {
     return streaming;
   }
 
-  DecodedStreaming _requireDecodedStreaming(BleDeviceRemoteDataSource device) {
+  DecodedStreaming _requireDecodedStreaming(DeviceRemoteDS device) {
     final streaming = device.streaming;
     if (streaming is DecodedStreaming) {
       return streaming as DecodedStreaming;

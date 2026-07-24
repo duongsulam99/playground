@@ -2,15 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
-import 'abstract/ble_device_capabilities.dart';
-import 'abstract/ble_device_remote_data_source.dart';
+import 'abstract/capabilities/index.dart';
+import 'abstract/device_remote_datasrc.dart';
 import 'ble_device_runtime.dart';
 import 'device/ring/index.dart';
 
 /// Base cho mọi [BleDeviceRemoteDataSource]: delegate mandatory capabilities
 /// xuống [BleDeviceRuntime]. Subclass chỉ override optional capabilities
 /// (streaming, info, ringSession) và hook lifecycle.
-abstract base class BaseBleDeviceRemoteDataSource implements BleDeviceRemoteDataSource {
+abstract base class BaseBleDeviceRemoteDataSource implements DeviceRemoteDS {
   BaseBleDeviceRemoteDataSource(this.runtime);
 
   @protected
