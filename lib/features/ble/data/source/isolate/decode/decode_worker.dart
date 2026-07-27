@@ -33,10 +33,10 @@ void streamDecodeWorkerMain(SendPort mainSendPort) {
     if (message is! BleStreamDecodeRequest) return;
 
     try {
-      final result = decoder.decode(deviceId: '', rawBytes: message.rawBytes);
+      final voltages = decoder.decode(message.rawBytes);
 
       mainSendPort.send(
-        BleActionSuccess(requestId: message.requestId, result: result.voltages),
+        BleActionSuccess(requestId: message.requestId, result: voltages),
       );
     } on BleException catch (error) {
       mainSendPort.send(
