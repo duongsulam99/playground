@@ -2,7 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/common/di/init_dependencies.dart';
 import 'package:vulcan_mobile_playground/common/router/app_router.dart';
-import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/ble/ble_bloc.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/manager/ble_manager_bloc.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/app_localizations.dart';
 import 'package:vulcan_mobile_playground/theme/playground_theme.dart';
 
@@ -29,11 +30,14 @@ class _MyAppState extends State<MyApp> {
           // Locale changes will rebuild of the GlobalMainApp
           // Trigger when locale changes
           builder: (context, _) {
-            return BlocProvider.value(
-              value: serviceLocator<BleBloc>(),
-              child: GlobalMainApp(
-                localeController: _localeController,
-                route: route,
+            return RepositoryProvider.value(
+              value: serviceLocator<BleDeviceBlocRegistry>(),
+              child: BlocProvider.value(
+                value: serviceLocator<BleManagerBloc>(),
+                child: GlobalMainApp(
+                  localeController: _localeController,
+                  route: route,
+                ),
               ),
             );
           },

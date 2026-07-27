@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/manager/ble_manager_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_section.dart';
 import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_args.dart';
 import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_route.dart';
-
-import '../bloc/ble/ble_bloc.dart';
 
 class BleDeviceInfoPage extends StatefulWidget {
   const BleDeviceInfoPage({required this.deviceId, super.key});
@@ -23,7 +22,7 @@ class BleDeviceInfoPage extends StatefulWidget {
 }
 
 class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
-  BleBloc? _bleBloc;
+  BleDeviceBloc? _deviceBloc;
 
   @override
   void initState() {
@@ -33,61 +32,95 @@ class _BleDeviceInfoPageState extends State<BleDeviceInfoPage> {
 
   @override
   void dispose() {
-    _bleBloc?.add(BleEvent.stopDeviceStream(deviceId: widget.deviceId));
+    final bloc = _deviceBloc;
+    if (bloc != null && !bloc.isClosed) {
+      bloc.add(const BleDeviceEvent.stopStream());
+    }
     super.dispose();
   }
 
   void _startStreamIfNeeded() {
-    _bleBloc ??= context.read<BleBloc>();
-    final state = _bleBloc!.state;
-    final viewState = _DeviceInfoViewState.from(state, widget.deviceId);
+    final registry = context.read<BleDeviceBlocRegistry>();
+    _deviceBloc = registry.get(widget.deviceId);
+    if (_deviceBloc == null) return;
 
-    if (viewState.supportsDataStream && viewState.isConnected) {
-      _bleBloc!.add(BleEvent.startDeviceStream(deviceId: widget.deviceId));
+    final state = _deviceBloc!.state;
+    if (state.supportsDataStream) {
+      _deviceBloc!.add(const BleDeviceEvent.startStream());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Device info')),
-      body: BlocSelector<BleBloc, BleState, _DeviceInfoViewState>(
-        selector: (state) => _DeviceInfoViewState.from(state, widget.deviceId),
-        builder: (context, viewState) {
-          final threshold =
-              viewState.connection?.deviceInfo?.thresholdConfig?.threshold;
-          final emgLower = threshold?.elementAtOrNull(1) ?? 30;
-          final emgUpper = threshold?.elementAtOrNull(2) ?? 50;
+    final registry = context.read<BleDeviceBlocRegistry>();
+    final deviceBloc = registry.get(widget.deviceId);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!viewState.isConnected) ...[
-                  const _DisconnectedBanner(),
-                  const SizedBox(height: 16),
-                ],
-                _DeviceHeader(
-                  displayName: viewState.displayName,
-                  deviceId: widget.deviceId,
-                  connectionStatus: viewState.connectionStatus,
-                ),
-                const SizedBox(height: 16),
-                _DeviceMetadataCard(
-                  connection: viewState.connection,
-                  displayName: viewState.displayName,
-                ),
-                const SizedBox(height: 16),
-                EmgLiveChartSection(
-                  deviceId: widget.deviceId,
-                  emgLower: emgLower,
-                  emgUpper: emgUpper,
-                ),
-              ],
-            ),
-          );
-        },
+    if (deviceBloc == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Device info')),
+        body: const Center(child: Text('Device session is not active.')),
+      );
+    }
+
+    return BlocProvider.value(
+      value: deviceBloc,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Device info')),
+        body: BlocBuilder<BleManagerBloc, BleManagerState>(
+          buildWhen: (previous, current) =>
+              previous.connectionStatusFor(widget.deviceId) !=
+                  current.connectionStatusFor(widget.deviceId) ||
+              previous.savedDeviceFor(widget.deviceId) !=
+                  current.savedDeviceFor(widget.deviceId),
+          builder: (context, managerState) {
+            return BlocSelector<
+              BleDeviceBloc,
+              BleDeviceState,
+              _DeviceInfoViewState
+            >(
+              selector: (deviceState) => _DeviceInfoViewState.from(
+                managerState: managerState,
+                deviceState: deviceState,
+                deviceId: widget.deviceId,
+              ),
+              builder: (context, viewState) {
+                final threshold =
+                    viewState.deviceInfo?.thresholdConfig?.threshold;
+                final emgLower = threshold?.elementAtOrNull(1) ?? 30;
+                final emgUpper = threshold?.elementAtOrNull(2) ?? 50;
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!viewState.isConnected) ...[
+                        const _DisconnectedBanner(),
+                        const SizedBox(height: 16),
+                      ],
+                      _DeviceHeader(
+                        displayName: viewState.displayName,
+                        deviceId: widget.deviceId,
+                        connectionStatus: viewState.connectionStatus,
+                      ),
+                      const SizedBox(height: 16),
+                      _DeviceMetadataCard(
+                        displayName: viewState.displayName,
+                        isConnected: viewState.isConnected,
+                      ),
+                      const SizedBox(height: 16),
+                      EmgLiveChartSection(
+                        deviceId: widget.deviceId,
+                        emgLower: emgLower,
+                        emgUpper: emgUpper,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -97,7 +130,7 @@ class _DeviceInfoViewState {
   const _DeviceInfoViewState({
     required this.displayName,
     required this.connectionStatus,
-    required this.connection,
+    required this.deviceInfo,
     required this.supportsDataStream,
     required this.isConnected,
     required this.isStreaming,
@@ -105,29 +138,26 @@ class _DeviceInfoViewState {
 
   final String displayName;
   final BleConnectionStatus connectionStatus;
-  final BleActiveConnection? connection;
+  final BleDeviceInfo? deviceInfo;
   final bool supportsDataStream;
   final bool isConnected;
   final bool isStreaming;
 
-  factory _DeviceInfoViewState.from(BleState state, String deviceId) {
-    final connection = state.activeConnectionFor(deviceId);
-    final savedDevice = state.savedDeviceFor(deviceId);
+  factory _DeviceInfoViewState.from({
+    required BleManagerState managerState,
+    required BleDeviceState deviceState,
+    required String deviceId,
+  }) {
+    final savedDevice = managerState.savedDeviceFor(deviceId);
     final displayName = savedDevice?.displayName ?? deviceId;
-    final scannedType = savedDevice?.deviceType;
-    final resolvedType = connection?.deviceInfo?.resolvedType;
-
-    final supportsDataStream =
-        scannedType?.isMyoBandFamily == true ||
-        resolvedType?.isMyoBandFamily == true;
 
     return _DeviceInfoViewState(
       displayName: displayName,
-      connectionStatus: state.connectionStatusFor(deviceId),
-      connection: connection,
-      supportsDataStream: supportsDataStream,
-      isConnected: connection?.status.isConnected ?? false,
-      isStreaming: state.isDeviceStreaming(deviceId),
+      connectionStatus: managerState.connectionStatusFor(deviceId),
+      deviceInfo: deviceState.deviceInfo,
+      supportsDataStream: deviceState.supportsDataStream,
+      isConnected: managerState.isDeviceConnected(deviceId),
+      isStreaming: deviceState.isStreaming,
     );
   }
 
@@ -136,7 +166,7 @@ class _DeviceInfoViewState {
     return other is _DeviceInfoViewState &&
         displayName == other.displayName &&
         connectionStatus == other.connectionStatus &&
-        connection == other.connection &&
+        deviceInfo == other.deviceInfo &&
         supportsDataStream == other.supportsDataStream &&
         isConnected == other.isConnected &&
         isStreaming == other.isStreaming;
@@ -146,7 +176,7 @@ class _DeviceInfoViewState {
   int get hashCode => Object.hash(
     displayName,
     connectionStatus,
-    connection,
+    deviceInfo,
     supportsDataStream,
     isConnected,
     isStreaming,
@@ -216,29 +246,28 @@ class _DeviceHeader extends StatelessWidget {
 
 class _DeviceMetadataCard extends StatelessWidget {
   const _DeviceMetadataCard({
-    required this.connection,
     required this.displayName,
+    required this.isConnected,
   });
 
-  final BleActiveConnection? connection;
   final String displayName;
+  final bool isConnected;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: _buildContent(context),
+        child: BlocBuilder<BleDeviceBloc, BleDeviceState>(
+          builder: (context, deviceState) =>
+              _buildContent(context, deviceState),
+        ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    if (connection == null) {
-      return const Text('No active connection for this device.');
-    }
-
-    if (connection!.isReadingInfo) {
+  Widget _buildContent(BuildContext context, BleDeviceState deviceState) {
+    if (deviceState.isReadingInfo) {
       return Row(
         children: [
           const SizedBox(
@@ -252,7 +281,7 @@ class _DeviceMetadataCard extends StatelessWidget {
       );
     }
 
-    if (connection!.hasError && connection!.deviceInfo == null) {
+    if (deviceState.hasError && deviceState.deviceInfo == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -264,22 +293,22 @@ class _DeviceMetadataCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(connection!.errorMessage ?? 'Unknown error'),
+          Text(deviceState.errorMessage ?? 'Unknown error'),
         ],
       );
     }
 
-    final info = connection!.deviceInfo;
+    final info = deviceState.deviceInfo;
     if (info == null) {
       return const Text('Device info is not available for this device.');
     }
 
     return _MetadataBody(
       info: info,
-      battery: connection!.battery,
+      battery: deviceState.battery,
       fallbackName: displayName,
-      deviceId: connection!.deviceId,
-      isConnected: connection!.status.isConnected,
+      deviceId: deviceState.deviceId,
+      isConnected: isConnected,
     );
   }
 }

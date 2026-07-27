@@ -2,10 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
 import '../../../domain/entities/ble_device_stream_snapshot.dart';
-import '../../bloc/ble/ble_bloc.dart';
+import '../../bloc/device/ble_device_bloc.dart';
 import 'emg_data_buffer.dart';
 import 'emg_live_chart_widget.dart';
 
@@ -62,24 +61,19 @@ class _EmgLiveChartSectionState extends State<EmgLiveChartSection> {
     _buffer.startUiFlush();
   }
 
-  bool _listenWhen(BleState previous, BleState current) {
-    final deviceId = widget.deviceId;
-    final snapshotChanged =
-        previous.streamSnapshotFor(deviceId) !=
-        current.streamSnapshotFor(deviceId);
-    final streamingChanged =
-        previous.isDeviceStreaming(deviceId) !=
-        current.isDeviceStreaming(deviceId);
+  bool _listenWhen(BleDeviceState previous, BleDeviceState current) {
+    final snapshotChanged = previous.streamSnapshot != current.streamSnapshot;
+    final streamingChanged = previous.isStreaming != current.isStreaming;
     return snapshotChanged || streamingChanged;
   }
 
-  void _onListener(BuildContext context, BleState state) {
-    if (!state.isDeviceStreaming(widget.deviceId)) {
+  void _onListener(BuildContext context, BleDeviceState state) {
+    if (!state.isStreaming) {
       _resetBuffer();
       return;
     }
 
-    final snapshot = state.streamSnapshotFor(widget.deviceId);
+    final snapshot = state.streamSnapshot;
     if (snapshot is EmgStreamSnapshot) {
       _onSnapshot(snapshot);
     }
@@ -87,11 +81,11 @@ class _EmgLiveChartSectionState extends State<EmgLiveChartSection> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BleBloc, BleState>(
+    return BlocListener<BleDeviceBloc, BleDeviceState>(
       listenWhen: (previous, current) => _listenWhen(previous, current),
       listener: (context, state) => _onListener(context, state),
-      child: BlocSelector<BleBloc, BleState, _ChartViewState>(
-        selector: (state) => _ChartViewState.from(state, widget.deviceId),
+      child: BlocSelector<BleDeviceBloc, BleDeviceState, _ChartViewState>(
+        selector: (state) => _ChartViewState.from(state),
         builder: (context, viewState) => EmgLiveChartWidget(
           buffer: _buffer,
           isStreaming: viewState.isStreaming,
@@ -113,18 +107,10 @@ class _ChartViewState {
   final bool isStreaming;
   final bool supportsDataStream;
 
-  factory _ChartViewState.from(BleState state, String deviceId) {
-    final scannedType = state.savedDeviceFor(deviceId)?.deviceType;
-    final resolvedType = state
-        .activeConnectionFor(deviceId)
-        ?.deviceInfo
-        ?.resolvedType;
-
+  factory _ChartViewState.from(BleDeviceState state) {
     return _ChartViewState(
-      isStreaming: state.isDeviceStreaming(deviceId),
-      supportsDataStream:
-          scannedType?.isMyoBandFamily == true ||
-          resolvedType?.isMyoBandFamily == true,
+      isStreaming: state.isStreaming,
+      supportsDataStream: state.supportsDataStream,
     );
   }
 

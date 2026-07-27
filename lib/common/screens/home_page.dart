@@ -5,14 +5,14 @@ import 'package:vulcan_mobile_playground/core/ble/config/constants/vulcan_consta
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/l10n/localization/l10n_extension.dart';
 
-import '../../features/ble/presentation/bloc/ble/ble_bloc.dart';
+import '../../features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
+import '../../features/ble/presentation/bloc/manager/ble_manager_bloc.dart';
 import '../../features/ble/presentation/routing/ble_route.dart';
 import '../../features/ble/presentation/widgets/home_myo_band_info_section.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  
   static const String path = '/';
 
   @override
@@ -49,11 +49,12 @@ class HomePage extends StatelessWidget {
               child: const Text('BLE Lab (Only band, ... devices)'),
             ),
             const SizedBox(height: 24),
-            BlocBuilder<BleBloc, BleState>(
+            BlocBuilder<BleManagerBloc, BleManagerState>(
               buildWhen: (previous, current) =>
                   previous.activeConnections != current.activeConnections ||
                   previous.savedDevices != current.savedDevices,
               builder: (context, state) {
+                final registry = context.read<BleDeviceBlocRegistry>();
                 return Column(
                   children: [
                     Text(
@@ -62,6 +63,7 @@ class HomePage extends StatelessWidget {
                     HomeMyoBandInfoSection(
                       savedDevices: state.savedDevices,
                       activeConnections: state.activeConnections,
+                      deviceRegistry: registry,
                     ),
                   ],
                 );

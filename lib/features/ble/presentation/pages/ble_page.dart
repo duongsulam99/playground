@@ -6,7 +6,7 @@ import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_c
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_device_list.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_scan_controls.dart';
 
-import '../bloc/ble/ble_bloc.dart';
+import '../bloc/manager/ble_manager_bloc.dart';
 
 class BlePage extends StatefulWidget {
   const BlePage({super.key, this.filterTypes});
@@ -18,7 +18,7 @@ class BlePage extends StatefulWidget {
 }
 
 class _BlePageState extends State<BlePage> {
-  BleBloc? _bleBloc;
+  BleManagerBloc? _managerBloc;
 
   @override
   void initState() {
@@ -33,28 +33,32 @@ class _BlePageState extends State<BlePage> {
   }
 
   void _bootstrapBlePage() {
-    _bleBloc ??= context.read<BleBloc>();
-    _bleBloc?.add(BleEvent.scanFilterUpdated(filterTypes: widget.filterTypes));
+    _managerBloc ??= context.read<BleManagerBloc>();
+    _managerBloc?.add(
+      BleManagerEvent.scanFilterUpdated(filterTypes: widget.filterTypes),
+    );
   }
 
   void _onPageClose() {
-    _bleBloc?.add(const BleEvent.stopScan());
+    _managerBloc?.add(const BleManagerEvent.stopScan());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('BLE Lab')),
-      body: BlocConsumer<BleBloc, BleState>(
+      body: BlocConsumer<BleManagerBloc, BleManagerState>(
         listener: (context, state) {
-          if (state.errorMessage != null && state.status == BleStatus.failure) {
+          if (state.errorMessage != null &&
+              state.status == BleManagerStatus.failure) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
 
           for (final connection in state.activeConnections.values) {
-            if (connection.hasError && state.status == BleStatus.failure) {
+            if (connection.hasError &&
+                state.status == BleManagerStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -78,11 +82,11 @@ class _BlePageState extends State<BlePage> {
                     isScanning: state.isScanning,
                     isEnabled: state.isAdapterReady,
                     onToggleScan: () {
-                      final bloc = context.read<BleBloc>();
+                      final bloc = context.read<BleManagerBloc>();
                       if (state.isScanning) {
-                        bloc.add(const BleEvent.stopScan());
+                        bloc.add(const BleManagerEvent.stopScan());
                       } else {
-                        bloc.add(const BleEvent.startScan());
+                        bloc.add(const BleManagerEvent.startScan());
                       }
                     },
                   ),
@@ -91,8 +95,8 @@ class _BlePageState extends State<BlePage> {
                     savedDevices: state.savedDevices,
                     activeConnections: state.activeConnections,
                     onDisconnect: (deviceId) {
-                      context.read<BleBloc>().add(
-                        BleEvent.disconnectRequested(deviceId: deviceId),
+                      context.read<BleManagerBloc>().add(
+                        BleManagerEvent.disconnectRequested(deviceId: deviceId),
                       );
                     },
                   ),
@@ -109,13 +113,13 @@ class _BlePageState extends State<BlePage> {
                     activeConnections: state.activeConnections,
                     canConnectDevice: state.canConnectDevice,
                     onDeviceSelected: (deviceId) {
-                      context.read<BleBloc>().add(
-                        BleEvent.connectRequested(deviceId: deviceId),
+                      context.read<BleManagerBloc>().add(
+                        BleManagerEvent.connectRequested(deviceId: deviceId),
                       );
                     },
                     onDeviceDisconnect: (deviceId) {
-                      context.read<BleBloc>().add(
-                        BleEvent.disconnectRequested(deviceId: deviceId),
+                      context.read<BleManagerBloc>().add(
+                        BleManagerEvent.disconnectRequested(deviceId: deviceId),
                       );
                     },
                   ),

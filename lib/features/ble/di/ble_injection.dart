@@ -20,7 +20,9 @@ import '../domain/usecase/watch_battery.dart';
 import '../domain/usecase/watch_device_connection.dart';
 import '../domain/usecase/watch_device_data.dart';
 import '../domain/usecase/watch_scan_results.dart';
-import '../presentation/bloc/ble/ble_bloc.dart';
+import '../presentation/bloc/device/ble_device_bloc.dart';
+import '../presentation/bloc/device/ble_device_bloc_registry.dart';
+import '../presentation/bloc/manager/ble_manager_bloc.dart';
 
 // Firmware transport adapter
 /// Is used to adapt the firmware transport interface
@@ -28,7 +30,7 @@ import '../presentation/bloc/ble/ble_bloc.dart';
 import '../../firmware/data/firmware_ble_transport.dart';
 
 Future<void> initBleInjection(GetIt sl) async {
-  if (sl.isRegistered<BleBloc>()) return;
+  if (sl.isRegistered<BleManagerBloc>()) return;
 
   sl.registerSingletonAsync<StreamDecodeWorker>(StreamDecodeWorker.create);
   sl.registerSingletonAsync<ScanParseWorker>(ScanParseWorker.create);
@@ -69,23 +71,43 @@ Future<void> initBleInjection(GetIt sl) async {
   sl.registerFactory(() => StartDeviceStream(repository: sl()));
   sl.registerFactory(() => StopDeviceStream(repository: sl()));
 
-  sl.registerLazySingleton<BleBloc>(
-    () => BleBloc(
-      watchAdapterStatus: sl(),
-      watchScanResults: sl(),
+  sl.registerFactoryParam<BleDeviceBloc, BleDeviceBlocArgs, void>(
+    (args, _) => BleDeviceBloc(
+      deviceId: args.deviceId,
+      scannedType: args.scannedType,
       watchDeviceData: sl(),
-      watchDeviceConnection: sl(),
       watchBattery: sl(),
-      startScan: sl(),
-      stopScan: sl(),
-      connectDevice: sl(),
-      disconnectDevice: sl(),
       readDeviceInfo: sl(),
       startDeviceStream: sl(),
       stopDeviceStream: sl(),
     ),
   );
 
+  sl.registerLazySingleton<BleDeviceBlocRegistry>(
+    () => BleDeviceBlocRegistry(
+      createBloc: ({required deviceId, required scannedType}) =>
+          sl<BleDeviceBloc>(
+            param1: BleDeviceBlocArgs(
+              deviceId: deviceId,
+              scannedType: scannedType,
+            ),
+          ),
+    ),
+  );
+
+  sl.registerLazySingleton<BleManagerBloc>(
+    () => BleManagerBloc(
+      watchAdapterStatus: sl(),
+      watchScanResults: sl(),
+      watchDeviceConnection: sl(),
+      startScan: sl(),
+      stopScan: sl(),
+      connectDevice: sl(),
+      disconnectDevice: sl(),
+      deviceRegistry: sl(),
+    ),
+  );
+
   await sl.allReady();
-  sl<BleBloc>();
+  sl<BleManagerBloc>();
 }

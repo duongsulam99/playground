@@ -1,30 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_entry.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discovered_device.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_scan_snapshot.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_device_info_route.dart';
 
 class HomeMyoBandInfoSection extends StatelessWidget {
   const HomeMyoBandInfoSection({
     required this.savedDevices,
     required this.activeConnections,
+    required this.deviceRegistry,
     super.key,
   });
 
   final BleScanSnapshot savedDevices;
-  final Map<String, BleActiveConnection> activeConnections;
+  final Map<String, BleConnectionEntry> activeConnections;
+  final BleDeviceBlocRegistry deviceRegistry;
 
   @override
   Widget build(BuildContext context) {
     final myoBandConnections = activeConnections.values.where((connection) {
       if (!connection.status.isConnected) return false;
 
-      final scannedType = _deviceTypeFor(connection.deviceId);
-      if (scannedType?.isMyoBandFamily == true) return true;
+      final deviceBloc = deviceRegistry.get(connection.deviceId);
+      if (deviceBloc != null &&
+          deviceBloc.state.capabilities.supportsDeviceInfo) {
+        return true;
+      }
 
-      return connection.deviceInfo?.resolvedType.isMyoBandFamily == true;
+      final scannedType = _deviceTypeFor(connection.deviceId);
+      return scannedType?.isMyoBandFamily == true;
     }).toList();
 
     if (myoBandConnections.isEmpty) {
@@ -37,27 +48,31 @@ class HomeMyoBandInfoSection extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'MyoBand info',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...myoBandConnections.map(
-          (connection) => _MyoBandInfoCard(
-            connection: connection,
-            fallbackName: _displayNameFor(connection.deviceId),
-            onTap: () => _openDeviceInfo(context, connection.deviceId),
-          ),
-        ),
+        ...myoBandConnections.map((connection) {
+          final deviceBloc = deviceRegistry.get(connection.deviceId);
+          if (deviceBloc == null) return const SizedBox.shrink();
+
+          return BlocProvider.value(
+            value: deviceBloc,
+            child: _MyoBandInfoCard(
+              fallbackName: _displayNameFor(connection.deviceId),
+              onTap: () => _openDeviceInfo(context, connection.deviceId),
+            ),
+          );
+        }),
       ],
     );
   }
 
   void _openDeviceInfo(BuildContext context, String deviceId) {
-    Navigator.of(context).pushNamed(
-      BleDeviceInfoRoute.path,
-      arguments: deviceId,
-    );
+    Navigator.of(
+      context,
+    ).pushNamed(BleDeviceInfoRoute.path, arguments: deviceId);
   }
 
   BleDiscoveredDevice? _deviceFor(String deviceId) => savedDevices[deviceId];
@@ -72,67 +87,93 @@ class HomeMyoBandInfoSection extends StatelessWidget {
 }
 
 class _MyoBandInfoCard extends StatelessWidget {
-  const _MyoBandInfoCard({
-    required this.connection,
-    required this.fallbackName,
-    required this.onTap,
-  });
+  const _MyoBandInfoCard({required this.fallbackName, required this.onTap});
 
-  final BleActiveConnection connection;
   final String fallbackName;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final info = connection.deviceInfo;
+    return BlocBuilder<BleDeviceBloc, BleDeviceState>(
+      builder: (context, state) {
+        if (state.isReadingInfo) {
+          return Card(
+            child: ListTile(
+              leading: const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              title: Text(fallbackName),
+              subtitle: const Text('Reading device info...'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: onTap,
+            ),
+          );
+        }
 
-    if (connection.isReadingInfo) {
-      return Card(
-        child: ListTile(
-          leading: const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          title: Text(fallbackName),
-          subtitle: const Text('Reading device info...'),
-          trailing: const Icon(Icons.chevron_right),
+        if (state.hasError && state.deviceInfo == null) {
+          return Card(
+            child: ListTile(
+              leading: const Icon(Icons.error_outline, color: Colors.red),
+              title: Text(fallbackName),
+              subtitle: Text(
+                state.errorMessage ?? 'Failed to read device info',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: onTap,
+            ),
+          );
+        }
+
+        final info = state.deviceInfo;
+        if (info == null) {
+          return const SizedBox.shrink();
+        }
+
+        return _MyoBandInfoBody(
+          info: info,
+          battery: state.battery,
+          fallbackName: fallbackName,
           onTap: onTap,
-        ),
-      );
-    }
+        );
+      },
+    );
+  }
+}
 
-    if (connection.hasError && info == null) {
-      return Card(
-        child: ListTile(
-          leading: const Icon(Icons.error_outline, color: Colors.red),
-          title: Text(fallbackName),
-          subtitle: Text(connection.errorMessage ?? 'Failed to read device info'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: onTap,
-        ),
-      );
-    }
+class _MyoBandInfoBody extends StatelessWidget {
+  const _MyoBandInfoBody({
+    required this.info,
+    required this.battery,
+    required this.fallbackName,
+    required this.onTap,
+  });
 
-    if (info == null) {
-      return const SizedBox.shrink();
-    }
+  final BleDeviceInfo info;
+  final BleBatterySnapshot? battery;
+  final String fallbackName;
+  final VoidCallback onTap;
 
+  @override
+  Widget build(BuildContext context) {
     final typeLabel = info.resolvedType.genName ?? info.resolvedType.name;
-    final battery = connection.battery;
     final batteryLabel = battery == null
         ? 'Battery: —'
-        : 'Battery: ${battery.percent}%${battery.isCharging ? ' ⚡' : ''}';
+        : 'Battery: ${battery!.percent}%${battery!.isCharging ? ' ⚡' : ''}';
 
     return Card(
       child: ListTile(
         leading: const Icon(Icons.sensors, color: Colors.deepPurple),
         title: Text(info.name.isEmpty ? fallbackName : info.name),
-        subtitle: Text(
-          'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
-          ' · $batteryLabel\n'
-          'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
-          ' · Type: $typeLabel',
+        subtitle: BlocBuilder<BleDeviceBloc, BleDeviceState>(
+          buildWhen: (p, c) => p.battery != c.battery,
+          builder: (context, state) => Text(
+            'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
+            ' · $batteryLabel\n'
+            'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
+            ' · Type: $typeLabel',
+          ),
         ),
         isThreeLine: true,
         trailing: const Icon(Icons.chevron_right),

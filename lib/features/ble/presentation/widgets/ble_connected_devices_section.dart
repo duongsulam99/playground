@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
-import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_active_connection.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_entry.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_scan_snapshot.dart';
 
 class BleConnectedDevicesSection extends StatelessWidget {
@@ -12,7 +12,7 @@ class BleConnectedDevicesSection extends StatelessWidget {
   });
 
   final BleScanSnapshot savedDevices;
-  final Map<String, BleActiveConnection> activeConnections;
+  final Map<String, BleConnectionEntry> activeConnections;
   final ValueChanged<String> onDisconnect;
 
   @override
@@ -45,7 +45,9 @@ class BleConnectedDevicesSection extends StatelessWidget {
             return ListTile(
               leading: Icon(
                 Icons.bluetooth_connected,
-                color: connection.status.isConnected ? Colors.green : Colors.orange,
+                color: connection.status.isConnected
+                    ? Colors.green
+                    : Colors.orange,
               ),
               title: Text(device?.displayName ?? connection.deviceId),
               subtitle: Text(

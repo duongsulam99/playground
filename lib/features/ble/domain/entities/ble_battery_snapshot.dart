@@ -2,10 +2,7 @@ import 'package:equatable/equatable.dart';
 
 /// Snapshot pin realtime từ BATTERY_UUID notify.
 class BleBatterySnapshot extends Equatable {
-  const BleBatterySnapshot({
-    required this.percent,
-    required this.isCharging,
-  });
+  const BleBatterySnapshot({required this.percent, required this.isCharging});
 
   final int percent;
   final bool isCharging;

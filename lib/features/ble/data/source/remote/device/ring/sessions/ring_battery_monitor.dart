@@ -41,7 +41,7 @@ abstract interface class BleRingBatteryMonitor {
   Future<void> dispose();
 }
 
-/// Subscribe BATTERY_UUID notify — pin chỉ từ notification, không GATT read.
+/// Subscribe BATTERY_UUID notify; seed % bằng GATT read một lần khi start.
 ///
 /// Fail silently nếu notify không khả dụng (giống ringProcess.subscribeBattery).
 ///
@@ -71,8 +71,16 @@ final class RingBatteryMonitor implements BleRingBatteryMonitor {
     if (_disposed || _started) return;
     _started = true;
 
+    // 0. Ensure GATT ready.
     _runtime.ensureGattReady();
 
+    // 1. Read initial battery.
+    // Seed initial % — battery often notifies only on change after CCCD.
+    await _initizeReadBattery();
+
+    // 2. Subscribe battery notify for realtime updates.
+    // Notify only trigger when battery changes.
+    // For example: 76% -> 75% trigger only once, ...
     try {
       final notifyStream = await _runtime.enableNotify(BleRingKey.battery);
 
@@ -97,6 +105,22 @@ final class RingBatteryMonitor implements BleRingBatteryMonitor {
       );
       await _subscription?.cancel();
       _subscription = null;
+    }
+  }
+
+  Future<void> _initizeReadBattery() async {
+    if (_disposed || _latest != null) return;
+
+    try {
+      final bytes = await _runtime.readCharacteristic(BleRingKey.battery);
+      if (_disposed || _controller.isClosed || bytes.isEmpty) return;
+      _emit(BatterySnapshot.fromBytes(bytes));
+      _logger.debug(
+        'initizeReadBattery',
+        'battery=${_latest!.percent}%, charging=${_latest!.isCharging}',
+      );
+    } catch (e) {
+      _logger.warning('initizeReadBattery', 'Initial battery read failed: $e');
     }
   }
 

@@ -132,13 +132,9 @@ class DeviceConnectionHandler {
     );
     _channels[channelId] = channel;
 
-    await _enqueueOperation(() => characteristic.setNotifyValue(true));
-
-    // Stream monitor chỉ theo dõi signal-like channels (reassembleFrames).
-    if (reassembleFrames) {
-      _streamMonitor.start(channel.controller.stream.map((_) => 0.0));
-    }
-
+    // FlutterBluePlus: listen to onValueReceived BEFORE setNotifyValue.
+    // Many peripherals (esp. battery) emit once when CCCD is enabled and then
+    // only on change — listening after setNotifyValue drops that first packet.
     channel.subscription = characteristic.onValueReceived.listen(
       channel.addChunk,
       onError: (Object error, StackTrace stackTrace) {
@@ -153,6 +149,13 @@ class DeviceConnectionHandler {
         if (reassembleFrames) _streamMonitor.stop();
       },
     );
+
+    await _enqueueOperation(() => characteristic.setNotifyValue(true));
+
+    // Stream monitor chỉ theo dõi signal-like channels (reassembleFrames).
+    if (reassembleFrames) {
+      _streamMonitor.start(channel.controller.stream.map((_) => 0.0));
+    }
 
     _logger.debug(
       'subscribeNotify',
