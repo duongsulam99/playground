@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_supper_app_core/core.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/keys/ring/key.dart';
-import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 
 import '../../../device_runtime.dart';
@@ -42,7 +41,7 @@ abstract interface class BleRingBatteryMonitor {
   Future<void> dispose();
 }
 
-/// Subscribe BATTERY_UUID notify + one-shot read giá trị ban đầu.
+/// Subscribe BATTERY_UUID notify — pin chỉ từ notification, không GATT read.
 ///
 /// Fail silently nếu notify không khả dụng (giống ringProcess.subscribeBattery).
 ///
@@ -98,41 +97,6 @@ final class RingBatteryMonitor implements BleRingBatteryMonitor {
       );
       await _subscription?.cancel();
       _subscription = null;
-    }
-
-    await _emitInitialRead();
-  }
-
-  Future<void> _emitInitialRead() async {
-    try {
-      final bytes = await _runtime.readCharacteristic(BleRingKey.battery);
-      if (_disposed || _controller.isClosed) return;
-
-      _emit(BatterySnapshot.fromBytes(bytes));
-      _logger.debug(
-        'read',
-        'battery=${_latest!.percent}%, charging=${_latest!.isCharging}',
-      );
-
-      // Retry sau 1s nếu pin = 0 (giống ringProcess.getBattery).
-      if (_latest!.percent == 0) {
-        await Future<void>.delayed(const Duration(milliseconds: 1000));
-        if (_disposed || _controller.isClosed) return;
-
-        final retry = await _runtime.readCharacteristic(BleRingKey.battery);
-        if (_disposed || _controller.isClosed) return;
-
-        _emit(BatterySnapshot.fromBytes(retry));
-        _logger.debug(
-          'readRetry',
-          'battery=${_latest!.percent}%, charging=${_latest!.isCharging}',
-        );
-      }
-    } catch (e) {
-      _logger.warning('read', 'Failed to read battery: $e');
-      if (e is BleException) {
-        // Keep monitoring if notify already started; do not rethrow.
-      }
     }
   }
 
