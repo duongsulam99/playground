@@ -9,8 +9,8 @@ class DfuStrategyFactory {
   DfuStrategyFactory({
     Esp32OtaStrategy? esp32OtaStrategy,
     NordicMcumgrStrategy? nordicMcumgrStrategy,
-  }) : _esp32OtaStrategy = esp32OtaStrategy ?? const Esp32OtaStrategy(),
-       _nordicMcumgrStrategy = nordicMcumgrStrategy ?? NordicMcumgrStrategy();
+  }) : _esp32OtaStrategy = const Esp32OtaStrategy(),
+       _nordicMcumgrStrategy = const NordicMcumgrStrategy();
 
   final Esp32OtaStrategy _esp32OtaStrategy;
   final NordicMcumgrStrategy _nordicMcumgrStrategy;

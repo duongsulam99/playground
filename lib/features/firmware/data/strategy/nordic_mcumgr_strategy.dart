@@ -1,7 +1,7 @@
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_supper_app_core/core.dart';
-import 'package:mcumgr_flutter/mcumgr_flutter.dart' as dfu;
+import 'package:flutter_supper_app_core/core.dart' hide Image;
+import 'package:mcumgr_flutter/mcumgr_flutter.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
 
@@ -11,14 +11,15 @@ import '../firmware_ble_transport.dart';
 import 'dfu_strategy.dart';
 
 class NordicMcumgrStrategy implements DfuStrategy {
-  NordicMcumgrStrategy({dfu.UpdateManagerFactory? updateManagerFactory})
-    : _updateManagerFactory =
-          updateManagerFactory ?? dfu.FirmwareUpdateManagerFactory();
+  const NordicMcumgrStrategy();
+  // : _updateManagerFactory = FirmwareUpdateManagerFactory();
 
-  final dfu.UpdateManagerFactory _updateManagerFactory;
+  // final UpdateManagerFactory _updateManagerFactory;
 
   static const int _progressTimeoutSeconds = 600;
   static const String _startOtaCommand = '1';
+  static final _updateManager = FirmwareUpdateManagerFactory();
+  static final _zipDecoder = ZipDecoder();
 
   @override
   DfuType get type => DfuType.nordicDfu;
@@ -29,9 +30,9 @@ class NordicMcumgrStrategy implements DfuStrategy {
     required Uint8List firmwareBytes,
     required String deviceId,
   }) async* {
-    dfu.FirmwareUpdateManager? updateManager;
-    StreamSubscription<dfu.FirmwareUpgradeState>? stateSubscription;
-    StreamSubscription<dfu.ProgressUpdate>? progressSubscription;
+    FirmwareUpdateManager? updateManager;
+    StreamSubscription<FirmwareUpgradeState>? stateSubscription;
+    StreamSubscription<ProgressUpdate>? progressSubscription;
     Timer? progressTimeoutTimer;
     var imageCount = 0;
     final progressController = StreamController<DfuProgress>();
@@ -66,13 +67,13 @@ class NordicMcumgrStrategy implements DfuStrategy {
       await Future<void>.delayed(const Duration(milliseconds: 1000));
 
       final bleDeviceId = transport.getDeviceId(deviceId);
-      updateManager = await _updateManagerFactory.getUpdateManager(bleDeviceId);
+      updateManager = await _updateManager.getUpdateManager(bleDeviceId);
       updateManager.setup();
 
       stateSubscription = updateManager.updateStateStream?.listen(
         (event) {
           switch (event) {
-            case dfu.FirmwareUpgradeState.upload:
+            case FirmwareUpgradeState.upload:
               imageCount = 0;
               progressController.add(
                 const DfuProgress(
@@ -81,7 +82,7 @@ class NordicMcumgrStrategy implements DfuStrategy {
                   message: 'Uploading firmware',
                 ),
               );
-            case dfu.FirmwareUpgradeState.success:
+            case FirmwareUpgradeState.success:
               progressController.add(
                 const DfuProgress(
                   status: DfuStatus.completed,
@@ -90,8 +91,8 @@ class NordicMcumgrStrategy implements DfuStrategy {
                 ),
               );
               progressController.close();
-            case dfu.FirmwareUpgradeState.reset:
-            case dfu.FirmwareUpgradeState.confirm:
+            case FirmwareUpgradeState.reset:
+            case FirmwareUpgradeState.confirm:
               progressController.add(
                 const DfuProgress(
                   status: DfuStatus.confirming,
@@ -193,16 +194,15 @@ class NordicMcumgrStrategy implements DfuStrategy {
     }
   }
 
-  List<dfu.Image> _buildImagesFromZip(Uint8List zipBytes) {
-    final archive = ZipDecoder().decodeBytes(zipBytes);
+  List<Image> _buildImagesFromZip(Uint8List zipBytes) {
+    final archive = _zipDecoder.decodeBytes(zipBytes);
     final manifestFile = archive.files.firstWhere(
       (file) => file.name.endsWith('manifest.json'),
       orElse: () => throw const FormatException('manifest.json not found'),
     );
 
-    final manifestJson =
-        jsonDecode(utf8.decode(manifestFile.content as List<int>))
-            as Map<String, dynamic>;
+    final contentDecoded = utf8.decode(manifestFile.content);
+    final manifestJson = jsonDecode(contentDecoded) as Map<String, dynamic>;
     final manifest = ManifestModel.fromJson(manifestJson);
 
     return manifest.files.map((file) {
@@ -211,10 +211,7 @@ class NordicMcumgrStrategy implements DfuStrategy {
         orElse: () => throw FormatException('${file.file} not found in zip'),
       );
 
-      return dfu.Image(
-        image: file.image,
-        data: Uint8List.fromList(archiveFile.content as List<int>),
-      );
+      return Image(image: file.image, data: archiveFile.content);
     }).toList();
   }
 }
