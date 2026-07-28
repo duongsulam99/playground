@@ -16,6 +16,11 @@ import '../domain/usecase/start_scan.dart';
 import '../domain/usecase/stop_device_stream.dart';
 import '../domain/usecase/stop_scan.dart';
 import '../domain/usecase/watch_adapter_status.dart';
+import '../domain/usecase/update_action_button_mapping.dart';
+import '../domain/usecase/update_logic_control.dart';
+import '../domain/usecase/watch_action_button_mapping.dart';
+import '../domain/usecase/watch_action_button_press.dart';
+import '../domain/usecase/watch_logic_control.dart';
 import '../domain/usecase/watch_battery.dart';
 import '../domain/usecase/watch_device_connection.dart';
 import '../domain/usecase/watch_device_data.dart';
@@ -63,6 +68,11 @@ Future<void> initBleInjection(GetIt sl) async {
   sl.registerFactory(() => WatchDeviceData(repository: sl()));
   sl.registerFactory(() => WatchDeviceConnection(repository: sl()));
   sl.registerFactory(() => WatchBattery(repository: sl()));
+  sl.registerFactory(() => WatchActionButtonMapping(repository: sl()));
+  sl.registerFactory(() => WatchActionButtonPress(repository: sl()));
+  sl.registerFactory(() => WatchLogicControl(repository: sl()));
+  sl.registerFactory(() => UpdateActionButtonMapping(repository: sl()));
+  sl.registerFactory(() => UpdateLogicControl(repository: sl()));
   sl.registerFactory(() => StartScan(repository: sl()));
   sl.registerFactory(() => StopScan(repository: sl()));
   sl.registerFactory(() => ConnectDevice(repository: sl()));
@@ -77,6 +87,7 @@ Future<void> initBleInjection(GetIt sl) async {
       scannedType: args.scannedType,
       watchDeviceData: sl(),
       watchBattery: sl(),
+      watchActionButtonMapping: sl(),
       readDeviceInfo: sl(),
       startDeviceStream: sl(),
       stopDeviceStream: sl(),

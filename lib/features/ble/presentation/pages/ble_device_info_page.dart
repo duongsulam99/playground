@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ring_threshold_config.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_action_button_mapping.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/manager/ble_manager_bloc.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_action_button_mapping_label.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/emg_chart/emg_live_chart_section.dart';
 import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_args.dart';
 import 'package:vulcan_mobile_playground/features/firmware/presentation/routing/firmware_update_route.dart';
@@ -306,6 +308,8 @@ class _DeviceMetadataCard extends StatelessWidget {
     return _MetadataBody(
       info: info,
       battery: deviceState.battery,
+      actionButtonMapping: deviceState.actionButtonMapping,
+      showActionButton: deviceState.capabilities.supportsActionButton,
       fallbackName: displayName,
       deviceId: deviceState.deviceId,
       isConnected: isConnected,
@@ -317,6 +321,8 @@ class _MetadataBody extends StatelessWidget {
   const _MetadataBody({
     required this.info,
     required this.battery,
+    required this.actionButtonMapping,
+    required this.showActionButton,
     required this.fallbackName,
     required this.deviceId,
     required this.isConnected,
@@ -324,6 +330,8 @@ class _MetadataBody extends StatelessWidget {
 
   final BleDeviceInfo info;
   final BleBatterySnapshot? battery;
+  final BleActionButtonMapping? actionButtonMapping;
+  final bool showActionButton;
   final String fallbackName;
   final String deviceId;
   final bool isConnected;
@@ -357,7 +365,8 @@ class _MetadataBody extends StatelessWidget {
             'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
             ' · $_batteryLabel\n'
             'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
-            ' · Type: $typeLabel',
+            ' · Type: $typeLabel'
+            '${showActionButton ? '\n${formatActionButtonMappingLabel(actionButtonMapping)}' : ''}',
           ),
         ),
         if (info.thresholdConfig != null) ...[

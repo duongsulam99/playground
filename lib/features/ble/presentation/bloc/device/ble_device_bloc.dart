@@ -7,6 +7,7 @@ import 'package:dartz/dartz.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
+import '../../../domain/entities/ble_action_button_mapping.dart';
 import '../../../domain/entities/ble_battery_snapshot.dart';
 import '../../../domain/entities/ble_device_capabilities.dart';
 import '../../../domain/entities/ble_device_info.dart';
@@ -14,6 +15,7 @@ import '../../../domain/entities/ble_device_stream_snapshot.dart';
 import '../../../domain/usecase/read_device_info.dart';
 import '../../../domain/usecase/start_device_stream.dart';
 import '../../../domain/usecase/stop_device_stream.dart';
+import '../../../domain/usecase/watch_action_button_mapping.dart';
 import '../../../domain/usecase/watch_battery.dart';
 import '../../../domain/usecase/watch_device_data.dart';
 
@@ -34,6 +36,7 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
     required VulcanDeviceType scannedType,
     required this._watchDeviceData,
     required this._watchBattery,
+    required this._watchActionButtonMapping,
     required this._readDeviceInfo,
     required this._startDeviceStream,
     required this._stopDeviceStream,
@@ -52,22 +55,29 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
     on<BleDeviceStopStream>(_onStopStream);
     on<BleDeviceListenData>(_onListenData, transformer: restartable());
     on<BleDeviceBatteryUpdated>(_onBatteryUpdated, transformer: concurrent());
+    on<BleDeviceActionButtonMappingUpdated>(
+      _onActionButtonMappingUpdated,
+      transformer: concurrent(),
+    );
     on<BleDeviceSessionEnded>(_onSessionEnded);
   }
 
   final WatchDeviceData _watchDeviceData;
   final WatchBattery _watchBattery;
+  final WatchActionButtonMapping _watchActionButtonMapping;
   final ReadDeviceInfo _readDeviceInfo;
   final StartDeviceStream _startDeviceStream;
   final StopDeviceStream _stopDeviceStream;
 
   StreamSubscription<dynamic>? _batterySubscription;
+  StreamSubscription<dynamic>? _actionButtonMappingSubscription;
 
   Future<void> _onSessionStarted(
     BleDeviceSessionStarted event,
     Emitter<BleDeviceState> emit,
   ) async {
     _subscribeBatteryStream();
+    _subscribeActionButtonMappingStream();
     await _readInfo(emit);
   }
 
@@ -123,6 +133,10 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
 
         if (capabilities.supportsBattery && _batterySubscription == null) {
           _subscribeBatteryStream();
+        }
+        if (capabilities.supportsActionButton &&
+            _actionButtonMappingSubscription == null) {
+          _subscribeActionButtonMappingStream();
         }
       },
     );
@@ -244,18 +258,27 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
     emit(state.copyWith(battery: event.battery));
   }
 
+  Future<void> _onActionButtonMappingUpdated(
+    BleDeviceActionButtonMappingUpdated event,
+    Emitter<BleDeviceState> emit,
+  ) async {
+    emit(state.copyWith(actionButtonMapping: event.mapping));
+  }
+
   Future<void> _onSessionEnded(
     BleDeviceSessionEnded event,
     Emitter<BleDeviceState> emit,
   ) async {
     await _stopStreaming(emit, stopHardware: event.stopHardware);
     await _unsubscribeBatteryStream();
+    await _unsubscribeActionButtonMappingStream();
 
     emit(
       state.copyWith(
         isReadingInfo: false,
         deviceInfo: null,
         battery: null,
+        actionButtonMapping: null,
         streamSnapshot: null,
         isStreaming: false,
         status: BleDeviceStatus.success,
@@ -289,6 +312,30 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
     _batterySubscription = null;
   }
 
+  void _subscribeActionButtonMappingStream() {
+    if (_actionButtonMappingSubscription != null) return;
+    if (!state.capabilities.supportsActionButton) return;
+
+    final stream = _watchActionButtonMapping(
+      WatchActionButtonMappingParams(deviceId: state.deviceId),
+    );
+
+    _actionButtonMappingSubscription = stream.listen((result) {
+      if (isClosed) return;
+      result.fold(
+        (failure) => log('Action button mapping stream error: $failure'),
+        (mapping) => add(
+          BleDeviceEvent.actionButtonMappingUpdated(mapping: mapping),
+        ),
+      );
+    });
+  }
+
+  Future<void> _unsubscribeActionButtonMappingStream() async {
+    await _actionButtonMappingSubscription?.cancel();
+    _actionButtonMappingSubscription = null;
+  }
+
   /// Stops hardware stream if still active (used by Manager close / disconnect).
   Future<void> stopHardwareStreamIfNeeded() async {
     if (!state.isStreaming) return;
@@ -298,6 +345,7 @@ class BleDeviceBloc extends Bloc<BleDeviceEvent, BleDeviceState> {
   @override
   Future<void> close() async {
     await _unsubscribeBatteryStream();
+    await _unsubscribeActionButtonMappingStream();
     // Hardware stop is owned by BleManagerBloc (disconnect vs connectionLost).
     return super.close();
   }

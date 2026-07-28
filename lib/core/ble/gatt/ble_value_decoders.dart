@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_supper_app_core/core.dart';
 
+import '../models/ring_action_button_mapping.dart';
+import '../models/ring_action_button_type.dart';
+import '../models/ring_logic_control.dart';
 import '../models/ring_threshold_config.dart';
 
 extension ListIntExtension on List<int> {
@@ -145,5 +148,32 @@ class BleValueDecoders {
       moveEn: moveEn,
       epochTime: epochTime,
     );
+  }
+
+  /// Read mapping: 2 raw bytes (single tap, double tap).
+  static RingActionButtonMapping decodeActionButtonMapping(List<int> bytes) {
+    if (bytes.isEmpty) return RingActionButtonMapping.none;
+
+    return RingActionButtonMapping(
+      single: RingActionButtonType.fromBleIndex(bytes[0]),
+      doubleTap: RingActionButtonType.fromBleIndex(bytes[1]),
+    );
+  }
+
+  /// Write mapping: UTF-8 `"label0|label1"` (parity ringProcess.updateActionButton).
+  static List<int> encodeActionButtonMappingWrite(
+    RingActionButtonMapping mapping,
+  ) {
+    return utf8.encode(
+      '${mapping.single.bleIndex}|${mapping.doubleTap.bleIndex}',
+    );
+  }
+
+  static RingLogicControl decodeLogicControl(List<int> bytes) {
+    if (bytes.isEmpty) return RingLogicControl.defaultOpen;
+    final asString = decodeUtf8(bytes);
+    final parsed = int.tryParse(asString);
+    if (parsed != null) return RingLogicControl.fromBleValue(parsed);
+    return RingLogicControl.fromBleValue(bytes[0]);
   }
 }

@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_action_button_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_logic_control.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
+import '../../domain/entities/ble_action_button_mapping.dart';
 import '../../domain/entities/ble_battery_snapshot.dart';
 import '../../domain/entities/ble_device_info.dart';
 import '../../domain/entities/ble_device_stream_snapshot.dart';
@@ -69,6 +72,84 @@ class BleRepositoryImpl implements BleRepository {
     } catch (error) {
       return Stream.value(Left(_mapException(error)));
     }
+  }
+
+  @override
+  Stream<Either<Failure, BleActionButtonMapping>> watchActionButtonMapping(
+    String deviceId,
+  ) {
+    try {
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      return _mapStreamToEither(
+        session.actionButtonMappingStream.map(_mapActionButtonMapping),
+      );
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, RingActionButtonType>> watchActionButtonPress(
+    String deviceId,
+  ) {
+    try {
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      return _mapStreamToEither(session.actionButtonPressStream);
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, RingLogicControl>> watchLogicControl(String deviceId) {
+    try {
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      return _mapStreamToEither(session.logicControlStream);
+    } catch (error) {
+      return Stream.value(Left(_mapException(error)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateActionButtonMapping(
+    String deviceId,
+    BleActionButtonMapping mapping,
+  ) async {
+    try {
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      await session.updateActionButtonMapping(
+        ActionButtonMappingSnapshot(
+          single: mapping.single,
+          doubleTap: mapping.doubleTap,
+        ),
+      );
+      return const Right(unit);
+    } catch (error) {
+      return Left(_mapException(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateLogicControl(
+    String deviceId,
+    RingLogicControl logic,
+  ) async {
+    try {
+      final session = _requireRingSession(_connectedDevice(deviceId));
+      await session.updateLogicControl(logic);
+      return const Right(unit);
+    } catch (error) {
+      return Left(_mapException(error));
+    }
+  }
+
+  BleActionButtonMapping _mapActionButtonMapping(
+    ActionButtonMappingSnapshot snapshot,
+  ) {
+    return BleActionButtonMapping(
+      single: snapshot.single,
+      doubleTap: snapshot.doubleTap,
+    );
   }
 
   @override

@@ -13,17 +13,20 @@ class BleDeviceCapabilities extends Equatable {
   const BleDeviceCapabilities({
     required this.supportsDeviceInfo,
     required this.supportsBattery,
+    required this.supportsActionButton,
     required this.supportsDecodedStream,
   });
 
   static const unsupported = BleDeviceCapabilities(
     supportsDeviceInfo: false,
     supportsBattery: false,
+    supportsActionButton: false,
     supportsDecodedStream: false,
   );
 
   final bool supportsDeviceInfo;
   final bool supportsBattery;
+  final bool supportsActionButton;
   final bool supportsDecodedStream;
 
   /// Resolves capabilities from scanned advertisement type and optional
@@ -40,6 +43,7 @@ class BleDeviceCapabilities extends Equatable {
       return const BleDeviceCapabilities(
         supportsDeviceInfo: true,
         supportsBattery: true,
+        supportsActionButton: true,
         supportsDecodedStream: true,
       );
     }
@@ -68,6 +72,7 @@ class BleDeviceCapabilities extends Equatable {
   List<Object?> get props => [
     supportsDeviceInfo,
     supportsBattery,
+    supportsActionButton,
     supportsDecodedStream,
   ];
 }

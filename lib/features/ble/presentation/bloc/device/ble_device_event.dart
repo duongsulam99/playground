@@ -17,6 +17,10 @@ sealed class BleDeviceEvent with _$BleDeviceEvent {
     required BleBatterySnapshot battery,
   }) = BleDeviceBatteryUpdated;
 
+  const factory BleDeviceEvent.actionButtonMappingUpdated({
+    required BleActionButtonMapping mapping,
+  }) = BleDeviceActionButtonMappingUpdated;
+
   const factory BleDeviceEvent.sessionEnded({
     @Default(true) bool stopHardware,
   }) = BleDeviceSessionEnded;

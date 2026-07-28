@@ -1,9 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_action_button_type.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ring_logic_control.dart';
 import 'package:vulcan_mobile_playground/core/error/failure.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_adapter_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 
+import '../entities/ble_action_button_mapping.dart';
 import '../entities/ble_battery_snapshot.dart';
 import '../entities/ble_device_info.dart';
 import '../entities/ble_device_stream_snapshot.dart';
@@ -19,6 +22,26 @@ abstract class BleRepository {
   );
 
   Stream<Either<Failure, BleBatterySnapshot>> watchBattery(String deviceId);
+
+  Stream<Either<Failure, BleActionButtonMapping>> watchActionButtonMapping(
+    String deviceId,
+  );
+
+  Stream<Either<Failure, RingActionButtonType>> watchActionButtonPress(
+    String deviceId,
+  );
+
+  Stream<Either<Failure, RingLogicControl>> watchLogicControl(String deviceId);
+
+  Future<Either<Failure, Unit>> updateActionButtonMapping(
+    String deviceId,
+    BleActionButtonMapping mapping,
+  );
+
+  Future<Either<Failure, Unit>> updateLogicControl(
+    String deviceId,
+    RingLogicControl logic,
+  );
 
   Stream<Either<Failure, BleConnectionStatus>> watchConnectionStatus(
     String deviceId,

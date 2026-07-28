@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_status.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
+import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_action_button_mapping.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_battery_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_connection_entry.dart';
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_device_info.dart';
@@ -9,6 +10,7 @@ import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_discov
 import 'package:vulcan_mobile_playground/features/ble/domain/entities/ble_scan_snapshot.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/bloc/device/ble_device_bloc_registry.dart';
+import 'package:vulcan_mobile_playground/features/ble/presentation/widgets/ble_action_button_mapping_label.dart';
 import 'package:vulcan_mobile_playground/features/ble/presentation/routing/ble_device_info_route.dart';
 
 class HomeMyoBandInfoSection extends StatelessWidget {
@@ -134,6 +136,8 @@ class _MyoBandInfoCard extends StatelessWidget {
         return _MyoBandInfoBody(
           info: info,
           battery: state.battery,
+          actionButtonMapping: state.actionButtonMapping,
+          showActionButton: state.capabilities.supportsActionButton,
           fallbackName: fallbackName,
           onTap: onTap,
         );
@@ -146,12 +150,16 @@ class _MyoBandInfoBody extends StatelessWidget {
   const _MyoBandInfoBody({
     required this.info,
     required this.battery,
+    required this.actionButtonMapping,
+    required this.showActionButton,
     required this.fallbackName,
     required this.onTap,
   });
 
   final BleDeviceInfo info;
   final BleBatterySnapshot? battery;
+  final BleActionButtonMapping? actionButtonMapping;
+  final bool showActionButton;
   final String fallbackName;
   final VoidCallback onTap;
 
@@ -167,12 +175,15 @@ class _MyoBandInfoBody extends StatelessWidget {
         leading: const Icon(Icons.sensors, color: Colors.deepPurple),
         title: Text(info.name.isEmpty ? fallbackName : info.name),
         subtitle: BlocBuilder<BleDeviceBloc, BleDeviceState>(
-          buildWhen: (p, c) => p.battery != c.battery,
+          buildWhen: (p, c) =>
+              p.battery != c.battery ||
+              p.actionButtonMapping != c.actionButtonMapping,
           builder: (context, state) => Text(
             'FW: ${info.firmwareVersion.isEmpty ? '-' : info.firmwareVersion}'
             ' · $batteryLabel\n'
             'Hardware: ${info.hardwareId.isEmpty ? '-' : info.hardwareId}'
-            ' · Type: $typeLabel',
+            ' · Type: $typeLabel'
+            '${showActionButton ? '\n${formatActionButtonMappingLabel(actionButtonMapping)}' : ''}',
           ),
         ),
         isThreeLine: true,

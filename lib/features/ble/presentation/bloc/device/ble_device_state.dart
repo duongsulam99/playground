@@ -11,6 +11,7 @@ abstract class BleDeviceState with _$BleDeviceState {
     VulcanDeviceType? resolvedType,
     BleDeviceInfo? deviceInfo,
     BleBatterySnapshot? battery,
+    BleActionButtonMapping? actionButtonMapping,
     @Default(false) bool isReadingInfo,
     @Default(false) bool isStreaming,
     BleDeviceStreamSnapshot? streamSnapshot,
