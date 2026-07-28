@@ -183,10 +183,9 @@ class StreamDecodeWorker extends BleActionIsolate<List<double>> {
       if (batch.isEmpty) return;
 
       if (inFlight) {
-        if (latestPending != null) {
-          _onBatchDropped(batch);
-        }
+        if (latestPending != null) _onBatchDropped(batch);
 
+        // Drop-oldest: Always replace the pending batch to newest patch.
         latestPending = batch;
         return;
       }
