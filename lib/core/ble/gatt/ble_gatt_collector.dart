@@ -33,7 +33,7 @@ class BleGattCollector {
       for (final characteristic in service.characteristics) {
         /// Check if characteristic UUID is in profile
         final charUUID = characteristic.uuid.str;
-        final key = characteristicsProfile.keyFor(charUUID);
+        final key = characteristicsProfile.keyForm(charUUID);
 
         /// If characteristic UUID is not in profile, SKIP
         if (key == null || key.isEmpty) {

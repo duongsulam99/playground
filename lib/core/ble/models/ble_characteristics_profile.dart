@@ -2,27 +2,71 @@ import '../gatt/keys/adapter/key.dart';
 import '../gatt/keys/hand/key.dart';
 import '../gatt/keys/ring/key.dart';
 
+typedef KeyMap = Map<String, String>;
+
 /// Typed BLE GATT characteristic UUID profile.
 /// See: https://www.bluetooth.com/specifications/gatt/characteristics
 sealed class BleCharacteristicsProfile {
   const BleCharacteristicsProfile();
 
+  /// Weak side-table cache keyed by each profile instance.
+  ///
+  /// Expando stores data outside the object itself, so const profile instances
+  /// can keep their const constructors while still getting a lazily-built cache.
+  /// When a profile instance is garbage-collected, its Expando entry can be
+  /// collected too.
+  ///
+  /// The cached [KeyMap] is one bidirectional lookup table:
+  /// - `uuid:<normalized characteristic uuid>` -> characteristic key
+  /// - `key:<characteristic key>` -> original characteristic uuid
+  /// - `uuid:<normalized uuid>` -> [_containsOnlyMarker] for UUIDs that only
+  ///   need membership lookup via [contains].
+  static final Expando<KeyMap> _lookupCache = Expando();
+
+  static const String _uuidPrefix = 'uuid:';
+  static const String _keyPrefix = 'key:';
+  static const String _containsOnlyMarker = '<contains-only>';
+
   List<String> get uuids;
 
-  bool contains(String uuid) =>
-      uuids.any((value) => value.toLowerCase() == uuid.toLowerCase());
-
-  String? keyFor(String uuid) {
-    final normalizedId = uuid.toLowerCase();
-    for (final entry in entries) {
-      if (entry.value.toLowerCase() == normalizedId) {
-        return entry.key;
-      }
-    }
-    return null;
+  bool contains(String uuid) {
+    return _lookup.containsKey(_uuidLookupKey(uuid));
   }
 
+  /// Get [key] from [characteristic].
+  String? keyForm(String uuid) {
+    final key = _lookup[_uuidLookupKey(uuid)];
+    return key == _containsOnlyMarker ? null : key;
+  }
+
+  /// Get [characteristic] from [key].
+  String? characteristicForKey(String key) => _lookup[_keyLookupKey(key)];
+
   Iterable<MapEntry<String, String>> get entries;
+
+  KeyMap get _lookup {
+    final cached = _lookupCache[this];
+    if (cached != null) return cached;
+
+    final lookup = <String, String>{};
+    for (final entry in entries) {
+      lookup.putIfAbsent(_uuidLookupKey(entry.value), () => entry.key);
+      lookup.putIfAbsent(_keyLookupKey(entry.key), () => entry.value);
+    }
+
+    for (final uuid in uuids) {
+      lookup.putIfAbsent(_uuidLookupKey(uuid), () => _containsOnlyMarker);
+    }
+
+    _lookupCache[this] = lookup;
+    return lookup;
+  }
+
+  String _normalize(String uuid) => uuid.toLowerCase();
+
+  String _uuidLookupKey(String uuid) => '$_uuidPrefix${_normalize(uuid)}';
+
+  String _keyLookupKey(String key) => '$_keyPrefix$key';
 }
 
 final class HandBleCharacteristics extends BleCharacteristicsProfile {

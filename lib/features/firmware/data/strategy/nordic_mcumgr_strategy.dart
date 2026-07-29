@@ -1,7 +1,11 @@
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_supper_app_core/core.dart' hide Image;
 import 'package:mcumgr_flutter/mcumgr_flutter.dart';
+import 'package:mcumgr_flutter/models/firmware_upgrade_mode.dart';
+import 'package:mcumgr_flutter/models/image_upload_alignment.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/DFU/dfu_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_value_encoders.dart';
 
@@ -18,6 +22,14 @@ class NordicMcumgrStrategy implements DfuStrategy {
 
   static const int _progressTimeoutSeconds = 600;
   static const String _startOtaCommand = '1';
+  static const _configuration = FirmwareUpgradeConfiguration(
+    estimatedSwapTime: Duration(seconds: 60),
+    eraseAppSettings: true,
+    pipelineDepth: 1,
+    byteAlignment: ImageUploadAlignment.fourByte,
+    reassemblyBufferSize: 0,
+    firmwareUpgradeMode: FirmwareUpgradeMode.confirmOnly,
+  );
   static final _updateManager = FirmwareUpdateManagerFactory();
   static final _zipDecoder = ZipDecoder();
 
@@ -165,7 +177,9 @@ class NordicMcumgrStrategy implements DfuStrategy {
       );
 
       unawaited(
-        updateManager.update(images).catchError((Object error) {
+        updateManager.update(images, configuration: _configuration).catchError((
+          Object error,
+        ) {
           if (!progressController.isClosed) {
             progressController.add(
               DfuProgress(

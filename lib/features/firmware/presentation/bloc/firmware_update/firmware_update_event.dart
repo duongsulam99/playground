@@ -10,4 +10,8 @@ sealed class FirmwareUpdateEvent with _$FirmwareUpdateEvent {
 
   const factory FirmwareUpdateEvent.retryRequested() =
       FirmwareUpdateRetryRequested;
+
+  const factory FirmwareUpdateEvent.executeRequested({
+    FirmwareInfo? firmwareInfo,
+  }) = FirmwareUpdateExecuteRequested;
 }

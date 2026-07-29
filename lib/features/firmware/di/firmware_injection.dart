@@ -15,7 +15,9 @@ Future<void> initFirmwareInjection(GetIt sl) async {
   if (sl.isRegistered<FirmwareRepository>()) return;
 
   sl.registerLazySingleton(FirmwareFirebaseRemote.new);
-  sl.registerLazySingleton(() => FirmwareRemoteApi(baseUrl: _firmwareApiBaseUrl));
+  sl.registerLazySingleton(
+    () => FirmwareRemoteApi(baseUrl: _firmwareApiBaseUrl),
+  );
 
   sl.registerLazySingleton<FirmwareRepository>(
     () => FirmwareRepositoryImpl(
@@ -27,5 +29,10 @@ Future<void> initFirmwareInjection(GetIt sl) async {
 
   sl.registerFactory(() => CheckLatestFirmware(repository: sl()));
   sl.registerFactory(() => ExecuteFirmwareUpdate(repository: sl()));
-  sl.registerFactory(() => FirmwareUpdateBloc(checkLatestFirmware: sl()));
+  sl.registerFactory(
+    () => FirmwareUpdateBloc(
+      checkLatestFirmware: sl(),
+      executeFirmwareUpdate: sl(),
+    ),
+  );
 }

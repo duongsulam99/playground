@@ -2,22 +2,29 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 
+import '../../../domain/entity/dfu_progress.dart';
 import '../../../domain/entity/firmware_info.dart';
 import '../../../domain/repository/firmware_repository.dart';
 import '../../../domain/usecase/check_latest_firmware.dart';
+import '../../../domain/usecase/execute_firmware_update.dart';
 
 part 'firmware_update_event.dart';
 part 'firmware_update_state.dart';
 part 'firmware_update_bloc.freezed.dart';
 
-class FirmwareUpdateBloc extends Bloc<FirmwareUpdateEvent, FirmwareUpdateState> {
-  FirmwareUpdateBloc({required this._checkLatestFirmware})
-    : super(const FirmwareUpdateState()) {
+class FirmwareUpdateBloc
+    extends Bloc<FirmwareUpdateEvent, FirmwareUpdateState> {
+  FirmwareUpdateBloc({
+    required this.checkLatestFirmware,
+    required this.executeFirmwareUpdate,
+  }) : super(const FirmwareUpdateState()) {
     on<FirmwareUpdateStarted>(_onStarted);
     on<FirmwareUpdateRetryRequested>(_onRetryRequested);
+    on<FirmwareUpdateExecuteRequested>(_onExecuteRequested);
   }
 
-  final CheckLatestFirmware _checkLatestFirmware;
+  final CheckLatestFirmware checkLatestFirmware;
+  final ExecuteFirmwareUpdate executeFirmwareUpdate;
 
   Future<void> _onStarted(
     FirmwareUpdateStarted event,
@@ -55,12 +62,14 @@ class FirmwareUpdateBloc extends Bloc<FirmwareUpdateEvent, FirmwareUpdateState> 
         deviceType: deviceType,
         currentVersion: currentVersion,
         checkStatus: FirmwareCheckStatus.loading,
+        updateStatus: FirmwareUpdateStatus.idle,
+        dfuProgress: null,
         errorMessage: null,
         checkResult: null,
       ),
     );
 
-    final result = await _checkLatestFirmware(
+    final result = await checkLatestFirmware(
       CheckFirmwareParams(
         deviceType: deviceType,
         currentVersion: currentVersion,
@@ -78,6 +87,45 @@ class FirmwareUpdateBloc extends Bloc<FirmwareUpdateEvent, FirmwareUpdateState> 
         state.copyWith(
           checkStatus: FirmwareCheckStatus.success,
           checkResult: checkResult,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onExecuteRequested(
+    FirmwareUpdateExecuteRequested event,
+    Emitter<FirmwareUpdateState> emit,
+  ) async {
+    final firmwareInfo = event.firmwareInfo ?? state.checkResult?.firmwareInfo;
+    if (firmwareInfo == null) {
+      emit(
+        state.copyWith(
+          updateStatus: FirmwareUpdateStatus.failed,
+          errorMessage: 'No firmware information available',
+        ),
+      );
+      return;
+    }
+
+    await emit.forEach(
+      executeFirmwareUpdate(
+        ExecuteFirmwareUpdateParams(
+          deviceId: state.deviceId,
+          deviceType: state.deviceType,
+          firmwareInfo: firmwareInfo,
+        ),
+      ),
+      onData: (result) => result.fold(
+        (failure) => state.copyWith(
+          updateStatus: FirmwareUpdateStatus.failed,
+          errorMessage: failure.message,
+        ),
+        (progress) => state.copyWith(
+          updateStatus: FirmwareUpdateStatus.fromDfuStatus(progress.status),
+          dfuProgress: progress,
+          errorMessage: progress.status == DfuStatus.failed
+              ? progress.message
+              : null,
         ),
       ),
     );
