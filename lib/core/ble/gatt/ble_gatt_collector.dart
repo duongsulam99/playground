@@ -37,20 +37,16 @@ class BleGattCollector {
       /// If in profile, loop through every characteristic
       for (final characteristic in service.characteristics) {
         /// Check if characteristic UUID is in profile
-        final key = characteristicsProfile.keyFor(
-          characteristic.uuid.toString(),
-        );
+        final charUUID = characteristic.uuid.str;
+        final key = characteristicsProfile.keyFor(charUUID);
 
         /// If characteristic UUID is not in profile, SKIP
         if (key == null || key.isEmpty) {
-          logger.debug(
-            'CHARACTERISTIC NOT FOUND',
-            '${characteristic.uuid} not in profile and skipped',
-          );
+          _doSomethingWhenCharNotFound(characteristic);
           continue;
         }
 
-        logger.debug('FOUND', '[$key] for $serviceUuid');
+        logger.debug('FOUND', '[$key] ${characteristic.uuid.str}');
 
         /// Add characteristic to map
         characteristics[key] = characteristic;
@@ -58,5 +54,12 @@ class BleGattCollector {
     }
 
     return characteristics;
+  }
+
+  static void _doSomethingWhenCharNotFound(BluetoothCharacteristic char) {
+    logger.debug(
+      'CHARACTERISTIC NOT FOUND',
+      '${char.uuid.str} not in profile and skipped',
+    );
   }
 }
