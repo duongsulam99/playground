@@ -15,21 +15,16 @@ class BleGattCollector {
     required BleServicesProfile servicesProfile,
     required BleCharacteristicsProfile characteristicsProfile,
   }) {
-    /// Convert Service Profile UUIDs to lowercase
-    final serviceProfileUuids = servicesProfile.uuids
-        .map((uuid) => uuid)
-        .toSet();
-
     /// Create Characteristics LinkedMap
     final characteristics = <String, BluetoothCharacteristic>{};
 
     /// Loop through every available services in device
     for (final service in services) {
       /// Check if service UUID is in profile
-      final serviceUuid = service.serviceUuid.toString();
+      final serviceUuid = service.serviceUuid.str;
 
       /// If not in profile, skip it
-      if (!serviceProfileUuids.contains(serviceUuid)) {
+      if (!servicesProfile.contains(serviceUuid)) {
         logger.debug('service', 'Service $serviceUuid not in profile');
         continue;
       }

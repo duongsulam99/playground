@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
+import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
 import '../helper/device_connection_handler.dart';
@@ -93,28 +94,23 @@ class DeviceRuntime implements Connection, GattAccess, FirmwareTransport {
   }
 
   @override
-  Future<void> writeOta(List<int> data, {int timeout = 15}) =>
-      writeCharacteristic(
-        _requireOtaCharacteristicKey(),
-        data,
-        timeout: timeout,
-      );
+  Future<void> writeOta(List<int> data, {int timeout = 15}) async {
+    ensureGattReady();
+    final characteristic = _requireOtaCharacteristic();
+    await characteristic.write(data, timeout: timeout);
+  }
 
   @override
   Future<void> setUpdateFirmware(bool enabled) async {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(
-      _requireOtaCharacteristicKey(),
-    );
+    final characteristic = _requireOtaCharacteristic();
     await characteristic.setNotifyValue(enabled);
   }
 
   @override
   Stream<List<int>> watchUpdateNotifications() {
     ensureGattReady();
-    final characteristic = _requireCharacteristic(
-      _requireOtaCharacteristicKey(),
-    );
+    final characteristic = _requireOtaCharacteristic();
     return characteristic.onValueReceived;
   }
 
@@ -228,15 +224,32 @@ class DeviceRuntime implements Connection, GattAccess, FirmwareTransport {
     return characteristic;
   }
 
-  String _requireOtaCharacteristicKey() {
-    final key = _deviceType.characteristics?.otaCharacteristicKey;
-    if (key == null) {
-      throw BleException(
-        'Device type ${_deviceType.name} does not support OTA',
-        deviceId: deviceId,
-      );
+  BluetoothCharacteristic _requireOtaCharacteristic() {
+    final otaUuid = _otaUuidFor(_deviceType.characteristics);
+    if (otaUuid == null || _characteristics[otaUuid] == null) {
+      throw BleException('Device does not support OTA', deviceId: deviceId);
     }
-    return key;
+
+    final result = _characteristics[otaUuid]!;
+
+    _logger.debug(
+      '_requireOtaCharacteristic',
+      'Characteristic: ${result.uuid.str}',
+    );
+
+    return result;
+  }
+
+  String? _otaUuidFor(BleCharacteristicsProfile? profile) {
+    return switch (profile) {
+      HandBleCharacteristics(:final otaUuid) => otaUuid,
+      ElbowBleCharacteristics(:final otaUuid) => otaUuid,
+      CoaxialBleCharacteristics(:final otaUuid) => otaUuid,
+      WristBleCharacteristics(:final otaUuid) => otaUuid,
+      RingBleCharacteristics(:final otaUuid) => otaUuid,
+      BleAdapterBleCharacteristics(:final otaUuid) => otaUuid,
+      SensorBoxBleCharacteristics() || null => null,
+    };
   }
 
   BleConnectionStatus _mapConnectionState(BluetoothConnectionState state) {

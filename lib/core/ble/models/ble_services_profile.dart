@@ -7,8 +7,10 @@ sealed class BleServicesProfile {
 
   List<String> get uuids;
 
-  bool contains(String uuid) =>
-      uuids.any((value) => value.toLowerCase() == uuid.toLowerCase());
+  bool contains(String uuid) {
+    final normalizedId = uuid.toLowerCase();
+    return uuids.any((value) => value.toLowerCase() == normalizedId);
+  }
 }
 
 final class HandBleServices extends BleServicesProfile {
