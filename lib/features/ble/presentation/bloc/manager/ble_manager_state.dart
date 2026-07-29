@@ -55,12 +55,14 @@ extension BleManagerStateX on BleManagerState {
   }
 
   bool isDeviceConnected(String deviceId) {
-    if (activeConnectionFor(deviceId) == null) return false;
-    return activeConnectionFor(deviceId)!.status.isConnected;
+    final existing = activeConnectionFor(deviceId);
+    if (existing == null) return false;
+    return existing.status.isConnected;
   }
 
   BleConnectionStatus connectionStatusFor(String deviceId) {
-    if (activeConnectionFor(deviceId) == null) BleConnectionStatus.disconnected;
-    return activeConnectionFor(deviceId)!.status;
+    final existing = activeConnectionFor(deviceId);
+    if (existing != null) return existing.status;
+    return BleConnectionStatus.disconnected;
   }
 }

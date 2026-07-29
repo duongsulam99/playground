@@ -4,6 +4,7 @@ import 'package:vulcan_mobile_playground/core/ble/enums/BLE/ble_connection_statu
 import 'package:vulcan_mobile_playground/core/ble/enums/device_type.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_collector.dart';
 import 'package:vulcan_mobile_playground/core/ble/gatt/ble_gatt_reader.dart';
+import 'package:vulcan_mobile_playground/core/ble/gatt/keys/global_ble_key.dart';
 import 'package:vulcan_mobile_playground/core/ble/models/ble_characteristics_profile.dart';
 import 'package:vulcan_mobile_playground/core/error/exceptions.dart';
 
@@ -225,31 +226,21 @@ class DeviceRuntime implements Connection, GattAccess, FirmwareTransport {
   }
 
   BluetoothCharacteristic _requireOtaCharacteristic() {
-    final otaUuid = _otaUuidFor(_deviceType.characteristics);
-    if (otaUuid == null || _characteristics[otaUuid] == null) {
+    final profile = _deviceType.characteristics;
+    final otaUuid = _otaUuidFor(profile);
+    final otaKey = otaUuid == null ? null : profile?.keyForm(otaUuid);
+    if (otaKey == null || _characteristics[otaKey] == null) {
       throw BleException('Device does not support OTA', deviceId: deviceId);
     }
 
-    final result = _characteristics[otaUuid]!;
-
-    _logger.debug(
-      '_requireOtaCharacteristic',
-      'Characteristic: ${result.uuid.str}',
-    );
+    final result = _characteristics[otaKey]!;
 
     return result;
   }
 
   String? _otaUuidFor(BleCharacteristicsProfile? profile) {
-    return switch (profile) {
-      HandBleCharacteristics(:final otaUuid) => otaUuid,
-      ElbowBleCharacteristics(:final otaUuid) => otaUuid,
-      CoaxialBleCharacteristics(:final otaUuid) => otaUuid,
-      WristBleCharacteristics(:final otaUuid) => otaUuid,
-      RingBleCharacteristics(:final otaUuid) => otaUuid,
-      BleAdapterBleCharacteristics(:final otaUuid) => otaUuid,
-      SensorBoxBleCharacteristics() || null => null,
-    };
+    if (profile == null) return null;
+    return profile.characteristicForKey(GlobalBleKey.ota);
   }
 
   BleConnectionStatus _mapConnectionState(BluetoothConnectionState state) {

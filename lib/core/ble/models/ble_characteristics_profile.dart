@@ -1,4 +1,5 @@
 import '../gatt/keys/adapter/key.dart';
+import '../gatt/keys/global_ble_key.dart';
 import '../gatt/keys/hand/key.dart';
 import '../gatt/keys/ring/key.dart';
 
@@ -161,13 +162,13 @@ final class ElbowBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
+    MapEntry(GlobalBleKey.ota, otaUuid),
     MapEntry('NAME_UUID', nameUuid),
     MapEntry('HARDWARE_UUID', hardwareUuid),
     MapEntry('ADDR_UUID', addrUuid),
     MapEntry('CONTROL_UUID', controlUuid),
     MapEntry('SPEED_UUID', speedUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(GlobalBleKey.battery, batteryUuid),
     MapEntry('STATE_ELBOW_UUID', stateElbowUuid),
     MapEntry('CONNECT_UUID', connectUuid),
   ];
@@ -253,13 +254,13 @@ final class WristBleCharacteristics extends BleCharacteristicsProfile {
 
   @override
   Iterable<MapEntry<String, String>> get entries => [
-    MapEntry('OTA_UUID', otaUuid),
+    MapEntry(GlobalBleKey.ota, otaUuid),
     MapEntry('NAME_UUID', nameUuid),
     MapEntry('HARDWARE_UUID', hardwareUuid),
     MapEntry('ADDR_UUID', addrUuid),
     MapEntry('CONTROL_UUID', controlUuid),
     MapEntry('SPEED_UUID', speedUuid),
-    MapEntry('BATTERY_UUID', batteryUuid),
+    MapEntry(GlobalBleKey.battery, batteryUuid),
     MapEntry('STATE_WRIST_UUID', stateWristUuid),
     MapEntry('CONNECT_UUID', connectUuid),
   ];
