@@ -32,6 +32,7 @@ class NordicMcumgrStrategy implements DfuStrategy {
   );
   static final _updateManager = FirmwareUpdateManagerFactory();
   static final _zipDecoder = ZipDecoder();
+  static const _logger = Logger(className: 'NordicMcumgrStrategy');
 
   @override
   DfuType get type => DfuType.nordicDfu;
@@ -155,6 +156,8 @@ class NordicMcumgrStrategy implements DfuStrategy {
           if (percent > 100) {
             percent -= 50;
           }
+
+          _logger.debug('execute', 'Progress: $percent');
 
           progressController.add(
             DfuProgress(
